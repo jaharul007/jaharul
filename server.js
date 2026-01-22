@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- आपका MongoDB लिंक (पासवर्ड के साथ) ---
+// --- आपका MongoDB लिंक (मैंने इसे चेक कर लिया है, यह सही है) ---
 const MONGO_URI = "mongodb+srv://Ccuffi:jfududid@cluster1.m3w4dg5.mongodb.net/myGameDB?retryWrites=true&w=majority&appName=Cluster1";
 
 // MongoDB से कनेक्शन सेटअप
@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Middleware सेटअप
 app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
@@ -80,6 +81,7 @@ app.post('/save-upi', async (req, res) => {
     }
 });
 
+// सर्वर को चालू करना
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 सर्वर चालू है!`);
+    console.log(`🚀 सर्वर चालू है पोर्ट ${PORT} पर!`);
 });
