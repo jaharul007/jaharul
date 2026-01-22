@@ -6,12 +6,12 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- आपका MongoDB लिंक (मैंने इसे चेक कर लिया है, यह सही है) ---
+// --- आपका MongoDB लिंक ---
 const MONGO_URI = "mongodb+srv://Ccuffi:jfududid@cluster1.m3w4dg5.mongodb.net/myGameDB?retryWrites=true&w=majority&appName=Cluster1";
 
-// MongoDB से कनेक्शन सेटअप
+// MongoDB से कनेक्शन (Vercel के लिए "await" हटाकर direct connect बेहतर है)
 mongoose.connect(MONGO_URI)
-    .then(() => console.log("✅ MongoDB Atlas (Cloud) से कनेक्ट हो गया!"))
+    .then(() => console.log("✅ MongoDB Atlas से कनेक्ट हो गया!"))
     .catch(err => console.error("❌ DB Connection Error:", err));
 
 // डेटाबेस का ढांचा (Schema)
@@ -24,7 +24,8 @@ const userSchema = new mongoose.Schema({
     history: { type: Array, default: [] }
 });
 
-const User = mongoose.model('User', userSchema);
+// Model को दोबारा डिफाइन होने से बचाने के लिए check (Vercel fix)
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // Middleware सेटअप
 app.use(express.json());
@@ -81,7 +82,9 @@ app.post('/save-upi', async (req, res) => {
     }
 });
 
-// सर्वर को चालू करना
-app.listen(PORT, '0.0.0.0', () => {
+// --- VERCEL के लिए सबसे ज़रूरी बदलाव ---
+app.listen(PORT, () => {
     console.log(`🚀 सर्वर चालू है पोर्ट ${PORT} पर!`);
 });
+
+module.exports = app; // यह Vercel के लिए ज़रूरी है
