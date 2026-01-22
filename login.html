@@ -111,6 +111,9 @@
     </div>
 
     <script>
+        // --- API URL Updated to Vercel ---
+        const API_BASE_URL = "https://jaharul.vercel.app";
+
         function checkInputs() {
             const ph = document.getElementById('l_phone').value;
             const ps = document.getElementById('l_pass').value;
@@ -134,21 +137,40 @@
             passInput.type = passInput.type === "password" ? "text" : "password";
         }
 
-        function submitLogin() {
+        async function submitLogin() {
             const phone = document.getElementById('l_phone').value;
+            const password = document.getElementById('l_pass').value;
             const btn = document.getElementById('l_btn');
 
+            const originalText = btn.innerText;
             btn.innerText = "Logging in...";
             btn.disabled = true;
 
-            // Turant login logic: Data ko localStorage mein save karein
-            localStorage.setItem('user_id', phone); // Phone number ko hi ID bana diya
-            localStorage.setItem('user_balance', '50.00'); // Default balance set kiya
-            
-            // Bina kisi server delay ke index.html par bhejein
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 500); // 0.5 second ka delay real feel dene ke liye
+            try {
+                // REAL LOGIN CALL TO VERCEL BACKEND
+                const res = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ phone, password })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    localStorage.setItem('user_id', data.userId);
+                    localStorage.setItem('user_balance', data.balance);
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.message || "Invalid credentials!");
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("Server Connection Error! Check if your Vercel backend is running.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
