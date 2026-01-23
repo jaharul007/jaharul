@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Master Control - BDG Game</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body { background: #ff3131; font-family: 'Inter', sans-serif; padding: 25px; color: #000; overflow-y: auto; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+        .admin-box { background: rgba(0,0,0,0.15); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); }
+        .sum-title { font-size: 14px; font-weight: 900; text-transform: uppercase; color: #000; margin-bottom: 10px; text-align: center; }
+        .bet-sum-txt { font-size: 32px; font-weight: 900; color: #fff; text-align: center; display: block; text-shadow: 2px 2px #000; }
+        .admin-input { width: 100%; padding: 20px; border-radius: 15px; border: 3px solid #000; text-align: center; font-size: 28px; font-weight: 900; background: #fff; margin-top: 10px; }
+        .apply-btn { width: 100%; padding: 20px; background: #000; color: #fff; border: none; border-radius: 15px; font-weight: 900; cursor: pointer; font-size: 18px; margin-top: 15px; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 0; }
+        .n-btn { aspect-ratio: 1; border-radius: 50%; border: none; color: white; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; width: 45px; height: 45px; margin: 0 auto; }
+        .c-btn { width: 80px; font-size: 12px; height: 30px; line-height: 30px; text-align: center; border-radius: 5px; color: #fff; font-weight: 900; margin-top: 5px; }
+        .green { background: #2ead6d; } .violet { background: #9b51e0; } .red { background: #d94d4d; }
+        .back-btn { background: #000; color: #fff; border: none; padding: 12px 25px; border-radius: 10px; font-weight: 900; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-header">
+        <h1 style="font-size:26px; font-weight:900;">MASTER CONTROL</h1>
+        <button class="back-btn" onclick="window.location.href='index.html'">BACK</button>
+    </div>
+
+    <div class="admin-box">
+        <p class="sum-title">Total Bets on Colors</p>
+        <div style="display:flex; justify-content:space-around;">
+            <div><span class="bet-sum-txt" id="sum-Green">0</span><div class="c-btn green">Green</div></div>
+            <div><span class="bet-sum-txt" id="sum-Violet">0</span><div class="c-btn violet">Violet</div></div>
+            <div><span class="bet-sum-txt" id="sum-Red">0</span><div class="c-btn red">Red</div></div>
+        </div>
+    </div>
+
+    <div class="admin-box">
+        <p class="sum-title">Number-wise Tracking</p>
+        <div class="num-grid" id="numTrackingGrid">
+            </div>
+    </div>
+
+    <div class="admin-box" style="text-align:center;">
+        <h2 style="font-weight:900; margin-bottom:15px;">FORCE NEXT WINNER</h2>
+        <input type="number" id="forceInp" class="admin-input" placeholder="Result (0-9)" min="0" max="9">
+        <button id="saveBtn" class="apply-btn">SAVE RESULT NOW</button>
+        <p id="adminStatus" style="margin-top:20px; font-weight:900; font-size:18px; color: #fff; text-shadow: 1px 1px #000;">STATUS: AUTO MODE</p>
+    </div>
+
+    <script>
+        // Number grid injection to avoid document.write issues
+        const gridBox = document.getElementById('numTrackingGrid');
+        for(let i=0; i<=9; i++) {
+            let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#d94d4d':'#2ead6d');
+            gridBox.innerHTML += `<div style="text-align:center;"><span class="bet-sum-txt" style="font-size:18px;" id="sum-Num${i}">0</span><div class="n-btn" style="background:${col}; shadow:none;">${i}</div></div>`;
+        }
+
+        // Sync Function
+        function syncAdminData() {
+            try {
+                let activeBets = JSON.parse(localStorage.getItem('current_round_bets')) || {};
+                
+                // Update Colors
+                document.getElementById('sum-Green').innerText = activeBets['Green'] || 0;
+                document.getElementById('sum-Violet').innerText = activeBets['Violet'] || 0;
+                document.getElementById('sum-Red').innerText = activeBets['Red'] || 0;
+
+                // Update Numbers
+                for(let i=0; i<=9; i++) {
+                    let el = document.getElementById('sum-Num'+i);
+                    if(el) el.innerText = activeBets['Num'+i] || 0;
+                }
+                
+                // Status Check
+                let forced = localStorage.getItem('forced_result');
+                if(forced !== null && forced !== "") {
+                    document.getElementById('adminStatus').innerText = "FORCED: NEXT IS " + forced;
+                    document.getElementById('adminStatus').style.color = "#ffff00"; // Yellow color for visibility
+                } else {
+                    document.getElementById('adminStatus').innerText = "STATUS: AUTO MODE";
+                    document.getElementById('adminStatus').style.color = "#fff";
+                }
+            } catch(e) { console.log("Sync Error"); }
+        }
+
+        // Save Function with Error Handling
+        document.getElementById('saveBtn').onclick = function() {
+            let val = document.getElementById('forceInp').value;
+            if(val !== "" && val >= 0 && val <= 9) {
+                localStorage.setItem('forced_result', val.toString());
+                syncAdminData();
+                alert("Success: Next result set to " + val);
+                document.getElementById('forceInp').value = "";
+            } else {
+                alert("Please enter a number between 0 and 9");
+            }
+        };
+
+        setInterval(syncAdminData, 1000);
+        window.onload = syncAdminData;
+    </script>
+</body>
+</html>
