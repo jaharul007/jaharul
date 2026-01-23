@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>BDG GAME - Register</title>
     <style>
-        /* डिज़ाइन को गहरा और प्रोफेशनल रखा गया है */
+        /* Wahi design jo aapne pehle bheja tha */
         body { margin: 0; padding: 0; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; height: 100vh; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 500px; background: #222222; display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
         
@@ -32,17 +32,14 @@
         .box-input-wrapper { flex: 1; position: relative; }
         .form-input { width: 100%; background: #333; border: 1px solid #444; border-radius: 12px; padding: 18px; color: white; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.3s; }
         .form-input:focus { border-color: #d4af37; box-shadow: 0 0 5px rgba(212, 175, 55, 0.2); }
-        .eye-toggle { position: absolute; right: 18px; top: 18px; color: #777; font-size: 20px; cursor: pointer; }
 
         .policy-row { display: flex; align-items: center; gap: 12px; margin-top: 25px; }
-        .check-box-custom { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #555; display: flex; align-items: center; justify-content: center; cursor: pointer; background: white; }
+        .check-box-custom { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #555; display: flex; align-items: center; justify-content: center; cursor: pointer; background: white; color: #333; font-weight: bold; }
         .policy-text { font-size: 13px; color: #999; }
-        .policy-text span { color: #ff4d4d; cursor: pointer; font-weight: bold; }
 
         .button-group { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; }
         .main-reg-btn { width: 100%; padding: 18px; background: linear-gradient(180deg, #f3d078 0%, #d4af37 100%); border: none; border-radius: 45px; color: #3d2a00; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .back-login-btn { width: 100%; padding: 15px; background: transparent; border: 1px solid #d4af37; border-radius: 45px; color: #999; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 40px; }
-        .back-login-btn b { color: #d4af37; }
     </style>
 </head>
 <body>
@@ -65,7 +62,6 @@
         </div>
 
         <div class="form-body">
-            
             <div class="input-item">
                 <div class="input-label-gold">🗄️ Phone number</div>
                 <div class="row-flex">
@@ -78,23 +74,17 @@
 
             <div class="input-item">
                 <div class="input-label-gold">🔒 Set password</div>
-                <div class="box-input-wrapper">
-                    <input type="password" id="regPass" class="form-input" placeholder="Set password">
-                </div>
+                <input type="password" id="regPass" class="form-input" placeholder="Set password">
             </div>
 
             <div class="input-item">
                 <div class="input-label-gold">🔒 Confirm password</div>
-                <div class="box-input-wrapper">
-                    <input type="password" id="regConfirm" class="form-input" placeholder="Confirm password">
-                </div>
+                <input type="password" id="regConfirm" class="form-input" placeholder="Confirm password">
             </div>
 
             <div class="input-item">
                 <div class="input-label-gold">📂 Invite code</div>
-                <div class="box-input-wrapper">
-                    <input type="text" id="regInvite" class="form-input" placeholder="Please enter the invitation code">
-                </div>
+                <input type="text" id="regInvite" class="form-input" placeholder="Please enter the invitation code">
             </div>
 
             <div class="policy-row">
@@ -106,19 +96,18 @@
                 <button class="main-reg-btn" onclick="startRegistration()">Register</button>
                 <button class="back-login-btn" onclick="window.location.href='login.html'">I have an account <b>Login</b></button>
             </div>
-
         </div>
     </div>
 
     <script>
         async function startRegistration() {
-            const phone = document.getElementById('regPhone').value;
-            const password = document.getElementById('regPass').value;
-            const confirm = document.getElementById('regConfirm').value;
-            const inviteCode = document.getElementById('regInvite').value;
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPass').value.trim();
+            const confirm = document.getElementById('regConfirm').value.trim();
+            const inviteCode = document.getElementById('regInvite').value.trim();
 
             if(!phone || !password || !confirm) {
-                alert("Please fill all required fields");
+                alert("Please fill all fields!");
                 return;
             }
             if(password !== confirm) {
@@ -127,25 +116,23 @@
             }
 
             try {
-                // सुधारा हुआ हिस्सा: अब यह आपके Vercel api फोल्डर को कॉल करेगा
-                const res = await fetch('/api/register', {
+                // Database connection jodne wala part
+                const res = await fetch('/api/user', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ phone, password, inviteCode })
                 });
                 
                 const data = await res.json();
-                if (data.success) {
+                if (res.ok) {
                     alert("Registration Successful!");
-                    localStorage.setItem('user_id', data.userId);
-                    localStorage.setItem('user_balance', data.balance);
-                    window.location.href = 'index.html';
+                    localStorage.setItem('phone', phone);
+                    window.location.href = 'index.html'; 
                 } else {
-                    alert(data.message);
+                    alert(data.message || "Registration Failed");
                 }
             } catch (error) {
-                console.error("Error:", error);
-                alert("Server Connection Error. Check your internet.");
+                alert("Connection Error. Please check MongoDB settings.");
             }
         }
     </script>
