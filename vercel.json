@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/", "destination": "/wingo_game.html" }
+    { "source": "/", "destination": "/register.html" },
+    { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
