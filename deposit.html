@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Payment - BDG Game</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8f9fa; }
+        .payment-container { width: 100%; max-width: 500px; margin: 0 auto; background: #fff; min-height: 100vh; }
+        
+        /* Purple Header as per image */
+        .header { background: #5e17eb; color: white; padding: 18px; text-align: center; font-size: 18px; position: relative; font-weight: 500; }
+        .close-btn { position: absolute; left: 15px; top: 18px; font-size: 22px; cursor: pointer; color: white; text-decoration: none; }
+
+        /* QR Card Section */
+        .qr-card { margin: 15px; border-radius: 12px; padding: 25px 15px; text-align: center; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        .status-badge { background: #28a745; color: white; padding: 3px 12px; border-radius: 20px; font-size: 12px; display: inline-block; margin-bottom: 15px; }
+        
+        .bank-info { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+        .bank-logo { width: 28px; height: 28px; border-radius: 50%; }
+        .bank-name { font-size: 17px; font-weight: 600; color: #333; }
+        
+        .upi-id-display { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+        /* The QR Code Image */
+        .qr-box { margin: 10px 0 25px; }
+        .qr-image { width: 240px; height: 240px; }
+
+        /* Action Buttons (Share/Download) */
+        .btn-row { display: flex; justify-content: center; gap: 15px; margin-bottom: 10px; }
+        .action-btn { background: #f1f3f4; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; cursor: pointer; color: #444; }
+
+        /* App Options */
+        .apps-list { padding: 10px 15px; }
+        .app-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
+        .app-item:active { background-color: #f0f0f0; }
+        .app-meta { display: flex; align-items: center; gap: 15px; font-weight: 600; color: #444; }
+        .app-logo-paytm { width: 60px; }
+        .app-logo-phonepe { width: 30px; }
+        .arrow { color: #ccc; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="payment-container">
+    <div class="header">
+        <a href="account.html" class="close-btn">✕</a>
+        payment
+    </div>
+
+    <div class="qr-card">
+        <div class="status-badge">Primary</div>
+        
+        <div class="bank-info">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Airtel_logo.svg/100px-Airtel_logo.svg.png" class="bank-logo">
+            <span class="bank-name">Airtel Payments Bank - 4445</span>
+        </div>
+        
+        <div class="upi-id-display">
+            UPI ID: 6296584445@naviaxis <span style="cursor:pointer; color:#5e17eb;">❐</span>
+        </div>
+
+        <div class="qr-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=upi://pay?pa=6296584445@naviaxis&pn=AirtelBank&cu=INR" class="qr-image" alt="UPI QR Code">
+        </div>
+
+        <div class="btn-row">
+            <button class="action-btn">Share <span>🔗</span></button>
+            <button class="action-btn">Download <span>📥</span></button>
+        </div>
+    </div>
+
+    <div class="apps-list">
+        <div class="app-item" onclick="window.location.href='upi://pay?pa=6296584445@naviaxis'">
+            <div class="app-meta">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Paytm_Logo_%28standalone%29.svg/1200px-Paytm_Logo_%28standalone%29.svg.png" class="app-logo-paytm">
+                Paytm
+            </div>
+            <span class="arrow">›</span>
+        </div>
+
+        <div class="app-item" onclick="window.location.href='upi://pay?pa=6296584445@naviaxis'">
+            <div class="app-meta">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/1200px-PhonePe_Logo.svg.png" class="app-logo-phonepe">
+                PhonePe
+            </div>
+            <span class="arrow">›</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // User interface logic
+    console.log("Payment Page Loaded");
+</script>
+
+</body>
+</html>
