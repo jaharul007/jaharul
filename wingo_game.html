@@ -4,38 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>JAHARUL GAME</title>
+    <script src="api/history.js"></script>
+    <script src="api/game-result.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 450px; background: #0f1217; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* Navigation Header */
         .nav-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #22272d; color: #f3c34d; font-weight: bold; }
-
         .content { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
         .content::-webkit-scrollbar { display: none; }
 
-        /* Wallet Section */
         .wallet-card { background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); margin: 15px; border-radius: 20px; padding: 25px; text-align: center; }
         .bal-txt { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
         .w-btn-row { display: flex; gap: 15px; margin-top: 15px; }
         .w-btn { flex: 1; padding: 12px; border-radius: 25px; border: none; font-weight: bold; color: #fff; cursor: pointer; text-decoration: none; text-align: center; }
         .withdraw { background: #ff4d4d; } .deposit { background: #2ead6d; }
 
-        /* Mode Tabs */
         .game-tabs { display: flex; justify-content: space-between; padding: 10px 15px; gap: 8px; }
         .g-tab { flex: 1; background: #333; border-radius: 12px; padding: 10px 5px; text-align: center; cursor: pointer; color: #999; font-size: 11px; }
         .g-tab.active { background: #f3c34d; color: #5a3e00; font-weight: bold; box-shadow: 0 0 15px rgba(243, 195, 77, 0.3); }
         .tab-icon { display: block; font-size: 18px; margin-bottom: 4px; }
 
-        /* Timer Card */
         .timer-box { background: #f3c34d; margin: 15px; border-radius: 15px; display: flex; color: #5a3e00; min-height: 110px; cursor: pointer; }
         .t-left { flex: 1.2; padding: 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
         .t-right { flex: 1; padding: 15px; text-align: right; }
         .timer-display { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
         .t-digit { background: #333; color: #fff; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 22px; }
 
-        /* Betting Area */
         .btn-container { padding: 0 15px; }
         .color-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .c-btn { flex: 1; padding: 15px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
@@ -50,7 +46,6 @@
         .big { background: #e6a23c; border-radius: 30px 0 0 30px; } 
         .small { background: #409eff; border-radius: 0 30px 30px 0; }
 
-        /* History Table */
         .h-section { background: #22272d; margin: 15px; border-radius: 10px; overflow: hidden; padding-bottom: 10px; }
         .h-tabs { display: flex; padding: 10px; gap: 15px; border-bottom: 1px solid #1a1d22; }
         .h-tab-item { font-size: 13px; color: #999; padding: 5px 10px; cursor: pointer; }
@@ -151,24 +146,24 @@
     let currentMode = 60;
     let clickCount = 0;
 
-    // Data fetch karne ka function
+    // --- सुधार: history.js और game-result.js का कनेक्शन ---
     async function fetchFromDB() {
         try {
-            // User details/Balance fetch
+            // Balance fetch
             const userRes = await fetch('/api/user'); 
             const userData = await userRes.json();
             if(userData && userData.balance !== undefined) {
                 document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
             }
 
-            // Game History fetch
+            // Game History fetch (यह अब API के माध्यम से डेटा लाएगा)
             const histRes = await fetch(`/api/history?mode=${currentMode}`);
             const histData = await histRes.json();
             
             if(histData && Array.isArray(histData)) {
-                // Latest data hamesha upar rahe (Sort by Period ID descending)
+                // Latest data hamesha upar rahe
                 const sorted = histData.sort((a, b) => b.p - a.p);
-                renderHistory(sorted.slice(0, 10)); // Sirf latest 10 dikhao
+                renderHistory(sorted.slice(0, 10)); 
             } else {
                 document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No history available</td></tr>';
             }
@@ -177,7 +172,6 @@
         }
     }
 
-    // Grid initialize karein
     function init() {
         const grid = document.getElementById('mainGrid');
         grid.innerHTML = '';
@@ -190,7 +184,6 @@
             grid.appendChild(a);
         }
 
-        // Admin Panel trigger (5 clicks)
         document.getElementById('adminTrigger').addEventListener('click', () => {
             clickCount++;
             if(clickCount >= 5) {
@@ -203,7 +196,6 @@
         startTimer();
     }
 
-    // Mode switch (30s, 1m, 3m etc)
     function switchM(s, el) {
         currentMode = s;
         document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
@@ -213,7 +205,6 @@
         fetchFromDB();
     }
 
-    // Timer logic jo automatic refresh karega
     function startTimer() {
         setInterval(() => {
             let now = new Date();
@@ -227,26 +218,27 @@
                 <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
                 <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
 
-            // Period ID (Example: Date + Count)
             let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
             let p = dateStr + Math.floor(total/currentMode);
             document.getElementById('periodDisplay').innerText = p;
 
-            // Jab timer 1 second par ho, tab naya data fetch karo (3 second baad)
+            // --- सुधार: यहाँ रिजल्ट सेव करने का काम होगा ---
             if(rem === 1) { 
+                // गेम रिजल्ट बनाने और सेव करने के लिए (यह आपके game-result.js का फंक्शन है)
+                if(typeof saveGameResult === "function"){
+                    saveGameResult(p, currentMode);
+                }
+                
+                // 3 सेकंड बाद रिफ्रेश
                 setTimeout(fetchFromDB, 3000); 
             }
         }, 1000);
     }
 
-    // History table render logic
     function renderHistory(history) {
         let html = history.map(i => {
-            // Color selection logic based on number
             let nColor = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
             let bigSmall = i.n >= 5 ? 'Big' : 'Small';
-            
-            // Generate Dot Visuals
             let colorDots = `<span class="res-dot" style="background:${nColor}"></span>`;
             if(i.n == 0) colorDots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
             if(i.n == 5) colorDots += `<span class="res-dot" style="background:#2ead6d"></span>`;
@@ -265,7 +257,6 @@
         
         document.getElementById('historyBody').innerHTML = html;
 
-        // Top mini dots panel update
         document.getElementById('miniDots').innerHTML = history.slice(0,5).map(i => {
             let dotCol = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
             return `<span class="res-dot" style="background:${dotCol}; width:15px; height:15px; border:1px solid #fff;"></span>`
