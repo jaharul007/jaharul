@@ -1,30 +1,43 @@
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI; // Vercel Environment Variables mein apna MongoDB URL dalein
-const client = new MongoClient(uri);
+// Connection caching (Performance ke liye)
+let cachedDb = null;
+
+async function connectToDatabase() {
+    if (cachedDb) return cachedDb;
+    // process.env.MONGODB_URI ka matlab hai ki password Vercel settings se aayega
+    const client = await MongoClient.connect(process.env.MONGODB_URI);
+    const db = client.db('jaharul_game');
+    cachedDb = db;
+    return db;
+}
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+    // Sirf POST request allow karein
+    if (req.method !== 'POST') {
+        return res.status(405).json({ message: 'Method Not Allowed' });
+    }
 
     try {
-        await client.connect();
-        const db = client.db('jaharul_game');
+        const db = await connectToDatabase();
         const { period, number, mode } = req.body;
 
+        // Naya result object
         const newResult = {
-            p: period,
-            n: parseInt(number),
-            m: mode,
-            t: new Date()
+            p: period,          // Period ID
+            n: parseInt(number), // Number (0-9)
+            m: parseInt(mode),   // Game Mode (30, 60, 180, etc.)
+            t: new Date()        // Timestamp
         };
 
+        // Database mein save karein
         await db.collection('game_history').insertOne(newResult);
-        
-        // Purane records delete karein (optional: sirf 100 rakhein)
-        // await db.collection('game_history').deleteMany({ m: mode, t: { $lt: new Date(Date.now() - 24*60*60*1000) } });
 
-        res.status(200).json({ success: true });
+        // Success response
+        return res.status(200).json({ success: true, data: newResult });
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Database Error:", error);
+        return res.status(500).json({ error: "Failed to save result" });
     }
 }
