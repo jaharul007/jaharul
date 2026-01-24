@@ -1,19 +1,27 @@
-// यह फंक्शन डेटाबेस में रिजल्ट भेजने के लिए है
-async function saveGameResult(period, mode) {
-    const randomNum = Math.floor(Math.random() * 10); // रैंडम नंबर
+// Game Logic for Result Generation
+window.saveGameResult = async function(periodId, mode) {
+    console.log("Generating result for period: " + periodId);
     
     try {
-        await fetch('/api/save-result', {
+        // Random number generate karna (0-9)
+        const randomNumber = Math.floor(Math.random() * 10);
+        
+        // Backend API ko result bhejna taaki wo Database (MongoDB) mein save kar sake
+        const response = await fetch('/api/save-result', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                p: period,
-                n: randomNum,
-                mode: mode
+                period: periodId,
+                number: randomNumber,
+                mode: mode,
+                time: new Date().toISOString()
             })
         });
-        console.log("Result Saved!");
+
+        if (response.ok) {
+            console.log("Result saved successfully");
+        }
     } catch (error) {
-        console.error("Save error:", error);
+        console.error("Error saving result:", error);
     }
-}
+};
