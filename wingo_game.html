@@ -50,7 +50,7 @@
         .big { background: #e6a23c; border-radius: 30px 0 0 30px; } 
         .small { background: #409eff; border-radius: 0 30px 30px 0; }
 
-        /* History Table (Updated for Image Matching) */
+        /* History Table */
         .h-section { background: #22272d; margin: 15px; border-radius: 10px; overflow: hidden; padding-bottom: 10px; }
         .h-tabs { display: flex; padding: 10px; gap: 15px; border-bottom: 1px solid #1a1d22; }
         .h-tab-item { font-size: 13px; color: #999; padding: 5px 10px; cursor: pointer; }
@@ -74,7 +74,7 @@
 
 <div class="container">
     <div class="nav-header">
-        <span><</span> <span>JAHARUL GAME</span> <span>🎧 🕒</span>
+        <span onclick="history.back()" style="cursor:pointer;"><</span> <span>JAHARUL GAME</span> <span>🎧 🕒</span>
     </div>
 
     <div class="content">
@@ -124,7 +124,7 @@
 
         <div class="h-section">
             <div class="h-tabs">
-                <div class="h-tab-item active">Game history</div>
+                <div class="h-tab-item active" onclick="fetchFromDB()">Game history</div>
                 <div class="h-tab-item">Chart</div>
                 <div class="h-tab-item">My history</div>
             </div>
@@ -151,29 +151,36 @@
     let currentMode = 60;
     let clickCount = 0;
 
+    // Data fetch karne ka function
     async function fetchFromDB() {
         try {
-            // User balance
+            // User details/Balance fetch
             const userRes = await fetch('/api/user'); 
             const userData = await userRes.json();
-            if(userData.balance !== undefined) {
+            if(userData && userData.balance !== undefined) {
                 document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
             }
 
-            // Fetch History from MongoDB
+            // Game History fetch
             const histRes = await fetch(`/api/history?mode=${currentMode}`);
             const histData = await histRes.json();
             
             if(histData && Array.isArray(histData)) {
-                renderHistory(histData);
+                // Latest data hamesha upar rahe (Sort by Period ID descending)
+                const sorted = histData.sort((a, b) => b.p - a.p);
+                renderHistory(sorted.slice(0, 10)); // Sirf latest 10 dikhao
+            } else {
+                document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No history available</td></tr>';
             }
         } catch (error) {
             console.error("Fetch error:", error);
         }
     }
 
+    // Grid initialize karein
     function init() {
         const grid = document.getElementById('mainGrid');
+        grid.innerHTML = '';
         for(let i=0; i<=9; i++) {
             let a = document.createElement('a');
             a.className = 'n-btn'; a.innerText = i;
@@ -183,9 +190,10 @@
             grid.appendChild(a);
         }
 
+        // Admin Panel trigger (5 clicks)
         document.getElementById('adminTrigger').addEventListener('click', () => {
             clickCount++;
-            if(clickCount >= 3) {
+            if(clickCount >= 5) {
                 window.location.href = 'admin_panel.html';
                 clickCount = 0;
             }
@@ -195,6 +203,7 @@
         startTimer();
     }
 
+    // Mode switch (30s, 1m, 3m etc)
     function switchM(s, el) {
         currentMode = s;
         document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
@@ -204,6 +213,7 @@
         fetchFromDB();
     }
 
+    // Timer logic jo automatic refresh karega
     function startTimer() {
         setInterval(() => {
             let now = new Date();
@@ -217,27 +227,29 @@
                 <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
                 <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
 
-            let p = "20260124" + Math.floor(total/currentMode);
+            // Period ID (Example: Date + Count)
+            let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
+            let p = dateStr + Math.floor(total/currentMode);
             document.getElementById('periodDisplay').innerText = p;
 
+            // Jab timer 1 second par ho, tab naya data fetch karo (3 second baad)
             if(rem === 1) { 
-                setTimeout(fetchFromDB, 2000); 
+                setTimeout(fetchFromDB, 3000); 
             }
         }, 1000);
     }
 
+    // History table render logic
     function renderHistory(history) {
-        if(!history || history.length === 0) return;
-        
         let html = history.map(i => {
-            // Image matching dots logic
-            let colorDots = `<span class="res-dot" style="background:${i.c}"></span>`;
-            if(i.n == 0 || i.n == 5) {
-                colorDots += `<span class="res-dot" style="background:#9b51e0"></span>`;
-            }
-
-            let nColor = (i.n == 0 || i.n == 5) ? '#9b51e0' : i.c;
+            // Color selection logic based on number
+            let nColor = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
             let bigSmall = i.n >= 5 ? 'Big' : 'Small';
+            
+            // Generate Dot Visuals
+            let colorDots = `<span class="res-dot" style="background:${nColor}"></span>`;
+            if(i.n == 0) colorDots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
+            if(i.n == 5) colorDots += `<span class="res-dot" style="background:#2ead6d"></span>`;
 
             return `
                 <tr>
@@ -250,12 +262,14 @@
                 </tr>
             `;
         }).join('');
+        
         document.getElementById('historyBody').innerHTML = html;
 
-        // Top mini dots update
-        document.getElementById('miniDots').innerHTML = history.slice(0,5).map(i => 
-            `<span class="res-dot" style="background:${i.c}; width:15px; height:15px; border:1px solid #fff;"></span>`
-        ).join('');
+        // Top mini dots panel update
+        document.getElementById('miniDots').innerHTML = history.slice(0,5).map(i => {
+            let dotCol = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
+            return `<span class="res-dot" style="background:${dotCol}; width:15px; height:15px; border:1px solid #fff;"></span>`
+        }).join('');
     }
 
     window.onload = init;
