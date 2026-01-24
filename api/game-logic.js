@@ -1,30 +1,57 @@
-// यह फंक्शन नया रिजल्ट सेव करने के लिए Backend (save-result.js) को कॉल करता है
+// game-logic.js - Created for your Wingo Game
+
+// 1. डेटाबेस में नया रिजल्ट सेव करने के लिए (Timer खत्म होने पर इसे कॉल करें)
 async function saveGameResult(period, mode) {
-    console.log("Saving result for:", period);
+    console.log("Saving result for Period:", period, "Mode:", mode);
     try {
         const response = await fetch('/api/save-result', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ period: period, mode: mode })
+            body: JSON.stringify({
+                period: period,
+                mode: mode
+            })
         });
 
         const data = await response.json();
         if (data.success) {
-            console.log("Result Saved Successfully:", data.data);
+            console.log("✅ Success! MongoDB updated:", data.data);
+            // रिजल्ट सेव होने के बाद टेबल अपडेट करने के लिए fetchFromDB() को कॉल करें
+            if (typeof fetchFromDB === "function") {
+                fetchFromDB();
+            }
+        } else {
+            console.error("❌ Server Error:", data.error);
         }
     } catch (error) {
-        console.error("Error saving result:", error);
+        console.error("❌ Network Error:", error);
     }
 }
 
-// यह फंक्शन डेटाबेस से हिस्ट्री लाने के लिए Backend (history.js) को कॉल करता है
-async function loadGameHistory(mode) {
+// 2. डेटाबेस से पुरानी हिस्ट्री खींचने के लिए
+async function loadGameHistoryFromDB(mode) {
     try {
         const response = await fetch(`/api/history?mode=${mode}`);
+        if (!response.ok) throw new Error('API Response Error');
+        
         const data = await response.json();
-        return data; // यह MongoDB से मिले 10 रिजल्ट्स का एरे है
+        return data; // यह MongoDB से मिली 10 रिजल्ट्स की लिस्ट है
     } catch (error) {
-        console.error("Error loading history:", error);
+        console.error("❌ History Load Error:", error);
         return [];
+    }
+}
+
+// 3. गेम के बैलेंस को अपडेट करने के लिए (अगर आपने API बनायी है)
+async function updateUIBalance() {
+    try {
+        const res = await fetch('/api/user-balance'); // आपकी बैलेंस वाली API
+        const data = await res.json();
+        const balElement = document.getElementById('balance-amount');
+        if(balElement && data.balance !== undefined) {
+            balElement.innerText = "₹" + data.balance.toFixed(2);
+        }
+    } catch (e) {
+        console.log("Balance display error");
     }
 }
