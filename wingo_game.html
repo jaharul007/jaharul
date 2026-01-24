@@ -5,66 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>JAHARUL GAME</title>
     <style>
+        /* Design bilkul wahi hai jo aapne diya tha */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 450px; background: #0f1217; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Navigation Header */
         .nav-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #22272d; color: #f3c34d; font-weight: bold; }
-
         .content { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
         .content::-webkit-scrollbar { display: none; }
-
-        /* Wallet Section */
         .wallet-card { background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); margin: 15px; border-radius: 20px; padding: 25px; text-align: center; }
         .bal-txt { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
         .w-btn-row { display: flex; gap: 15px; margin-top: 15px; }
         .w-btn { flex: 1; padding: 12px; border-radius: 25px; border: none; font-weight: bold; color: #fff; cursor: pointer; text-decoration: none; text-align: center; }
         .withdraw { background: #ff4d4d; } .deposit { background: #2ead6d; }
-
-        /* Mode Tabs */
         .game-tabs { display: flex; justify-content: space-between; padding: 10px 15px; gap: 8px; }
         .g-tab { flex: 1; background: #333; border-radius: 12px; padding: 10px 5px; text-align: center; cursor: pointer; color: #999; font-size: 11px; }
         .g-tab.active { background: #f3c34d; color: #5a3e00; font-weight: bold; box-shadow: 0 0 15px rgba(243, 195, 77, 0.3); }
         .tab-icon { display: block; font-size: 18px; margin-bottom: 4px; }
-
-        /* Timer Card */
         .timer-box { background: #f3c34d; margin: 15px; border-radius: 15px; display: flex; color: #5a3e00; min-height: 110px; cursor: pointer; }
         .t-left { flex: 1.2; padding: 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
         .t-right { flex: 1; padding: 15px; text-align: right; }
         .timer-display { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
         .t-digit { background: #333; color: #fff; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 22px; }
-
-        /* Betting Area */
         .btn-container { padding: 0 15px; }
         .color-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .c-btn { flex: 1; padding: 15px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
         .green { background: #2ead6d; } .violet { background: #9b51e0; } .red { background: #ff4d4d; }
-        
         .num-grid-box { background: #22272d; padding: 15px; border-radius: 15px; margin-bottom: 15px; }
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .n-btn { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff; cursor: pointer; text-decoration: none; }
-
         .bs-row { display: flex; gap: 10px; margin-top: 15px; }
         .bs-btn { flex: 1; padding: 15px; font-weight: bold; text-decoration: none; text-align: center; font-size: 18px; color: #fff; }
         .big { background: #e6a23c; border-radius: 30px 0 0 30px; } 
         .small { background: #409eff; border-radius: 0 30px 30px 0; }
-
-        /* History Table */
         .h-section { background: #22272d; margin: 15px; border-radius: 10px; overflow: hidden; padding-bottom: 10px; }
         .h-tabs { display: flex; padding: 10px; gap: 15px; border-bottom: 1px solid #1a1d22; }
         .h-tab-item { font-size: 13px; color: #999; padding: 5px 10px; cursor: pointer; }
         .h-tab-item.active { background: #f3c34d; color: #000; border-radius: 5px; font-weight: bold; }
-
         table { width: 100%; border-collapse: collapse; }
         th { color: #9aa0ac; font-size: 12px; padding: 12px 5px; text-align: center; background: #2b323d; font-weight: normal; }
         td { padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-size: 14px; }
-        
         .td-period { color: #999; font-size: 12px; }
         .td-number { font-size: 20px; font-weight: bold; }
         .td-bs { color: #fff; }
         .res-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin: 0 2px; }
-
         .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 15px; background: #22272d; }
         .pg-btn { background: #333; border: none; color: #fff; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 18px; }
         .pg-btn.active { background: #f3c34d; color: #000; }
@@ -82,8 +65,8 @@
             <div class="bal-txt">₹<span id="balDisplay">0.00</span></div>
             <span style="font-size:12px; color:#ccc;">💰 Wallet balance</span>
             <div class="w-btn-row">
-                <a href="#" class="w-btn withdraw">Withdraw</a>
-                <a href="#" class="w-btn deposit">Deposit</a>
+                <a href="withdraw.html" class="w-btn withdraw">Withdraw</a>
+                <a href="deposit.html" class="w-btn deposit">Deposit</a>
             </div>
         </div>
 
@@ -147,22 +130,27 @@
     let currentMode = 60;
     let clickCount = 0;
 
-    // --- DB INTEGRATION START ---
+    // --- ORIGINAL MONGODB INTEGRATION ---
     async function fetchFromDB() {
         try {
+            // Balance fetch logic
             const userRes = await fetch('/api/user'); 
             const userData = await userRes.json();
-            document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
+            if(userData.balance !== undefined) {
+                document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
+            }
 
+            // Original History fetch from MongoDB (API aapne pehle dikhayi thi)
             const histRes = await fetch(`/api/history?mode=${currentMode}`);
             const histData = await histRes.json();
-            renderHistory(histData);
+            
+            if(histData && Array.isArray(histData)) {
+                renderHistory(histData);
+            }
         } catch (error) {
-            console.log("Using Local Storage Fallback");
-            renderHistory(JSON.parse(localStorage.getItem('bdg_hist')) || []);
+            console.log("Database fetch error, retrying...");
         }
     }
-    // --- DB INTEGRATION END ---
 
     function init() {
         const grid = document.getElementById('mainGrid');
@@ -170,8 +158,6 @@
             let a = document.createElement('a');
             a.className = 'n-btn'; a.innerText = i;
             a.href = `betting_popup.html?type=${i}`;
-            
-            // Aapka original color logic
             let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
             a.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
             grid.appendChild(a);
@@ -210,9 +196,11 @@
                 <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
                 <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
 
-            let p = "20260123" + Math.floor(total/currentMode);
+            // Period Logic matching the photo year-month-day-count
+            let p = "20260124" + Math.floor(total/currentMode);
             document.getElementById('periodDisplay').innerText = p;
 
+            // Jab time khatam ho (0 par), tab DB se naya result uthao
             if(rem === 1) { 
                 setTimeout(fetchFromDB, 2000); 
             }
@@ -222,19 +210,29 @@
     function renderHistory(history) {
         if(!history || history.length === 0) return;
         
-        let html = history.map(i => `
-            <tr>
-                <td class="td-period">${i.p}</td>
-                <td class="td-number" style="color:${(i.n==0||i.n==5) ? '#9b51e0' : i.c}">${i.n}</td>
-                <td class="td-bs">${i.s || (i.n >= 5 ? 'Big' : 'Small')}</td>
-                <td>
-                    <span class="res-dot" style="background:${i.c}"></span>
-                    ${(i.n==0||i.n==5) ? `<span class="res-dot" style="background:#9b51e0"></span>` : ''}
-                </td>
-            </tr>
-        `).join('');
+        let html = history.map(i => {
+            // Photo wala Color Dot Logic (0/5 par 2 dots)
+            let dots = `<span class="res-dot" style="background:${i.c}"></span>`;
+            if(i.n == 0 || i.n == 5) {
+                dots += `<span class="res-dot" style="background:#9b51e0"></span>`;
+            }
+
+            // Big/Small logic based on Number
+            let bs = i.n >= 5 ? 'Big' : 'Small';
+            let numColor = (i.n == 0 || i.n == 5) ? '#9b51e0' : i.c;
+
+            return `
+                <tr>
+                    <td class="td-period">${i.p}</td>
+                    <td class="td-number" style="color:${numColor}">${i.n}</td>
+                    <td class="td-bs" style="color:#9aa0ac">${bs}</td>
+                    <td>${dots}</td>
+                </tr>
+            `;
+        }).join('');
         document.getElementById('historyBody').innerHTML = html;
 
+        // Top mini dots update
         document.getElementById('miniDots').innerHTML = history.slice(0,5).map(i => 
             `<span class="res-dot" style="background:${i.c}; width:15px; height:15px; border:1px solid #fff;"></span>`
         ).join('');
