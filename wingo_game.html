@@ -146,24 +146,23 @@
     let currentMode = 60;
     let clickCount = 0;
 
-    // --- सुधार: history.js और game-result.js का कनेक्शन ---
+    // --- 1. History aur Balance lane ka function ---
     async function fetchFromDB() {
         try {
-            // Balance fetch
+            // Balance Fetch
             const userRes = await fetch('/api/user'); 
             const userData = await userRes.json();
             if(userData && userData.balance !== undefined) {
                 document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
             }
 
-            // Game History fetch (यह अब API के माध्यम से डेटा लाएगा)
+            // History Fetch (MongoDB backend se)
             const histRes = await fetch(`/api/history?mode=${currentMode}`);
             const histData = await histRes.json();
             
             if(histData && Array.isArray(histData)) {
-                // Latest data hamesha upar rahe
-                const sorted = histData.sort((a, b) => b.p - a.p);
-                renderHistory(sorted.slice(0, 10)); 
+                // MongoDB se data hamesha sorted milta hai handler ki wajah se
+                renderHistory(histData); 
             } else {
                 document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No history available</td></tr>';
             }
@@ -172,6 +171,71 @@
         }
     }
 
+    // --- 2. Timer Setup (Results save karne ke liye) ---
+    function startTimer() {
+        setInterval(() => {
+            let now = new Date();
+            let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
+            let rem = currentMode - (total % currentMode);
+            
+            // Display Timer
+            let m = Math.floor(rem/60).toString().padStart(2,'0');
+            let s = (rem%60).toString().padStart(2,'0');
+            document.getElementById('timerDigits').innerHTML = `
+                <span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>
+                <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
+                <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
+
+            // Period ID Generation
+            let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
+            let p = dateStr + Math.floor(total/currentMode);
+            document.getElementById('periodDisplay').innerText = p;
+
+            // --- RESULT SAVING LOGIC ---
+            if(rem === 1) { 
+                // Jab timer khatam hone wala ho, save function call karo
+                if(typeof saveGameResult === "function"){
+                    saveGameResult(p, currentMode);
+                }
+                
+                // 3 second wait karke table refresh karo taaki DB update ho chuka ho
+                setTimeout(fetchFromDB, 3000); 
+            }
+        }, 1000);
+    }
+
+    // --- 3. UI rendering Logic ---
+    function renderHistory(history) {
+        let html = history.map(i => {
+            let nColor = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
+            let bigSmall = i.n >= 5 ? 'Big' : 'Small';
+            
+            let colorDots = `<span class="res-dot" style="background:${nColor}"></span>`;
+            if(i.n == 0) colorDots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
+            if(i.n == 5) colorDots += `<span class="res-dot" style="background:#2ead6d"></span>`;
+
+            return `
+                <tr>
+                    <td class="td-period">${i.p}</td>
+                    <td class="td-number" style="color:${nColor}">${i.n}</td>
+                    <td class="td-bs">${bigSmall}</td>
+                    <td style="display: flex; justify-content: center; align-items: center; padding-top: 15px;">
+                        ${colorDots}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        document.getElementById('historyBody').innerHTML = html;
+
+        // Top mini visual dots
+        document.getElementById('miniDots').innerHTML = history.slice(0,5).map(i => {
+            let dotCol = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
+            return `<span class="res-dot" style="background:${dotCol}; width:13px; height:13px; border:1px solid #fff;"></span>`
+        }).join('');
+    }
+
+    // --- 4. Initialization ---
     function init() {
         const grid = document.getElementById('mainGrid');
         grid.innerHTML = '';
@@ -203,64 +267,6 @@
         document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
         document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">Refreshing...</td></tr>';
         fetchFromDB();
-    }
-
-    function startTimer() {
-        setInterval(() => {
-            let now = new Date();
-            let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
-            let rem = currentMode - (total % currentMode);
-            
-            let m = Math.floor(rem/60).toString().padStart(2,'0');
-            let s = (rem%60).toString().padStart(2,'0');
-            document.getElementById('timerDigits').innerHTML = `
-                <span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>
-                <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
-                <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
-
-            let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
-            let p = dateStr + Math.floor(total/currentMode);
-            document.getElementById('periodDisplay').innerText = p;
-
-            // --- सुधार: यहाँ रिजल्ट सेव करने का काम होगा ---
-            if(rem === 1) { 
-                // गेम रिजल्ट बनाने और सेव करने के लिए (यह आपके game-result.js का फंक्शन है)
-                if(typeof saveGameResult === "function"){
-                    saveGameResult(p, currentMode);
-                }
-                
-                // 3 सेकंड बाद रिफ्रेश
-                setTimeout(fetchFromDB, 3000); 
-            }
-        }, 1000);
-    }
-
-    function renderHistory(history) {
-        let html = history.map(i => {
-            let nColor = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
-            let bigSmall = i.n >= 5 ? 'Big' : 'Small';
-            let colorDots = `<span class="res-dot" style="background:${nColor}"></span>`;
-            if(i.n == 0) colorDots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
-            if(i.n == 5) colorDots += `<span class="res-dot" style="background:#2ead6d"></span>`;
-
-            return `
-                <tr>
-                    <td class="td-period">${i.p}</td>
-                    <td class="td-number" style="color:${nColor}">${i.n}</td>
-                    <td class="td-bs">${bigSmall}</td>
-                    <td style="display: flex; justify-content: center; align-items: center; padding-top: 15px;">
-                        ${colorDots}
-                    </td>
-                </tr>
-            `;
-        }).join('');
-        
-        document.getElementById('historyBody').innerHTML = html;
-
-        document.getElementById('miniDots').innerHTML = history.slice(0,5).map(i => {
-            let dotCol = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
-            return `<span class="res-dot" style="background:${dotCol}; width:15px; height:15px; border:1px solid #fff;"></span>`
-        }).join('');
     }
 
     window.onload = init;
