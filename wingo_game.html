@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>JAHARUL GAME</title>
-    <script src="api/history.js"></script>
-    <script src="api/game-result.js"></script>
+    <script src="api/game-logic.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; }
@@ -150,10 +149,12 @@
     async function fetchFromDB() {
         try {
             // Balance Fetch
-            const userRes = await fetch('/api/user'); 
-            const userData = await userRes.json();
-            if(userData && userData.balance !== undefined) {
-                document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
+            const userRes = await fetch('/api/user').catch(() => null); 
+            if(userRes && userRes.ok) {
+                const userData = await userRes.json();
+                if(userData && userData.balance !== undefined) {
+                    document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
+                }
             }
 
             // History Fetch (MongoDB backend se)
@@ -161,7 +162,6 @@
             const histData = await histRes.json();
             
             if(histData && Array.isArray(histData)) {
-                // MongoDB se data hamesha sorted milta hai handler ki wajah se
                 renderHistory(histData); 
             } else {
                 document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No history available</td></tr>';
@@ -188,17 +188,17 @@
 
             // Period ID Generation
             let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
-            let p = dateStr + Math.floor(total/currentMode);
+            let p = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
             document.getElementById('periodDisplay').innerText = p;
 
             // --- RESULT SAVING LOGIC ---
             if(rem === 1) { 
-                // Jab timer khatam hone wala ho, save function call karo
+                // Jab timer khatam hone wala ho, save function call karo (Jo game-logic.js mein hai)
                 if(typeof saveGameResult === "function"){
                     saveGameResult(p, currentMode);
                 }
                 
-                // 3 second wait karke table refresh karo taaki DB update ho chuka ho
+                // Result save hone ke baad table refresh karo
                 setTimeout(fetchFromDB, 3000); 
             }
         }, 1000);
@@ -229,32 +229,40 @@
         document.getElementById('historyBody').innerHTML = html;
 
         // Top mini visual dots
-        document.getElementById('miniDots').innerHTML = history.slice(0,5).map(i => {
-            let dotCol = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
-            return `<span class="res-dot" style="background:${dotCol}; width:13px; height:13px; border:1px solid #fff;"></span>`
-        }).join('');
+        const miniDotsEl = document.getElementById('miniDots');
+        if(miniDotsEl) {
+            miniDotsEl.innerHTML = history.slice(0,5).map(i => {
+                let dotCol = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
+                return `<span class="res-dot" style="background:${dotCol}; width:13px; height:13px; border:1px solid #fff;"></span>`
+            }).join('');
+        }
     }
 
     // --- 4. Initialization ---
     function init() {
         const grid = document.getElementById('mainGrid');
-        grid.innerHTML = '';
-        for(let i=0; i<=9; i++) {
-            let a = document.createElement('a');
-            a.className = 'n-btn'; a.innerText = i;
-            a.href = `betting_popup.html?type=${i}`;
-            let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
-            a.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
-            grid.appendChild(a);
+        if(grid) {
+            grid.innerHTML = '';
+            for(let i=0; i<=9; i++) {
+                let a = document.createElement('a');
+                a.className = 'n-btn'; a.innerText = i;
+                a.href = `betting_popup.html?type=${i}`;
+                let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
+                a.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
+                grid.appendChild(a);
+            }
         }
 
-        document.getElementById('adminTrigger').addEventListener('click', () => {
-            clickCount++;
-            if(clickCount >= 5) {
-                window.location.href = 'admin_panel.html';
-                clickCount = 0;
-            }
-        });
+        const adminTrigger = document.getElementById('adminTrigger');
+        if(adminTrigger) {
+            adminTrigger.addEventListener('click', () => {
+                clickCount++;
+                if(clickCount >= 5) {
+                    window.location.href = 'admin_panel.html';
+                    clickCount = 0;
+                }
+            });
+        }
 
         fetchFromDB();
         startTimer();
@@ -263,7 +271,7 @@
     function switchM(s, el) {
         currentMode = s;
         document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
+        if(el) el.classList.add('active');
         document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
         document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">Refreshing...</td></tr>';
         fetchFromDB();
