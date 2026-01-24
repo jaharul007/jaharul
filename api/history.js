@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 
-// Connection caching taaki MongoDB crash na ho
+// Connection caching (ताकि बार-बार कनेक्शन न बनाना पड़े)
 let cachedClient = null;
 
 async function connectToDatabase() {
@@ -12,7 +12,7 @@ async function connectToDatabase() {
 }
 
 export default async function handler(req, res) {
-    // Mode query se lena (e.g., /api/history?mode=60)
+    // URL से मोड लेना (e.g., /api/history?mode=60)
     const { mode } = req.query;
 
     if (!mode) {
@@ -24,19 +24,18 @@ export default async function handler(req, res) {
         const db = client.db('wingo_game'); 
         const historyCollection = db.collection('game_history');
 
-        // Latest 10 results fetch karna (Period ID 'p' ke hisaab se descending)
+        // लेटेस्ट 10 रिजल्ट्स निकालना (Period 'p' के हिसाब से Descending)
         const history = await historyCollection
             .find({ mode: parseInt(mode) }) 
             .sort({ p: -1 }) 
             .limit(10)       
             .toArray();
 
-        // Browser cache rokne ke liye headers
+        // ब्राउज़र को पुराना डेटा दिखाने से रोकना (Fresh data always)
         res.setHeader('Cache-Control', 'no-store, max-age=0');
         res.status(200).json(history);
     } catch (error) {
-        console.error("DB Error:", error);
+        console.error("Database Error:", error);
         res.status(500).json({ error: 'Database connection failed' });
     }
-    // client.close() yahan nahi karna hai
 }
