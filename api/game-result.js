@@ -1,26 +1,44 @@
 const { MongoClient } = require('mongodb');
-const client = new MongoClient(process.env.MONGODB_URI);
+
+let cachedClient = null;
+
+async function connectToDB() {
+    if (cachedClient) return cachedClient;
+    const client = new MongoClient(process.env.MONGODB_URI);
+    await client.connect();
+    cachedClient = client;
+    return client;
+}
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
     
     const { period, mode } = req.body;
+
+    if (!period || !mode) {
+        return res.status(400).json({ error: 'Missing period or mode' });
+    }
+
     try {
-        await client.connect();
+        const client = await connectToDB();
         const db = client.db('wingo_game');
         
-        // Random number generate karna (0-9)
+        // Random number (0-9)
         const num = Math.floor(Math.random() * 10);
-        const color = (num === 0 || num === 5) ? (num === 0 ? '#ff4d4d' : '#2ead6d') : (num % 2 === 0 ? '#ff4d4d' : '#2ead6d');
-        const size = num >= 5 ? 'Big' : 'Small';
-
-        const result = { p: period, n: num, c: color, s: size, mode: parseInt(mode), v: (num === 0 || num === 5) };
+        
+        // Data structure jo aapke frontend (wingo_game.html) ke saath match kare
+        const result = { 
+            p: period,          // Period ID
+            n: num,             // Number
+            mode: parseInt(mode), 
+            createdAt: new Date() 
+        };
         
         await db.collection('game_history').insertOne(result);
-        res.status(200).json(result);
+        
+        res.status(200).json({ success: true, data: result });
     } catch (e) {
         res.status(500).json({ error: e.message });
-    } finally {
-        await client.close();
     }
+    // client.close() yahan bhi nahi karna hai
 }
