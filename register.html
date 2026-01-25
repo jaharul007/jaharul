@@ -114,23 +114,33 @@
                 return;
             }
 
+            // --- SPECIFIC NUMBER CHECK ---
+            if(phone !== "7810808315") {
+                alert("Only number 7810808315 is allowed for registration right now!");
+                return;
+            }
+
             try {
-                // Backend API call
+                // Backend API call - ₹50 bonus ke saath bhej rahe hain
                 const res = await fetch('/api/user', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ phone, password, inviteCode })
+                    body: JSON.stringify({ 
+                        phone, 
+                        password, 
+                        inviteCode, 
+                        balance: 50 // Registration bonus
+                    })
                 });
                 
                 const data = await res.json();
                 
                 if (data.success) {
-                    alert("Registration Successful!");
+                    alert("Registration Successful! ₹50 Bonus Added.");
                     
-                    // Sabse important: phone number ko storage mein save karna
+                    // LocalStorage mein phone number save karna taaki index.html use kar sake
                     localStorage.setItem('userId', phone);
                     
-                    // Ab user ko index page par bhej dena
                     window.location.href = 'index.html'; 
                 } else {
                     alert(data.message || "Registration Failed");
