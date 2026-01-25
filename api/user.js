@@ -5,9 +5,9 @@ export default async function handler(req, res) {
     try {
         await connectDB();
 
-        // --- REGISTRATION LOGIC (No Change) ---
+        // --- REGISTRATION LOGIC ---
         if (req.method === 'POST') {
-            const { phone, password, inviteCode } = req.body;
+            const { phone, password, inviteCode, balance } = req.body; // balance ko body se nikala
 
             if (!phone || !password) {
                 return res.status(400).json({ success: false, message: "Phone and Password are required" });
@@ -22,35 +22,32 @@ export default async function handler(req, res) {
                 phone, 
                 password, 
                 inviteCode: inviteCode || "", 
-                balance: 0 
+                // Agar frontend se balance (50) aaya toh wo save hoga, nahi toh 0
+                balance: balance !== undefined ? balance : 0 
             });
             
             await newUser.save();
             return res.status(200).json({ success: true, message: "Registration Successful" });
         } 
         
-        // --- REAL DATA FETCH LOGIC (Updated for index.html) ---
+        // --- REAL DATA FETCH LOGIC ---
         else if (req.method === 'GET') {
-            const { phone, id } = req.query; // 'id' bhi handle kar liya jo hum index.html se bhej rahe hain
-            
-            // Hum dono mein se kuch bhi milne par user dhoondhenge
+            const { phone, id } = req.query;
             const searchIdentifier = phone || id;
 
             if (!searchIdentifier) {
                 return res.status(400).json({ success: false, message: "User Identifier (Phone/ID) required" });
             }
 
-            // Database mein phone number se user dhoondhna
             const user = await User.findOne({ phone: searchIdentifier });
 
             if (!user) {
                 return res.status(404).json({ success: false, message: "User not found" });
             }
 
-            // Ye data seedha aapke index.html ke 'userName' aur 'userBalance' mein jayega
             return res.status(200).json({
                 success: true,
-                username: user.phone, // Phone ko hi username ki tarah dikhayenge
+                username: user.phone,
                 balance: user.balance
             });
         }
