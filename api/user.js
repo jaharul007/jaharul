@@ -2,14 +2,13 @@ import connectDB from '../lib/mongodb.js';
 import User from '../models/User.js';
 
 export default async function handler(req, res) {
-    // Vercel serverless environment mein connection ko await karna zaroori hai
     try {
         await connectDB();
 
+        // --- REGISTRATION LOGIC (No Change) ---
         if (req.method === 'POST') {
             const { phone, password, inviteCode } = req.body;
 
-            // Basic validation check
             if (!phone || !password) {
                 return res.status(400).json({ success: false, message: "Phone and Password are required" });
             }
@@ -30,16 +29,28 @@ export default async function handler(req, res) {
             return res.status(200).json({ success: true, message: "Registration Successful" });
         } 
         
+        // --- REAL DATA FETCH LOGIC (Updated for index.html) ---
         else if (req.method === 'GET') {
-            const { phone } = req.query;
-            if (!phone) return res.status(400).json({ success: false, message: "Phone required" });
+            const { phone, id } = req.query; // 'id' bhi handle kar liya jo hum index.html se bhej rahe hain
+            
+            // Hum dono mein se kuch bhi milne par user dhoondhenge
+            const searchIdentifier = phone || id;
 
-            const user = await User.findOne({ phone });
-            if (!user) return res.status(404).json({ success: false, message: "User not found" });
+            if (!searchIdentifier) {
+                return res.status(400).json({ success: false, message: "User Identifier (Phone/ID) required" });
+            }
 
+            // Database mein phone number se user dhoondhna
+            const user = await User.findOne({ phone: searchIdentifier });
+
+            if (!user) {
+                return res.status(404).json({ success: false, message: "User not found" });
+            }
+
+            // Ye data seedha aapke index.html ke 'userName' aur 'userBalance' mein jayega
             return res.status(200).json({
                 success: true,
-                phone: user.phone,
+                username: user.phone, // Phone ko hi username ki tarah dikhayenge
                 balance: user.balance
             });
         }
@@ -51,7 +62,6 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error("API Error:", error);
-        // Error message ko JSON mein bhejna zaroori hai taaki frontend use handle kar sake
         return res.status(500).json({ 
             success: false, 
             message: "Database Connection Failed", 
