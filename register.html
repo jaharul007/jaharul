@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>BDG GAME - Register</title>
     <style>
-        /* Wahi design jo aapne pehle bheja tha */
         body { margin: 0; padding: 0; background-color: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; height: 100vh; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 500px; background: #222222; display: flex; flex-direction: column; min-height: 100vh; overflow-y: auto; }
         
@@ -116,7 +115,7 @@
             }
 
             try {
-                // Database connection jodne wala part
+                // Backend API call
                 const res = await fetch('/api/user', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -124,15 +123,21 @@
                 });
                 
                 const data = await res.json();
-                if (res.ok) {
+                
+                if (data.success) {
                     alert("Registration Successful!");
-                    localStorage.setItem('phone', phone);
+                    
+                    // Sabse important: phone number ko storage mein save karna
+                    localStorage.setItem('userId', phone);
+                    
+                    // Ab user ko index page par bhej dena
                     window.location.href = 'index.html'; 
                 } else {
                     alert(data.message || "Registration Failed");
                 }
             } catch (error) {
-                alert("Connection Error. Please check MongoDB settings.");
+                console.error("Error:", error);
+                alert("Connection Error. Please check your setup.");
             }
         }
     </script>
