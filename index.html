@@ -22,10 +22,10 @@
       -webkit-user-drag: none;
     }
 
-    /* --- BRANDING FIXES (Text Overlays) --- */
+    /* --- BRANDING FIXES --- */
     .brand-overlay {
       position: absolute;
-      background: #1a1d22; /* Matching header color */
+      background: #1a1d22; 
       color: #f3c34d;
       font-weight: 900;
       z-index: 5;
@@ -34,14 +34,14 @@
     .main-logo { top: 2.2%; left: 4%; width: 45%; height: 3.5%; font-size: 5.5vw; }
     .welcome-text { top: 8.2%; left: 11%; width: 50%; height: 2%; font-size: 2.8vw; }
 
-    /* --- BALANCE & NAME FIX (Matching Photo) --- */
+    /* --- BALANCE & NAME DISPLAY --- */
     .user-info-patch {
       position: absolute;
       top: 13.4%;
       left: 17%;
       width: 65%;
       height: 3%;
-      background: #f1c75b; /* Original photo yellow match */
+      background: #f1c75b; 
       display: flex;
       align-items: center;
       color: #3d2b00;
@@ -51,12 +51,11 @@
       pointer-events: none;
     }
 
-    /* --- INVISIBLE CLICKABLE ZONES --- */
+    /* --- CLICKABLE ZONES --- */
     .click-zone {
       position: absolute;
       cursor: pointer;
       z-index: 10;
-      /* background: rgba(255,0,0,0.2); */ /* Check karne ke liye ise on karein */
     }
 
     .cs-btn { top: 1.5%; right: 4%; width: 35%; height: 5%; border-radius: 20px; }
@@ -64,12 +63,10 @@
     .original-card { top: 18.5%; left: 34.5%; width: 31%; height: 16%; }
     .slots-card { top: 18.5%; right: 3%; width: 31%; height: 16%; }
     
-    /* Mid Panels */
     .sports-btn { top: 35.5%; left: 3%; width: 31%; height: 13%; }
     .popular-btn { top: 35.5%; left: 34.5%; width: 31%; height: 13%; }
     .casino-btn { top: 35.5%; right: 3%; width: 31%; height: 13%; }
 
-    /* Bottom Nav */
     .nav-home { bottom: 0; left: 0; width: 25%; height: 8%; }
     .nav-account { bottom: 0; right: 0; width: 25%; height: 8%; }
 
@@ -89,12 +86,13 @@
     <div class="brand-overlay welcome-text">Welcome to Jaharul Game</div>
 
     <div class="user-info-patch">
-      Member <span id="userName" style="margin-left:5px;">GUEST</span> 
+      Member <span id="userName" style="margin-left:5px;">Loading...</span> 
       <span style="margin: 0 5px;">-</span> 
       ₹<span id="userBalance">0.00</span>
     </div>
 
-    <div class="click-zone cs-btn" onclick="window.location.href='https://t.me/your_handle'"></div> <div class="click-zone lottery-card" onclick="location.href='wingo_game.html'"></div>
+    <div class="click-zone cs-btn" onclick="window.location.href='https://t.me/your_handle'"></div> 
+    <div class="click-zone lottery-card" onclick="location.href='wingo_game.html'"></div>
     <div class="click-zone original-card" onclick="location.href='original.html'"></div>
     <div class="click-zone slots-card" onclick="location.href='slots.html'"></div>
     
@@ -107,31 +105,35 @@
   </div>
 
   <script>
-    // SERVER CONNECTION SCRIPT
+    // --- DATABASE FETCH SCRIPT ---
     async function fetchDatabaseData() {
-      // localStorage se logged-in user ki ID uthayenge
+      // LocalStorage se user ki pehchan (phone number) lena
       const userId = localStorage.getItem('userId'); 
       
       if (!userId) {
-        console.log("No user logged in, showing default.");
+        console.log("No user logged in.");
+        document.getElementById('userName').innerText = "GUEST";
         return;
       }
 
       try {
-        // Yeh line aapke MongoDB server se data layegi
+        // Aapke Vercel backend (api/user.js) se data mangna
         const response = await fetch(`/api/user/profile?id=${userId}`);
         const data = await response.json();
 
         if (data.success) {
+          // Screen par balance aur phone number update karna
           document.getElementById('userName').innerText = data.username;
           document.getElementById('userBalance').innerText = parseFloat(data.balance).toFixed(2);
+        } else {
+          document.getElementById('userName').innerText = "NOT FOUND";
         }
       } catch (err) {
         console.error("Database connection error:", err);
       }
     }
 
-    // Page load hote hi data refresh karein
+    // Page khulte hi function run karega
     window.onload = fetchDatabaseData;
   </script>
 
