@@ -3,6 +3,10 @@
     {
       "source": "/",
       "destination": "/register.html"
+    },
+    {
+      "source": "/api/user/profile",
+      "destination": "/api/user.js"
     }
   ]
 }
