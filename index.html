@@ -1,143 +1,139 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>BDG GAME</title>
-    <style>
-        /* Styles remain the same as your original design */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #1a1d22; color: #fff; display: flex; justify-content: center; }
-        .app { width: 100%; max-width: 500px; background: #1a1a1a; min-height: 100vh; padding-bottom: 80px; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #222; }
-        .logo { color: #f3c34d; font-weight: 900; font-size: 20px; border-bottom: 2px solid #f3c34d; }
-        .cs-btn { background: linear-gradient(180deg, #f3d078, #b8860b); color: #3d2b00; padding: 7px 15px; border-radius: 20px; font-size: 11px; font-weight: 800; border: none; }
-        .welcome { padding: 10px 15px; color: #f3c34d; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .flag { width: 22px; height: 14px; background: linear-gradient(to bottom, #002664 50%, #B22234 50%); border-radius: 2px; }
-        .member-bar { 
-            background: linear-gradient(180deg, #f3d078, #b8860b); 
-            margin: 5px 12px 15px; padding: 12px; border-radius: 10px; 
-            display: flex; justify-content: space-between; align-items: center;
-            color: #3d2b00; font-weight: 900; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-        }
-        .user-icon { background: #3186ff; border-radius: 50%; padding: 4px; color: white; margin-right: 5px; }
-        .top-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 12px 20px; }
-        .gold-card { background: #f7e1a0; border-radius: 15px; padding: 15px 5px; text-align: center; box-shadow: 0 5px 10px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); text-decoration: none; display: block; }
-        .gold-card .icon { font-size: 45px; display: block; margin-bottom: 8px; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.2)); }
-        .gold-card b { color: #3d2b00; font-size: 15px; font-weight: 900; }
-        .mid-panel { background: linear-gradient(180deg, #f3d078, #d4af37); margin: 0 12px 20px; border-radius: 15px; display: grid; grid-template-columns: repeat(3, 1fr); padding: 12px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
-        .mid-item { text-align: center; border-right: 1px solid rgba(0,0,0,0.1); }
-        .mid-item:last-child { border-right: none; }
-        .mid-item span { font-size: 35px; display: block; }
-        .mid-item p { color: #3d2b00; font-size: 13px; font-weight: 900; margin-top: 5px; }
-        .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 12px 20px; }
-        .game-box { border-radius: 15px; height: 160px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid #333; }
-        .bg-chicken { background: linear-gradient(180deg, #ff416c, #ff4b2b); }
-        .bg-dragon { background: linear-gradient(180deg, #4facfe, #00f2fe); }
-        .bg-vortex { background: linear-gradient(180deg, #667eea, #764ba2); }
-        .bg-mines { background: linear-gradient(180deg, #1e3c72, #2a5298); }
-        .bg-gems { background: linear-gradient(180deg, #f093fb, #f5576c); }
-        .bg-money { background: linear-gradient(180deg, #5ee7df, #b490ca); }
-        .game-box .emoji { font-size: 60px; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3)); }
-        .name-tag { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; font-weight: 900; text-align: center; padding: 10px 2px; text-transform: uppercase; }
-        .nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; background: #222; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #333; }
-        .nav-item { text-align: center; text-decoration: none; color: #8a8d91; font-size: 11px; font-weight: 800; flex: 1; }
-        .nav-item.active { color: #f3c34d; }
-        .nav-item span { font-size: 24px; display: block; margin-bottom: 3px; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" />
+  <title>JAHARUL GAME</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #1a1d22; overflow-x: hidden; font-family: sans-serif; }
+
+    .container {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .bg-img {
+      width: 100%;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* --- BRANDING FIXES (Text Overlays) --- */
+    .brand-overlay {
+      position: absolute;
+      background: #1a1d22; /* Matching header color */
+      color: #f3c34d;
+      font-weight: 900;
+      z-index: 5;
+    }
+
+    .main-logo { top: 2.2%; left: 4%; width: 45%; height: 3.5%; font-size: 5.5vw; }
+    .welcome-text { top: 8.2%; left: 11%; width: 50%; height: 2%; font-size: 2.8vw; }
+
+    /* --- BALANCE & NAME FIX (Matching Photo) --- */
+    .user-info-patch {
+      position: absolute;
+      top: 13.4%;
+      left: 17%;
+      width: 65%;
+      height: 3%;
+      background: #f1c75b; /* Original photo yellow match */
+      display: flex;
+      align-items: center;
+      color: #3d2b00;
+      font-weight: 800;
+      font-size: 3.2vw;
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    /* --- INVISIBLE CLICKABLE ZONES --- */
+    .click-zone {
+      position: absolute;
+      cursor: pointer;
+      z-index: 10;
+      /* background: rgba(255,0,0,0.2); */ /* Check karne ke liye ise on karein */
+    }
+
+    .cs-btn { top: 1.5%; right: 4%; width: 35%; height: 5%; border-radius: 20px; }
+    .lottery-card { top: 18.5%; left: 3%; width: 31%; height: 16%; }
+    .original-card { top: 18.5%; left: 34.5%; width: 31%; height: 16%; }
+    .slots-card { top: 18.5%; right: 3%; width: 31%; height: 16%; }
+    
+    /* Mid Panels */
+    .sports-btn { top: 35.5%; left: 3%; width: 31%; height: 13%; }
+    .popular-btn { top: 35.5%; left: 34.5%; width: 31%; height: 13%; }
+    .casino-btn { top: 35.5%; right: 3%; width: 31%; height: 13%; }
+
+    /* Bottom Nav */
+    .nav-home { bottom: 0; left: 0; width: 25%; height: 8%; }
+    .nav-account { bottom: 0; right: 0; width: 25%; height: 8%; }
+
+    @media (min-width: 500px) {
+      .main-logo { font-size: 24px; }
+      .welcome-text { font-size: 14px; }
+      .user-info-patch { font-size: 16px; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="app">
-    <div class="header">
-        <div class="logo">BDG GAME</div>
-        <button class="cs-btn">🎧 Customer Service</button>
+  <div class="container">
+    <img src="https://i.ibb.co/XZ5CDrdM/Picsart-26-01-25-12-57-30-867.jpg" class="bg-img">
+
+    <div class="brand-overlay main-logo">JAHARUL GAME</div>
+    <div class="brand-overlay welcome-text">Welcome to Jaharul Game</div>
+
+    <div class="user-info-patch">
+      Member <span id="userName" style="margin-left:5px;">GUEST</span> 
+      <span style="margin: 0 5px;">-</span> 
+      ₹<span id="userBalance">0.00</span>
     </div>
 
-    <div class="welcome"><div class="flag"></div> Welcome to BDG Game</div>
+    <div class="click-zone cs-btn" onclick="window.location.href='https://t.me/your_handle'"></div> <div class="click-zone lottery-card" onclick="location.href='wingo_game.html'"></div>
+    <div class="click-zone original-card" onclick="location.href='original.html'"></div>
+    <div class="click-zone slots-card" onclick="location.href='slots.html'"></div>
+    
+    <div class="click-zone sports-btn" onclick="location.href='sports.html'"></div>
+    <div class="click-zone popular-btn" onclick="location.href='popular.html'"></div>
+    <div class="click-zone casino-btn" onclick="location.href='casino.html'"></div>
 
-    <div class="member-bar">
-        <div>
-            <span class="user-icon">👤</span> 
-            Member <span id="userName">Loading...</span> - ₹<span id="userBalance">0.00</span> 
-            <span style="cursor:pointer; margin-left: 10px;" onclick="loadUserData()">🔄</span>
-        </div>
-        <div>▼</div>
-    </div>
+    <div class="click-zone nav-home" onclick="location.href='index.html'"></div>
+    <div class="click-zone nav-account" onclick="location.href='account.html'"></div>
+  </div>
 
-    <div class="top-grid">
-        <a href="wingo_game.html" class="gold-card">
-            <span class="icon">🏎️</span>
-            <b>Win Go</b>
-        </a>
-        <div class="gold-card">
-            <span class="icon">✈️</span>
-            <b>Original</b>
-        </div>
-        <div class="gold-card">
-            <span class="icon">🎰</span>
-            <b>Slots</b>
-        </div>
-    </div>
+  <script>
+    // SERVER CONNECTION SCRIPT
+    async function fetchDatabaseData() {
+      // localStorage se logged-in user ki ID uthayenge
+      const userId = localStorage.getItem('userId'); 
+      
+      if (!userId) {
+        console.log("No user logged in, showing default.");
+        return;
+      }
 
-    <div class="mid-panel">
-        <div class="mid-item"><span>⚽</span><p>Sports</p></div>
-        <div class="mid-item"><span>🔥</span><p>Popular</p></div>
-        <div class="mid-item"><span>🎰</span><p>Casino</p></div>
-    </div>
+      try {
+        // Yeh line aapke MongoDB server se data layegi
+        const response = await fetch(`/api/user/profile?id=${userId}`);
+        const data = await response.json();
 
-    <div class="game-grid">
-        <div class="game-box bg-chicken"><span class="emoji">🐔</span><div class="name-tag">CHICKEN ROAD</div></div>
-        <div class="game-box bg-dragon"><span class="emoji">🐉</span><div class="name-tag">DRAGON TIGER</div></div>
-        <div class="game-box bg-vortex"><span class="emoji">🌀</span><div class="name-tag">VORTEX</div></div>
-        <div class="game-box bg-mines"><span class="emoji">💣</span><div class="name-tag">MINES</div></div>
-        <div class="game-box bg-gems"><span class="emoji">💎</span><div class="name-tag">FORTUNE GEMS 2</div></div>
-        <div class="game-box bg-money"><span class="emoji">💵</span><div class="name-tag">MONEY COMING</div></div>
-    </div>
-</div>
-
-<div class="nav">
-    <a href="index.html" class="nav-item active"><span>🏠</span>Home</a>
-    <a href="#" class="nav-item"><span>👜</span>Activity</a>
-    <a href="#" class="nav-item"><span>💰</span>Promotion</a>
-    <a href="account.html" class="nav-item"><span>👤</span>Account</a>
-</div>
-
-<script>
-    // Server se User Data (Name and Balance) fetch karne ka function
-    async function loadUserData() {
-        // Maan lete hain login ke baad aapne 'userId' local storage me save ki hai
-        const userId = localStorage.getItem('userId'); 
-
-        if (!userId) {
-            // Agar userId nahi hai to login page par bheje
-            console.log("User not logged in");
-            document.getElementById('userName').innerText = "GUEST";
-            return;
+        if (data.success) {
+          document.getElementById('userName').innerText = data.username;
+          document.getElementById('userBalance').innerText = parseFloat(data.balance).toFixed(2);
         }
-
-        try {
-            // API call to fetch user data from MongoDB via your backend
-            const response = await fetch(`/api/user?userId=${userId}`);
-            const data = await response.json();
-
-            if (data.success) {
-                // UI update karna
-                document.getElementById('userName').innerText = data.username;
-                document.getElementById('userBalance').innerText = parseFloat(data.balance).toFixed(2);
-            } else {
-                console.error("Failed to load user data:", data.message);
-                document.getElementById('userName').innerText = "ERROR";
-            }
-        } catch (err) {
-            console.error("Network Error:", err);
-            document.getElementById('userName').innerText = "OFFLINE";
-        }
+      } catch (err) {
+        console.error("Database connection error:", err);
+      }
     }
 
-    // Page load hote hi data load karein
-    window.onload = loadUserData;
-</script>
+    // Page load hote hi data refresh karein
+    window.onload = fetchDatabaseData;
+  </script>
 
 </body>
 </html>
