@@ -105,6 +105,7 @@
             const confirm = document.getElementById('regConfirm').value.trim();
             const inviteCode = document.getElementById('regInvite').value.trim();
 
+            // validation logic
             if(!phone || !password || !confirm) {
                 alert("Please fill all fields!");
                 return;
@@ -114,40 +115,37 @@
                 return;
             }
 
-            // --- SPECIFIC NUMBER CHECK ---
-            if(phone !== "7810808315") {
-                alert("Only number 7810808315 is allowed for registration right now!");
-                return;
-            }
+            // Bonus logic: Agar invite code 1234 hai toh 50 balance, varna 0
+            let initialBalance = (inviteCode === "1234") ? 50 : 0;
 
             try {
-                // Backend API call - ₹50 bonus ke saath bhej rahe hain
-                const res = await fetch('/api/user', {
+                // Seedha Database API par request bhej rahe hain
+                const response = await fetch('/api/user', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        phone, 
-                        password, 
-                        inviteCode, 
-                        balance: 50 // Registration bonus
+                        phone: phone, 
+                        password: password, 
+                        inviteCode: inviteCode, 
+                        balance: initialBalance 
                     })
                 });
-                
-                const data = await res.json();
-                
+
+                const data = await response.json();
+
                 if (data.success) {
-                    alert("Registration Successful! ₹50 Bonus Added.");
+                    const msg = initialBalance > 0 ? "Registration Successful! ₹50 Bonus Added." : "Registration Successful!";
+                    alert(msg);
                     
-                    // LocalStorage mein phone number save karna taaki index.html use kar sake
-                    localStorage.setItem('userId', phone);
-                    
+                    // User ko session mein rakhne ke liye phone number pass kar rahe hain (par balance database se hi aayega)
+                    localStorage.setItem('userPhone', phone); 
                     window.location.href = 'index.html'; 
                 } else {
-                    alert(data.message || "Registration Failed");
+                    alert(data.message || "Registration Failed. Check if number already exists.");
                 }
             } catch (error) {
-                console.error("Error:", error);
-                alert("Connection Error. Please check your setup.");
+                console.error("Database Connection Error:", error);
+                alert("Could not connect to the database server.");
             }
         }
     </script>
