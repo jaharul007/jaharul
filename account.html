@@ -150,21 +150,47 @@
     </div>
 
     <script>
+        // --- REAL-TIME DATABASE SYNC ---
+        async function syncOriginalBalance() {
+            const userPhone = localStorage.getItem('userPhone');
+            if (!userPhone) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                // Update UID visually
+                document.getElementById('acc_uid').innerText = userPhone;
+
+                // Fetch fresh balance from api/user.js
+                const response = await fetch(`/api/user?phone=${userPhone}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('acc_bal').innerText = data.balance.toFixed(2);
+                }
+            } catch (err) {
+                console.error("Database sync error:", err);
+            }
+        }
+
+        // Manual refresh icon click
         function syncBalance() {
-            const bal = localStorage.getItem('user_balance') || "0.00";
-            document.getElementById('acc_bal').innerText = parseFloat(bal).toFixed(2);
+            syncOriginalBalance();
+        }
+
+        function logoutUser() {
+            if(confirm("Do you want to logout?")) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
         }
 
         window.onload = () => {
-            const uid = localStorage.getItem('user_id') || "18594327";
-            document.getElementById('acc_uid').innerText = uid;
-            syncBalance();
+            syncOriginalBalance();
+            // Auto-refresh balance every 10 seconds
+            setInterval(syncOriginalBalance, 10000);
         };
-
-        function logoutUser() {
-            localStorage.clear();
-            window.location.href = 'login.html';
-        }
     </script>
 </body>
 </html>
