@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       const history = await collection
         .find({ mode: parseInt(mode) || 60 })
         .sort({ p: -1 }) // Period ID ke hisaab se sort karo
-        .limit(20)
+        .limit(10)
         .toArray();
       return res.status(200).json(history);
     }
