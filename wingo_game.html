@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>JAHARUL GAME</title>
     <style>
-        /* --- TERA ORIGINAL CSS --- */
+        /* --- TERA ORIGINAL CSS (No changes) --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 450px; background: #0f1217; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -123,9 +123,9 @@
 </div>
 
 <script>
-    // --- SERVER LOGIC (PEHLE game-logic.js MEIN THA) ---
+    // --- SERVER LOGIC ---
     let currentMode = 60;
-    let lastSavedPeriod = "";
+    let lastSavedPeriods = {30: "", 60: "", 180: "", 300: ""}; // Har mode ka track rakhne ke liye
 
     async function saveGameResult(period, mode) {
         try {
@@ -133,9 +133,9 @@
             await fetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ p: period, n: randomNum, mode: mode })
+                body: JSON.stringify({ p: period, n: randomNum, mode: mode }) // Mode bhej rahe hain
             });
-            console.log("Result Saved:", period, randomNum);
+            console.log(`Result Saved for ${mode}s:`, period, randomNum);
         } catch (e) { console.error("Save Error:", e); }
     }
 
@@ -146,6 +146,7 @@
                 const userData = await userRes.json();
                 document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
             }
+            // Sirf current mode ki history mangwa rahe hain
             const histRes = await fetch(`/api/history?mode=${currentMode}`);
             if(histRes.ok) {
                 const histData = await histRes.json();
@@ -155,7 +156,10 @@
     }
 
     function renderHistory(history) {
-        if(!history || history.length === 0) return;
+        if(!history || history.length === 0) {
+            document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No history for this mode</td></tr>';
+            return;
+        }
         const html = history.map(i => {
             const n = parseInt(i.n);
             const nColor = (n === 0 || n === 5) ? '#9b51e0' : (n % 2 === 0 ? '#ff4d4d' : '#2ead6d');
@@ -173,12 +177,14 @@
         document.getElementById('historyBody').innerHTML = html;
     }
 
+    // Is timer function mein background mein sabhi modes ke result save honge
     function startTimer() {
         setInterval(async () => {
             let now = new Date();
             let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
-            let rem = currentMode - (total % currentMode);
             
+            // UI Timer (Current Display Mode ke liye)
+            let rem = currentMode - (total % currentMode);
             let m = Math.floor(rem/60).toString().padStart(2,'0');
             let s = (rem%60).toString().padStart(2,'0');
             document.getElementById('timerDigits').innerHTML = `
@@ -190,11 +196,18 @@
             let p = dateStr + "1000" + Math.floor(total/currentMode).toString().padStart(4, '0');
             document.getElementById('periodDisplay').innerText = p;
 
-            if(rem === 1 && lastSavedPeriod !== p) { 
-                lastSavedPeriod = p;
-                await saveGameResult(p, currentMode);
-                setTimeout(fetchFromDB, 2000); 
-            }
+            // Background Saving Logic (Check all modes)
+            [30, 60, 180, 300].forEach(async (mVal) => {
+                let mRem = mVal - (total % mVal);
+                let mP = dateStr + "1000" + Math.floor(total/mVal).toString().padStart(4, '0');
+                
+                if(mRem === 1 && lastSavedPeriods[mVal] !== mP) {
+                    lastSavedPeriods[mVal] = mP;
+                    await saveGameResult(mP, mVal);
+                    if(mVal === currentMode) setTimeout(fetchFromDB, 2000); // Agar wahi mode open hai to refresh karo
+                }
+            });
+
         }, 1000);
     }
 
@@ -203,6 +216,7 @@
         document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
         if(el) el.classList.add('active');
         document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
+        document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Loading...</td></tr>';
         fetchFromDB();
     }
 
