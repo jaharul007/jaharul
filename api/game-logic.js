@@ -1,95 +1,79 @@
-// api/game-logic.js
+// api/game-logic.js - Frontend Logic for Vercel + MongoDB
+
+let currentMode = 60; // Default 1 min
 
 /**
- * 1. Random Result Generator 
- * (Ye admin panel se bhi control ho sakta hai future mein)
+ * 1. Database se History Fetch karna (GET Request)
  */
-function generateResult() {
-    return Math.floor(Math.random() * 10);
+async function fetchFromDB() {
+    try {
+        // 1. Balance Fetch (MongoDB se)
+        const userRes = await fetch('/api/user').catch(() => null); 
+        if(userRes && userRes.ok) {
+            const userData = await userRes.json();
+            if(userData && userData.balance !== undefined) {
+                document.getElementById('balDisplay').innerText = Number(userData.balance).toFixed(2);
+            }
+        }
+
+        // 2. Game History Fetch (Teri api/history.js se)
+        const histRes = await fetch(`/api/history?mode=${currentMode}`);
+        if (!histRes.ok) throw new Error("History fetch failed");
+        
+        const histData = await histRes.json();
+        
+        if(histData && Array.isArray(histData)) {
+            // Table update karein (Main HTML ke renderHistory function ko call karega)
+            if (typeof renderHistory === "function") {
+                renderHistory(histData);
+            }
+        }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+    }
 }
 
 /**
- * 2. Result Save Function
- * Timer khatam hone par ye naya result banata hai
+ * 2. Naya Result MongoDB mein Save karna (POST Request)
+ * Ye function timer ke 1 second bachte hi trigger hota hai
  */
 async function saveGameResult(periodId, mode) {
-    const winningNumber = generateResult();
+    // 0-9 ke beech random winning number
+    const winningNumber = Math.floor(Math.random() * 10);
     
-    const newResult = {
+    const payload = {
         p: periodId,
         n: winningNumber,
-        mode: mode,
-        timestamp: new Date().getTime()
+        mode: mode
     };
 
     try {
-        // LocalStorage mein save kar rahe hain taaki bina server ke bhi kaam kare
-        let history = JSON.parse(localStorage.getItem(`history_${mode}`)) || [];
-        
-        // Naya result hamesha upar (Top) aayega
-        history.unshift(newResult);
-        
-        // Max 50 results hi rakhenge
-        if (history.length > 50) history.pop();
-        
-        localStorage.setItem(`history_${mode}`, JSON.stringify(history));
-        return newResult;
-    } catch (e) {
-        console.error("Save Error:", e);
-    }
-}
+        const response = await fetch('/api/history', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
 
-/**
- * 3. Initial Dummy Data
- * Agar database khali hai, toh ye screenshot jaisa data generate karega
- */
-function getInitialHistory(mode) {
-    let history = JSON.parse(localStorage.getItem(`history_${mode}`)) || [];
-    
-    if (history.length === 0) {
-        let now = new Date();
-        let dateStr = now.getFullYear().toString() + 
-                      (now.getMonth()+1).toString().padStart(2,'0') + 
-                      now.getDate().toString().padStart(2,'0');
-        
-        // Screenshot jaisa fake data bhar rahe hain pehli baar ke liye
-        for (let i = 0; i < 15; i++) {
-            history.push({
-                p: dateStr + "1000" + (10600 - i),
-                n: [1, 5, 2, 8, 2, 7, 3, 9, 1, 1, 0, 4, 6][i % 13], // Screenshot pattern
-                mode: mode
-            });
+        if (response.ok) {
+            const savedData = await response.json();
+            console.log("Result Saved to MongoDB:", savedData);
+            return savedData;
         }
-        localStorage.setItem(`history_${mode}`, JSON.stringify(history));
+    } catch (error) {
+        console.error("Save to MongoDB Failed:", error);
     }
-    return history;
 }
 
 /**
- * 4. Fetch Interceptor
- * HTML jab bhi fetch() karega, ye use data pakda dega
+ * 3. Betting logic (Optional - Popup ke liye)
  */
-const originalFetch = window.fetch;
-window.fetch = async function(url, options) {
-    // History mangne par ye chalta hai
-    if (url.includes('/api/history')) {
-        const urlParams = new URLSearchParams(url.split('?')[1]);
-        const mode = urlParams.get('mode') || 60;
-        const data = getInitialHistory(mode);
-        
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
-    
-    // User balance mangne par
-    if (url.includes('/api/user')) {
-        return new Response(JSON.stringify({ balance: 2580.45 }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
+function placeBet(type, amount) {
+    // Yahan bet save karne ka logic aayega (api/bet.js banani padegi)
+    console.log(`Bet placed on ${type} with amount ₹${amount}`);
+}
 
-    return originalFetch(url, options);
-};
+// Global initialization ki tayyari
+window.saveGameResult = saveGameResult;
+window.fetchFromDB = fetchFromDB;
