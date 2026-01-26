@@ -33,7 +33,7 @@ app.post('/api/user', async (req, res) => {
     try {
         const newUser = new User({
             phone: phone,
-                      userId: phone, // UID ke liye phone hi use kar rahe hain
+            userId: phone, // UID ke liye phone hi use kar rahe hain
             username: "Member_" + phone.substring(6),
             password: password,
             inviteCode: inviteCode,
@@ -65,15 +65,6 @@ app.get('/api/user/profile', async (req, res) => {
             res.status(404).json({ success: false, message: "User not found" });
         }
     } catch (err) {
-                  res.json({
-                success: true,
-                username: user.username,
-                balance: user.balance
-            });
-        } else {
-            res.status(404).json({ success: false, message: "User not found" });
-        }
-    } catch (err) {
         res.status(500).json({ success: false, message: "Server Error" });
     }
 });
@@ -93,4 +84,30 @@ app.get('/api/admin/users', async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, message: "Admin Fetch Error" });
     }
+});
+
+// B. Balance badhane/kam karne ke liye
+app.post('/api/admin/update-balance', async (req, res) => {
+    const { phone, balance } = req.body;
+    try {
+        const updatedUser = await User.findOneAndUpdate(
+            { phone: phone }, 
+            { balance: balance }, 
+            { new: true }
+        );
+        if (updatedUser) {
+            res.json({ success: true, message: "Balance Updated!" });
+        } else {
+            res.status(404).json({ success: false, message: "User not found" });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Update Error" });
+    }
+});
+
+// ==========================================
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
