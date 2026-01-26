@@ -4,56 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>JAHARUL GAME</title>
-    <script src="api/game-logic.js"></script>
     <style>
-        /* --- CSS (Original + Photo Look) --- */
+        /* --- TERA ORIGINAL CSS --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 450px; background: #0f1217; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .nav-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #22272d; color: #f3c34d; font-weight: bold; }
         .content { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
         .content::-webkit-scrollbar { display: none; }
-
         .wallet-card { background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); margin: 15px; border-radius: 20px; padding: 25px; text-align: center; }
         .bal-txt { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
         .w-btn-row { display: flex; gap: 15px; margin-top: 15px; }
         .w-btn { flex: 1; padding: 12px; border-radius: 25px; border: none; font-weight: bold; color: #fff; cursor: pointer; text-decoration: none; text-align: center; }
         .withdraw { background: #ff4d4d; } .deposit { background: #2ead6d; }
-
         .game-tabs { display: flex; justify-content: space-between; padding: 10px 15px; gap: 8px; }
         .g-tab { flex: 1; background: #333; border-radius: 12px; padding: 10px 5px; text-align: center; cursor: pointer; color: #999; font-size: 11px; }
         .g-tab.active { background: #f3c34d; color: #5a3e00; font-weight: bold; box-shadow: 0 0 15px rgba(243, 195, 77, 0.3); }
         .tab-icon { display: block; font-size: 18px; margin-bottom: 4px; }
-
-        .timer-box { background: #f3c34d; margin: 15px; border-radius: 15px; display: flex; color: #5a3e00; min-height: 110px; cursor: pointer; }
+        .timer-box { background: #f3c34d; margin: 15px; border-radius: 15px; display: flex; color: #5a3e00; min-height: 110px; }
         .t-left { flex: 1.2; padding: 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
         .t-right { flex: 1; padding: 15px; text-align: right; }
         .timer-display { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
         .t-digit { background: #333; color: #fff; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 22px; }
-
         .btn-container { padding: 0 15px; }
         .color-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .c-btn { flex: 1; padding: 15px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
         .green { background: #2ead6d; } .violet { background: #9b51e0; } .red { background: #ff4d4d; }
-        
         .num-grid-box { background: #22272d; padding: 15px; border-radius: 15px; margin-bottom: 15px; }
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .n-btn { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff; cursor: pointer; text-decoration: none; }
-
         .bs-row { display: flex; gap: 10px; margin-top: 15px; }
         .bs-btn { flex: 1; padding: 15px; font-weight: bold; text-decoration: none; text-align: center; font-size: 18px; color: #fff; }
         .big { background: #e6a23c; border-radius: 30px 0 0 30px; } 
         .small { background: #409eff; border-radius: 0 30px 30px 0; }
-
-        /* Photo Look CSS */
         .photo-history-card { background: #22272d; margin: 15px; border-radius: 10px; overflow: hidden; }
         .p-tabs { display: flex; background: #333; }
-        .p-tab-item { flex: 1; padding: 12px; text-align: center; font-size: 14px; color: #999; cursor: pointer; }
+        .p-tab-item { flex: 1; padding: 12px; text-align: center; font-size: 14px; color: #999; }
         .p-tab-item.active { background: #f3c34d; color: #000; font-weight: bold; }
         .p-table { width: 100%; border-collapse: collapse; }
         .p-table th { color: #9aa0ac; font-size: 13px; padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-weight: normal; }
         .p-table td { padding: 12px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-size: 15px; }
-        .p-period { color: #fff; font-size: 13px; text-align: left !important; padding-left: 15px !important; font-family: monospace; }
+        .p-period { color: #fff; font-size: 13px; text-align: left !important; padding-left: 15px !important; }
         .p-num { font-size: 24px; font-weight: bold; }
         .res-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin: 0 2px; }
         .dot-box { display: flex; justify-content: center; align-items: center; gap: 4px; }
@@ -65,7 +56,7 @@
 
 <div class="container">
     <div class="nav-header">
-        <span onclick="history.back()" style="cursor:pointer;"><</span> <span>JAHARUL GAME</span> <span>🎧 🕒</span>
+        <span onclick="history.back()" style="cursor:pointer;"><</span> <span>JAHARUL GAME</span> <span>🕒</span>
     </div>
 
     <div class="content">
@@ -85,7 +76,7 @@
             <div class="g-tab" onclick="switchM(300, this)"><span class="tab-icon">🕒</span>WinGo 5m</div>
         </div>
 
-        <div class="timer-box" id="adminTrigger">
+        <div class="timer-box">
             <div class="t-left">
                 <button style="background:none; border:1px solid #5a3e00; padding:2px 8px; border-radius:10px; font-size:10px;">How to play</button>
                 <p id="modeName" style="margin-top:10px; font-size:13px; font-weight:bold;">WinGo 1 Min</p>
@@ -100,15 +91,15 @@
 
         <div class="btn-container">
             <div class="color-row">
-                <a href="betting_popup.html?type=Green" class="c-btn green">Green</a>
-                <a href="betting_popup.html?type=Violet" class="c-btn violet">Violet</a>
-                <a href="betting_popup.html?type=Red" class="c-btn red">Red</a>
+                <button onclick="openBet('Green')" class="c-btn green">Green</button>
+                <button onclick="openBet('Violet')" class="c-btn violet">Violet</button>
+                <button onclick="openBet('Red')" class="c-btn red">Red</button>
             </div>
             <div class="num-grid-box">
                 <div class="num-grid" id="mainGrid"></div>
                 <div class="bs-row">
-                    <a href="betting_popup.html?type=Big" class="bs-btn big">Big</a>
-                    <a href="betting_popup.html?type=Small" class="bs-btn small">Small</a>
+                    <button onclick="openBet('Big')" class="bs-btn big">Big</button>
+                    <button onclick="openBet('Small')" class="bs-btn small">Small</button>
                 </div>
             </div>
         </div>
@@ -124,49 +115,28 @@
                     <tr><th style="text-align: left; padding-left: 15px;">Period</th><th>Number</th><th>Big Small</th><th>Color</th></tr>
                 </thead>
                 <tbody id="historyBody">
-                    <tr><td colspan="4" style="color:#999; padding:20px;">Fetching from MongoDB...</td></tr>
+                    <tr><td colspan="4" style="text-align:center; padding:20px;">Connecting to Database...</td></tr>
                 </tbody>
             </table>
-            <div class="pagination">
-                <button class="pg-btn"><</button>
-                <span style="color:#999;">1/50</span>
-                <button class="pg-btn active">></button>
-            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // --- SERVER LOGIC (PEHLE game-logic.js MEIN THA) ---
     let currentMode = 60;
     let lastSavedPeriod = "";
 
-    function renderHistory(history) {
-        if(!history || history.length === 0) return;
-        const html = history.map(i => {
-            const n = parseInt(i.n);
-            const nColor = (n === 0 || n === 5) ? '#9b51e0' : (n % 2 === 0 ? '#ff4d4d' : '#2ead6d');
-            const bigSmall = n >= 5 ? 'Big' : 'Small';
-            let dots = `<span class="res-dot" style="background:${nColor}"></span>`;
-            if(n === 0) dots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
-            if(n === 5) dots += `<span class="res-dot" style="background:#2ead6d"></span>`;
-
-            return `<tr>
-                <td class="p-period">${i.p}</td>
-                <td class="p-num" style="color:${nColor}">${n}</td>
-                <td style="color:#ccc;">${bigSmall}</td>
-                <td><div class="dot-box">${dots}</div></td>
-            </tr>`;
-        }).join('');
-        document.getElementById('historyBody').innerHTML = html;
-
-        const miniDotsEl = document.getElementById('miniDots');
-        if(miniDotsEl) {
-            miniDotsEl.innerHTML = history.slice(0,5).map(i => {
-                const n = parseInt(i.n);
-                const dotCol = (n === 0 || n === 5) ? '#9b51e0' : (n % 2 === 0 ? '#ff4d4d' : '#2ead6d');
-                return `<span class="res-dot" style="background:${dotCol}; width:12px; height:12px; border:1px solid #fff;"></span>`;
-            }).join('');
-        }
+    async function saveGameResult(period, mode) {
+        try {
+            const randomNum = Math.floor(Math.random() * 10);
+            await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ p: period, n: randomNum, mode: mode })
+            });
+            console.log("Result Saved:", period, randomNum);
+        } catch (e) { console.error("Save Error:", e); }
     }
 
     async function fetchFromDB() {
@@ -182,6 +152,25 @@
                 renderHistory(histData);
             }
         } catch (e) { console.error("Sync Error:", e); }
+    }
+
+    function renderHistory(history) {
+        if(!history || history.length === 0) return;
+        const html = history.map(i => {
+            const n = parseInt(i.n);
+            const nColor = (n === 0 || n === 5) ? '#9b51e0' : (n % 2 === 0 ? '#ff4d4d' : '#2ead6d');
+            const bigSmall = n >= 5 ? 'Big' : 'Small';
+            let dots = `<span class="res-dot" style="background:${nColor}"></span>`;
+            if(n === 0) dots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
+            if(n === 5) dots += `<span class="res-dot" style="background:#2ead6d"></span>`;
+            return `<tr>
+                <td class="p-period">${i.p}</td>
+                <td class="p-num" style="color:${nColor}">${n}</td>
+                <td style="color:#ccc;">${bigSmall}</td>
+                <td><div class="dot-box">${dots}</div></td>
+            </tr>`;
+        }).join('');
+        document.getElementById('historyBody').innerHTML = html;
     }
 
     function startTimer() {
@@ -203,27 +192,10 @@
 
             if(rem === 1 && lastSavedPeriod !== p) { 
                 lastSavedPeriod = p;
-                if(typeof saveGameResult === "function") {
-                    await saveGameResult(p, currentMode);
-                    setTimeout(fetchFromDB, 2000); 
-                }
+                await saveGameResult(p, currentMode);
+                setTimeout(fetchFromDB, 2000); 
             }
         }, 1000);
-    }
-
-    function init() {
-        const grid = document.getElementById('mainGrid');
-        grid.innerHTML = '';
-        for(let i=0; i<=9; i++) {
-            let a = document.createElement('a');
-            a.className = 'n-btn'; a.innerText = i;
-            a.href = `betting_popup.html?type=${i}`;
-            let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
-            a.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
-            grid.appendChild(a);
-        }
-        fetchFromDB();
-        startTimer();
     }
 
     function switchM(s, el) {
@@ -234,7 +206,24 @@
         fetchFromDB();
     }
 
-    window.onload = init;
+    function openBet(type) {
+        window.location.href = `betting_popup.html?type=${type}`;
+    }
+
+    window.onload = () => {
+        const grid = document.getElementById('mainGrid');
+        grid.innerHTML = '';
+        for(let i=0; i<=9; i++) {
+            let btn = document.createElement('button');
+            btn.className = 'n-btn'; btn.innerText = i;
+            btn.onclick = () => openBet(i);
+            let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
+            btn.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
+            grid.appendChild(btn);
+        }
+        fetchFromDB();
+        startTimer();
+    };
 </script>
 </body>
 </html>
