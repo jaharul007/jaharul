@@ -124,6 +124,19 @@
     let currentMode = 60;
     let lastSavedPeriods = {30: "", 60: "", 180: "", 300: ""}; 
 
+    // --- GLOBAL BALANCE SYNC (Database se balance laane ke liye) ---
+    async function syncOriginalBalance() {
+        const userPhone = localStorage.getItem('userPhone'); 
+        if (!userPhone) return;
+        try {
+            const response = await fetch(`/api/user?phone=${userPhone}`);
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('balDisplay').innerText = data.balance.toFixed(2);
+            }
+        } catch (err) { console.error("Balance Sync Error:", err); }
+    }
+
     // --- Result Save Logic ---
     async function saveGameResult(period, mode) {
         try {
@@ -140,13 +153,10 @@
     // --- Fetch History from DB ---
     async function fetchFromDB() {
         try {
-            // Balance Fetch
-            const userRes = await fetch('/api/user').catch(() => null); 
-            if(userRes && userRes.ok) {
-                const userData = await userRes.json();
-                document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
-            }
-            // Mode-specific History Fetch with Cache-Busting
+            // Fresh Balance Sync
+            await syncOriginalBalance();
+
+            // Mode-specific History Fetch
             const histRes = await fetch(`/api/history?mode=${currentMode}&t=${Date.now()}`);
             if(histRes.ok) {
                 const histData = await histRes.json();
@@ -177,13 +187,12 @@
         document.getElementById('historyBody').innerHTML = html;
     }
 
-    // --- Main Timer Logic (Background Auto-Saving) ---
+    // --- Main Timer Logic ---
     function startTimer() {
         setInterval(async () => {
             let now = new Date();
             let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
             
-            // 1. Update UI Timer for current selected mode
             let rem = currentMode - (total % currentMode);
             let m = Math.floor(rem/60).toString().padStart(2,'0');
             let s = (rem%60).toString().padStart(2,'0');
@@ -196,23 +205,19 @@
             let p = dateStr + "1000" + Math.floor(total/currentMode).toString().padStart(4, '0');
             document.getElementById('periodDisplay').innerText = p;
 
-            // 2. Background Check for ALL MODES (30, 60, 180, 300)
             [30, 60, 180, 300].forEach(async (mVal) => {
                 let mRem = mVal - (total % mVal);
                 let mP = dateStr + "1000" + Math.floor(total/mVal).toString().padStart(4, '0');
                 
-                // --- ADVANCE SAVE: Jab 2 second bache ho tabhi save karlo ---
                 if(mRem === 2 && lastSavedPeriods[mVal] !== mP) {
                     lastSavedPeriods[mVal] = mP;
                     await saveGameResult(mP, mVal);
                 }
                 
-                // Refresh UI jab timer reset ho
                 if(mRem === 1 && mVal === currentMode) {
                     setTimeout(fetchFromDB, 1500); 
                 }
             });
-
         }, 1000);
     }
 
@@ -226,11 +231,10 @@
     }
 
     function openBet(type) {
-        window.location.href = `betting_popup.html?type=${type}`;
+        window.location.href = `betting_popup.html?type=${type}&mode=${currentMode}`;
     }
 
     window.onload = () => {
-        // Build Number Grid
         const grid = document.getElementById('mainGrid');
         grid.innerHTML = '';
         for(let i=0; i<=9; i++) {
@@ -243,6 +247,7 @@
         }
         fetchFromDB();
         startTimer();
+        setInterval(syncOriginalBalance, 10000); // Har 10 sec mein balance sync
     };
 </script>
 </body>
