@@ -1,12 +1,19 @@
 {
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
   "rewrites": [
     {
       "source": "/",
       "destination": "/register.html"
     },
     {
-      "source": "/api/user/profile",
-      "destination": "/api/user.js"
+      "source": "/api/(.*)",
+      "destination": "/server.js"
     }
   ]
 }
