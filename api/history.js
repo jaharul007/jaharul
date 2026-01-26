@@ -52,7 +52,7 @@ export default async function handler(req, res) {
       const history = await collection
         .find({ mode: queryMode }) // Filter by Mode
         .sort({ p: -1 }) // Naya period sabse upar
-        .limit(20) // Top 20 results
+        .limit(10) // Top 10 results
         .toArray();
       return res.status(200).json(history);
     }
