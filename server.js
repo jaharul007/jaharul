@@ -100,14 +100,3 @@ app.post('/api/admin/update-balance', async (req, res) => {
         } else {
             res.status(404).json({ success: false, message: "User not found" });
         }
-    } catch (err) {
-        res.status(500).json({ success: false, message: "Update Error" });
-    }
-});
-
-// ==========================================
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
