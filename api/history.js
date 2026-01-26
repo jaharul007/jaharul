@@ -7,10 +7,11 @@ const options = {};
 let client;
 let clientPromise;
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
+if (!uri) {
+  throw new Error('Please add your Mongo URI to Vercel Environment Variables');
 }
 
+// Connection pooling for Vercel Serverless
 if (process.env.NODE_ENV === 'development') {
   if (!global._mongoClientPromise) {
     client = new MongoClient(uri, options);
@@ -25,37 +26,40 @@ if (process.env.NODE_ENV === 'development') {
 export default async function handler(req, res) {
   try {
     const client = await clientPromise;
-    const db = client.db("jaharul_game"); // Apne DB ka naam check kar lena
-    const { mode } = req.query;
+    const db = client.db("jaharul_game"); // Aapka Database Name
+    const collection = db.collection("game_results"); // Aapka Collection Name
 
+    // 1. DATA FETCH KARNA (GET Request)
     if (req.method === 'GET') {
-      // Database se latest 10 results nikalna
-      const history = await db
-        .collection("game_results")
+      const { mode } = req.query;
+      const history = await collection
         .find({ mode: parseInt(mode) || 60 })
-        .sort({ timestamp: -1 }) // Newest first
-        .limit(10)
+        .sort({ timestamp: -1 }) // Newest result sabse upar
+        .limit(20) // Latest 20 results
         .toArray();
 
       return res.status(200).json(history);
     }
 
+    // 2. DATA SAVE KARNA (POST Request)
     if (req.method === 'POST') {
-      // Naya result save karne ke liye (Timer ke through)
       const { p, n, mode } = req.body;
-      const newResult = {
-        p,
-        n: parseInt(n),
-        mode: parseInt(mode),
-        timestamp: new Date()
+      
+      const newEntry = {
+        p: p, // Period ID
+        n: parseInt(n), // Winning Number
+        mode: parseInt(mode), // 30, 60, 180, etc.
+        timestamp: new Date() // Original time of saving
       };
 
-      await db.collection("game_results").insertOne(newResult);
-      return res.status(201).json(newResult);
+      const result = await collection.insertOne(newEntry); // MongoDB mein save
+      return res.status(201).json({ message: "Saved Successfully", id: result.insertedId });
     }
 
+    return res.status(405).json({ message: "Method not allowed" });
+
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Database connection failed" });
+    console.error("MongoDB Error:", e);
+    return res.status(500).json({ error: "Failed to connect to original storage" });
   }
 }
