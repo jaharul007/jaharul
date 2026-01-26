@@ -1,68 +1,46 @@
-import connectDB from '../lib/mongodb.js';
-import User from '../models/User.js';
+import { MongoClient, ObjectId } from 'mongodb';
+
+const uri = process.env.MONGODB_URI;
+const client = new MongoClient(uri);
 
 export default async function handler(req, res) {
-    try {
-        await connectDB();
+  try {
+    await client.connect();
+    const db = client.db("jaharul_game");
+    const users = db.collection("users");
 
-        // --- REGISTRATION LOGIC ---
-        if (req.method === 'POST') {
-            const { phone, password, inviteCode, balance } = req.body; // balance ko body se nikala
+    // Maan lete hain ki abhi hum ek default user use kar rahe hain 
+    // Jab login system full hoga tab yahan session se ID aayegi
+    const userId = "65b2f1e2a3c4d5e6f7a8b9c0"; // Example ID
 
-            if (!phone || !password) {
-                return res.status(400).json({ success: false, message: "Phone and Password are required" });
-            }
-
-            const existingUser = await User.findOne({ phone });
-            if (existingUser) {
-                return res.status(400).json({ success: false, message: "User already exists!" });
-            }
-
-            const newUser = new User({ 
-                phone, 
-                password, 
-                inviteCode: inviteCode || "", 
-                // Agar frontend se balance (50) aaya toh wo save hoga, nahi toh 0
-                balance: balance !== undefined ? balance : 0 
-            });
-            
-            await newUser.save();
-            return res.status(200).json({ success: true, message: "Registration Successful" });
-        } 
-        
-        // --- REAL DATA FETCH LOGIC ---
-        else if (req.method === 'GET') {
-            const { phone, id } = req.query;
-            const searchIdentifier = phone || id;
-
-            if (!searchIdentifier) {
-                return res.status(400).json({ success: false, message: "User Identifier (Phone/ID) required" });
-            }
-
-            const user = await User.findOne({ phone: searchIdentifier });
-
-            if (!user) {
-                return res.status(404).json({ success: false, message: "User not found" });
-            }
-
-            return res.status(200).json({
-                success: true,
-                username: user.phone,
-                balance: user.balance
-            });
-        }
-
-        else {
-            res.setHeader('Allow', ['GET', 'POST']);
-            return res.status(405).json({ success: false, message: `Method ${req.method} Not Allowed` });
-        }
-
-    } catch (error) {
-        console.error("API Error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: "Database Connection Failed", 
-            error: error.message 
-        });
+    // 1. BALANCE DEKHNA (GET Request)
+    if (req.method === 'GET') {
+      const user = await users.findOne({ _id: new ObjectId(userId) });
+      if (!user) {
+        // Agar user nahi mila toh ek naya user bana do testing ke liye
+        await users.insertOne({ _id: new ObjectId(userId), balance: 1000.00, mobile: "1234567890" });
+        return res.status(200).json({ balance: 1000.00 });
+      }
+      return res.status(200).json({ balance: user.balance });
     }
+
+    // 2. BALANCE UPDATE KARNA (POST Request - For Betting)
+    if (req.method === 'POST') {
+      const { amount, action } = req.body; // action: 'deduct' or 'add'
+      
+      const updateAmount = action === 'deduct' ? -Math.abs(amount) : Math.abs(amount);
+      
+      const result = await users.findOneAndUpdate(
+        { _id: new ObjectId(userId) },
+        { $inc: { balance: updateAmount } },
+        { returnDocument: 'after' }
+      );
+
+      return res.status(200).json({ balance: result.value.balance });
+    }
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "User API Error" });
+  }
 }
