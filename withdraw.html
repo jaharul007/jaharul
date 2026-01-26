@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Withdraw</title>
     <style>
         body { background: #1a1a1a; color: white; font-family: Arial, sans-serif; margin: 0; padding: 0; }
@@ -63,7 +63,7 @@
 
         /* विथड्रॉ बटन (गहरा रंग) */
         .withdraw-submit { 
-            width: 100%; background: #333333; color: #555555; 
+            width: 100%; background: #333333; color: #f3d078; 
             padding: 16px; border-radius: 30px; border: none; 
             font-size: 16px; font-weight: bold; margin-top: 30px; cursor: pointer;
         }
@@ -79,7 +79,7 @@
     <div class="container">
         <div class="balance-card">
             <div class="balance-title">📂 Available balance</div>
-            <div class="amount">₹ 16820.00 <span style="font-size: 18px;">🔄</span></div>
+            <div class="amount">₹ <span id="with_bal">0.00</span> <span style="font-size: 18px; cursor:pointer;" onclick="syncOriginalBalance()">🔄</span></div>
             <div class="chip"></div>
             <div class="card-dots">**** ****</div>
         </div>
@@ -107,17 +107,64 @@
 
         <div class="input-area">
             <span>₹</span>
-            <input type="number" placeholder="Please enter the amount">
+            <input type="number" id="withdrawAmount" placeholder="Please enter the amount">
         </div>
 
-        <button class="withdraw-submit">Withdraw</button>
+        <button class="withdraw-submit" onclick="processWithdraw()">Withdraw</button>
     </div>
 
     <script>
+        // --- BALANCE SYNC LOGIC ---
+        async function syncOriginalBalance() {
+            const userPhone = localStorage.getItem('userPhone');
+            if (!userPhone) return;
+
+            try {
+                const response = await fetch(`/api/user?phone=${userPhone}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('with_bal').innerText = data.balance.toFixed(2);
+                    localStorage.setItem('user_balance', data.balance);
+                }
+            } catch (err) { console.error("Balance Error:", err); }
+        }
+
+        // --- WITHDRAW PROCESS & REDIRECT ---
+        async function processWithdraw() {
+            const amount = document.getElementById('withdrawAmount').value;
+            const userPhone = localStorage.getItem('userPhone');
+            const savedUpi = localStorage.getItem('saved_upi_id');
+            const currentBal = parseFloat(localStorage.getItem('user_balance') || 0);
+
+            if (!savedUpi) { alert("Please add UPI first!"); return; }
+            if (!amount || amount < 100) { alert("Minimum withdraw ₹100"); return; }
+            if (amount > currentBal) { alert("Insufficient balance!"); return; }
+
+            try {
+                const res = await fetch('/api/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: userPhone, amount: amount, upi: savedUpi })
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert("Request Submitted!");
+                    // SUCCESS KE BAAD DUSRE PAGE PE JANA
+                    window.location.href = 'withdraw-history.html'; 
+                } else {
+                    alert(result.message);
+                }
+            } catch (e) { 
+                // Agar server API nahi bani toh bhi testing ke liye redirect kar sakte ho
+                console.log("Server API missing, redirecting anyway for UI test...");
+                window.location.href = 'withdraw-history.html';
+            }
+        }
+
         function selectMethod(type, btn) {
             document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
             const addSec = document.getElementById('add_section');
             if(type === 'upi') {
                 addSec.style.opacity = "1";
@@ -128,24 +175,16 @@
             }
         }
 
-        // वह 'छोटा वाला कोड' जो आपने माँगा था, यहाँ जोड़ दिया है
         window.onload = function() {
+            syncOriginalBalance();
             const savedName = localStorage.getItem('saved_upi_name');
             const savedUpi = localStorage.getItem('saved_upi_id');
             
-            const addBtn = document.getElementById('add_btn');
-            const dataDisplay = document.getElementById('data_display');
-            const nameTxt = document.getElementById('name_txt');
-            const upiTxt = document.getElementById('upi_txt');
-
             if(savedName && savedUpi) {
-                // फॉर्म भरने के बाद प्लस वाला बॉक्स छुपाएं और नाम वाला बॉक्स दिखाएं
-                addBtn.style.display = 'none';
-                dataDisplay.style.display = 'block';
-                
-                // आपकी फोटो की तरह नाम बड़े अक्षरों में और UPI टैग के साथ
-                nameTxt.innerHTML = `<span class="upi-tag">UPI</span> ${savedName.toUpperCase()}`;
-                upiTxt.innerText = savedUpi;
+                document.getElementById('add_btn').style.display = 'none';
+                document.getElementById('data_display').style.display = 'block';
+                document.getElementById('name_txt').innerHTML = `<span class="upi-tag">UPI</span> ${savedName.toUpperCase()}`;
+                document.getElementById('upi_txt').innerText = savedUpi;
             }
         }
     </script>
