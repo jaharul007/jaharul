@@ -1,4 +1,4 @@
-import { MongoClient, ObjectId } from 'mongodb';
+import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
@@ -9,38 +9,50 @@ export default async function handler(req, res) {
     const db = client.db("jaharul_game");
     const users = db.collection("users");
 
-    // Maan lete hain ki abhi hum ek default user use kar rahe hain 
-    // Jab login system full hoga tab yahan session se ID aayegi
-    const userId = "65b2f1e2a3c4d5e6f7a8b9c0"; // Example ID
-
-    // 1. BALANCE DEKHNA (GET Request)
+    // 1. GET BALANCE: Jab koi bhi page load ho
     if (req.method === 'GET') {
-      const user = await users.findOne({ _id: new ObjectId(userId) });
-      if (!user) {
-        // Agar user nahi mila toh ek naya user bana do testing ke liye
-        await users.insertOne({ _id: new ObjectId(userId), balance: 1000.00, mobile: "1234567890" });
-        return res.status(200).json({ balance: 1000.00 });
+      const { phone } = req.query; // URL se phone number lega
+
+      if (!phone) {
+        return res.status(400).json({ success: false, message: "Phone number required" });
       }
-      return res.status(200).json({ balance: user.balance });
+
+      const user = await users.findOne({ phone: phone });
+      
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      return res.status(200).json({ success: true, balance: user.balance });
     }
 
-    // 2. BALANCE UPDATE KARNA (POST Request - For Betting)
+    // 2. UPDATE BALANCE: Registration ya Betting ke liye
     if (req.method === 'POST') {
-      const { amount, action } = req.body; // action: 'deduct' or 'add'
-      
-      const updateAmount = action === 'deduct' ? -Math.abs(amount) : Math.abs(amount);
-      
-      const result = await users.findOneAndUpdate(
-        { _id: new ObjectId(userId) },
-        { $inc: { balance: updateAmount } },
-        { returnDocument: 'after' }
-      );
+      const { phone, password, action, amount, balance } = req.body;
 
-      return res.status(200).json({ balance: result.value.balance });
+      // Agar Naya User Register ho raha hai
+      if (phone && password && balance !== undefined) {
+        const exists = await users.findOne({ phone: phone });
+        if (exists) return res.status(400).json({ success: false, message: "Already Registered" });
+
+        await users.insertOne({ phone, password, balance: parseFloat(balance), createdAt: new Date() });
+        return res.status(201).json({ success: true });
+      }
+
+      // Agar Betting se balance deduct/add ho raha hai
+      if (phone && action && amount) {
+        const updateVal = action === 'deduct' ? -Math.abs(amount) : Math.abs(amount);
+        const result = await users.findOneAndUpdate(
+          { phone: phone },
+          { $inc: { balance: updateVal } },
+          { returnDocument: 'after' }
+        );
+        return res.status(200).json({ success: true, balance: result.value.balance });
+      }
     }
 
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "User API Error" });
+    res.status(500).json({ success: false, error: e.message });
   }
 }
