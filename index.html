@@ -86,9 +86,9 @@
     <div class="brand-overlay welcome-text">Welcome to Jaharul Game</div>
 
     <div class="user-info-patch">
-      Member <span id="userName" style="margin-left:5px;">Loading...</span> 
-      <span style="margin: 0 5px;">-</span> 
-      ₹<span id="userBalance">0.00</span>
+      UID: <span id="userName" style="margin-left:5px;">Loading...</span> 
+      <span style="margin: 0 5px;">|</span> 
+      ₹<span id="balDisplay">0.00</span>
     </div>
 
     <div class="click-zone cs-btn" onclick="window.location.href='https://t.me/your_handle'"></div> 
@@ -105,36 +105,41 @@
   </div>
 
   <script>
-    // --- DATABASE FETCH SCRIPT ---
-    async function fetchDatabaseData() {
-      // LocalStorage se user ki pehchan (phone number) lena
-      const userId = localStorage.getItem('userId'); 
-      
-      if (!userId) {
-        console.log("No user logged in.");
-        document.getElementById('userName').innerText = "GUEST";
-        return;
-      }
-
-      try {
-        // Aapke Vercel backend (api/user.js) se data mangna
-        const response = await fetch(`/api/user/profile?id=${userId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          // Screen par balance aur phone number update karna
-          document.getElementById('userName').innerText = data.username;
-          document.getElementById('userBalance').innerText = parseFloat(data.balance).toFixed(2);
-        } else {
-          document.getElementById('userName').innerText = "NOT FOUND";
+    // --- ORIGINAL DATABASE BALANCE SYNC ---
+    async function syncOriginalBalance() {
+        // LocalStorage se phone number lena (Jo login/register ke waqt set hua tha)
+        const userPhone = localStorage.getItem('userPhone'); 
+        
+        if (!userPhone) {
+            console.log("User not logged in");
+            document.getElementById('userName').innerText = "GUEST";
+            // Agar aap chahte hain ki bina login ke page na khule toh niche wali line on kar dein:
+            // window.location.href = 'login.html';
+            return;
         }
-      } catch (err) {
-        console.error("Database connection error:", err);
-      }
+
+        try {
+            // Humne userName ki jagah phone number dikha diya
+            document.getElementById('userName').innerText = userPhone;
+
+            // Database (user.js) se fresh balance mangwana
+            const response = await fetch(`/api/user?phone=${userPhone}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const display = document.getElementById('balDisplay');
+                if (display) display.innerText = data.balance.toFixed(2);
+            }
+        } catch (err) {
+            console.error("Sync Error:", err);
+        }
     }
 
-    // Page khulte hi function run karega
-    window.onload = fetchDatabaseData;
+    // Page load hote hi chalega
+    window.onload = syncOriginalBalance;
+    
+    // Har 10 second mein balance refresh karega
+    setInterval(syncOriginalBalance, 10000);
   </script>
 
 </body>
