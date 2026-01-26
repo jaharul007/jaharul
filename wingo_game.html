@@ -6,61 +6,56 @@
     <title>JAHARUL GAME</title>
     <script src="api/game-logic.js"></script>
     <style>
+        /* --- TERA ORIGINAL CSS (BINA CHHEDE) --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 450px; background: #0f1217; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
         .nav-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #22272d; color: #f3c34d; font-weight: bold; }
         .content { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
         .content::-webkit-scrollbar { display: none; }
-
         .wallet-card { background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); margin: 15px; border-radius: 20px; padding: 25px; text-align: center; }
         .bal-txt { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
         .w-btn-row { display: flex; gap: 15px; margin-top: 15px; }
         .w-btn { flex: 1; padding: 12px; border-radius: 25px; border: none; font-weight: bold; color: #fff; cursor: pointer; text-decoration: none; text-align: center; }
         .withdraw { background: #ff4d4d; } .deposit { background: #2ead6d; }
-
         .game-tabs { display: flex; justify-content: space-between; padding: 10px 15px; gap: 8px; }
         .g-tab { flex: 1; background: #333; border-radius: 12px; padding: 10px 5px; text-align: center; cursor: pointer; color: #999; font-size: 11px; }
         .g-tab.active { background: #f3c34d; color: #5a3e00; font-weight: bold; box-shadow: 0 0 15px rgba(243, 195, 77, 0.3); }
         .tab-icon { display: block; font-size: 18px; margin-bottom: 4px; }
-
         .timer-box { background: #f3c34d; margin: 15px; border-radius: 15px; display: flex; color: #5a3e00; min-height: 110px; cursor: pointer; }
         .t-left { flex: 1.2; padding: 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
         .t-right { flex: 1; padding: 15px; text-align: right; }
         .timer-display { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
         .t-digit { background: #333; color: #fff; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 22px; }
-
         .btn-container { padding: 0 15px; }
         .color-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .c-btn { flex: 1; padding: 15px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
         .green { background: #2ead6d; } .violet { background: #9b51e0; } .red { background: #ff4d4d; }
-        
         .num-grid-box { background: #22272d; padding: 15px; border-radius: 15px; margin-bottom: 15px; }
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .n-btn { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff; cursor: pointer; text-decoration: none; }
-
         .bs-row { display: flex; gap: 10px; margin-top: 15px; }
         .bs-btn { flex: 1; padding: 15px; font-weight: bold; text-decoration: none; text-align: center; font-size: 18px; color: #fff; }
         .big { background: #e6a23c; border-radius: 30px 0 0 30px; } 
         .small { background: #409eff; border-radius: 0 30px 30px 0; }
 
-        .h-section { background: #22272d; margin: 15px; border-radius: 10px; overflow: hidden; padding-bottom: 10px; }
-        .h-tabs { display: flex; padding: 10px; gap: 15px; border-bottom: 1px solid #1a1d22; }
-        .h-tab-item { font-size: 13px; color: #999; padding: 5px 10px; cursor: pointer; }
-        .h-tab-item.active { background: #f3c34d; color: #000; border-radius: 5px; font-weight: bold; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        th { color: #9aa0ac; font-size: 12px; padding: 12px 5px; text-align: center; background: #2b323d; font-weight: normal; }
-        td { padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-size: 14px; vertical-align: middle; }
+        /* --- PHOTO WALA LOOK MATCH KARNE KE LIYE NEW CSS --- */
+        .photo-history-card { background: #22272d; margin: 15px; border-radius: 10px; overflow: hidden; }
+        .p-tabs { display: flex; background: #333; }
+        .p-tab-item { flex: 1; padding: 12px; text-align: center; font-size: 14px; color: #999; }
+        .p-tab-item.active { background: #f3c34d; color: #000; font-weight: bold; }
         
-        .td-period { color: #999; font-size: 12px; text-align: left; padding-left: 10px; }
-        .td-number { font-size: 20px; font-weight: bold; font-family: Arial, sans-serif; }
-        .td-bs { color: #fff; font-size: 13px; }
+        .p-table { width: 100%; border-collapse: collapse; }
+        .p-table th { color: #9aa0ac; font-size: 13px; padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-weight: normal; }
+        .p-table td { padding: 12px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-size: 15px; }
+        
+        .p-period { color: #fff; font-size: 13px; text-align: left !important; padding-left: 15px !important; font-family: monospace; }
+        .p-num { font-size: 24px; font-weight: bold; }
         .res-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin: 0 2px; }
+        .dot-box { display: flex; justify-content: center; align-items: center; gap: 4px; }
 
-        .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 15px; background: #22272d; }
-        .pg-btn { background: #333; border: none; color: #fff; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 18px; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px; background: #22272d; }
+        .pg-btn { background: #333; border: none; color: #fff; width: 40px; height: 40px; border-radius: 5px; cursor: pointer; font-size: 18px; }
         .pg-btn.active { background: #f3c34d; color: #000; }
     </style>
 </head>
@@ -116,25 +111,27 @@
             </div>
         </div>
 
-        <div class="h-section">
-            <div class="h-tabs">
-                <div class="h-tab-item active" onclick="fetchFromDB()">Game history</div>
-                <div class="h-tab-item">Chart</div>
-                <div class="h-tab-item">My history</div>
+        <div class="photo-history-card">
+            <div class="p-tabs">
+                <div class="p-tab-item active">Game history</div>
+                <div class="p-tab-item">Chart</div>
+                <div class="p-tab-item">My history</div>
             </div>
-            <div style="min-height: 400px;">
-                <table>
-                    <thead>
-                        <tr><th>Period</th><th>Number</th><th>Big Small</th><th>Color</th></tr>
-                    </thead>
-                    <tbody id="historyBody">
-                        <tr><td colspan="4" style="color:#999; padding:20px;">Loading history...</td></tr>
+            <table class="p-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding-left: 15px;">Period</th>
+                        <th>Number</th>
+                        <th>Big Small</th>
+                        <th>Color</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
                     </tbody>
-                </table>
-            </div>
+            </table>
             <div class="pagination">
                 <button class="pg-btn"><</button>
-                <span id="pageCounter" style="font-size: 14px; color: #999;">1/50</span>
+                <span style="color:#999;">1/50</span>
                 <button class="pg-btn active">></button>
             </div>
         </div>
@@ -145,90 +142,29 @@
     let currentMode = 60;
     let clickCount = 0;
 
-    // --- 1. History aur Balance lane ka function ---
-    async function fetchFromDB() {
-        try {
-            // Balance Fetch
-            const userRes = await fetch('/api/user').catch(() => null); 
-            if(userRes && userRes.ok) {
-                const userData = await userRes.json();
-                if(userData && userData.balance !== undefined) {
-                    document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
-                }
-            }
-
-            // History Fetch (MongoDB backend se)
-            const histRes = await fetch(`/api/history?mode=${currentMode}`);
-            const histData = await histRes.json();
-            
-            if(histData && Array.isArray(histData)) {
-                renderHistory(histData); 
-            } else {
-                document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">No history available</td></tr>';
-            }
-        } catch (error) {
-            console.error("Fetch error:", error);
-        }
-    }
-
-    // --- 2. Timer Setup (Results save karne ke liye) ---
-    function startTimer() {
-        setInterval(() => {
-            let now = new Date();
-            let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
-            let rem = currentMode - (total % currentMode);
-            
-            // Display Timer
-            let m = Math.floor(rem/60).toString().padStart(2,'0');
-            let s = (rem%60).toString().padStart(2,'0');
-            document.getElementById('timerDigits').innerHTML = `
-                <span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>
-                <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
-                <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
-
-            // Period ID Generation
-            let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
-            let p = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
-            document.getElementById('periodDisplay').innerText = p;
-
-            // --- RESULT SAVING LOGIC ---
-            if(rem === 1) { 
-                // Jab timer khatam hone wala ho, save function call karo (Jo game-logic.js mein hai)
-                if(typeof saveGameResult === "function"){
-                    saveGameResult(p, currentMode);
-                }
-                
-                // Result save hone ke baad table refresh karo
-                setTimeout(fetchFromDB, 3000); 
-            }
-        }, 1000);
-    }
-
-    // --- 3. UI rendering Logic ---
+    // --- PHOTO LOOK KI RENDERING ---
     function renderHistory(history) {
         let html = history.map(i => {
             let nColor = (i.n == 0 || i.n == 5) ? '#9b51e0' : (i.n % 2 == 0 ? '#ff4d4d' : '#2ead6d');
             let bigSmall = i.n >= 5 ? 'Big' : 'Small';
             
-            let colorDots = `<span class="res-dot" style="background:${nColor}"></span>`;
-            if(i.n == 0) colorDots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
-            if(i.n == 5) colorDots += `<span class="res-dot" style="background:#2ead6d"></span>`;
+            // Color Dots logic as per photo
+            let dots = `<span class="res-dot" style="background:${nColor}"></span>`;
+            if(i.n == 0) dots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
+            if(i.n == 5) dots += `<span class="res-dot" style="background:#2ead6d"></span>`;
 
             return `
                 <tr>
-                    <td class="td-period">${i.p}</td>
-                    <td class="td-number" style="color:${nColor}">${i.n}</td>
-                    <td class="td-bs">${bigSmall}</td>
-                    <td style="display: flex; justify-content: center; align-items: center; padding-top: 15px;">
-                        ${colorDots}
-                    </td>
+                    <td class="p-period">${i.p}</td>
+                    <td class="p-num" style="color:${nColor}">${i.n}</td>
+                    <td style="color:#ccc;">${bigSmall}</td>
+                    <td><div class="dot-box">${dots}</div></td>
                 </tr>
             `;
         }).join('');
-        
         document.getElementById('historyBody').innerHTML = html;
 
-        // Top mini visual dots
+        // Mini dots update
         const miniDotsEl = document.getElementById('miniDots');
         if(miniDotsEl) {
             miniDotsEl.innerHTML = history.slice(0,5).map(i => {
@@ -238,32 +174,59 @@
         }
     }
 
-    // --- 4. Initialization ---
+    async function fetchFromDB() {
+        try {
+            const userRes = await fetch('/api/user').catch(() => null); 
+            if(userRes && userRes.ok) {
+                const userData = await userRes.json();
+                document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
+            }
+
+            const histRes = await fetch(`/api/history?mode=${currentMode}`);
+            const histData = await histRes.json();
+            
+            if(histData && Array.isArray(histData)) {
+                // Photo ke hisab se latest 10 dikhana
+                renderHistory(histData.slice(0, 10)); 
+            }
+        } catch (error) { console.log(error); }
+    }
+
+    function startTimer() {
+        setInterval(() => {
+            let now = new Date();
+            let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
+            let rem = currentMode - (total % currentMode);
+            
+            let m = Math.floor(rem/60).toString().padStart(2,'0');
+            let s = (rem%60).toString().padStart(2,'0');
+            document.getElementById('timerDigits').innerHTML = `
+                <span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>
+                <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
+                <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
+
+            let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
+            let p = dateStr + "1000" + Math.floor(total/currentMode).toString().padStart(4, '0');
+            document.getElementById('periodDisplay').innerText = p;
+
+            if(rem === 1) { 
+                if(typeof saveGameResult === "function") saveGameResult(p, currentMode);
+                setTimeout(fetchFromDB, 2500); 
+            }
+        }, 1000);
+    }
+
     function init() {
         const grid = document.getElementById('mainGrid');
-        if(grid) {
-            grid.innerHTML = '';
-            for(let i=0; i<=9; i++) {
-                let a = document.createElement('a');
-                a.className = 'n-btn'; a.innerText = i;
-                a.href = `betting_popup.html?type=${i}`;
-                let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
-                a.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
-                grid.appendChild(a);
-            }
+        grid.innerHTML = '';
+        for(let i=0; i<=9; i++) {
+            let a = document.createElement('a');
+            a.className = 'n-btn'; a.innerText = i;
+            a.href = `betting_popup.html?type=${i}`;
+            let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
+            a.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
+            grid.appendChild(a);
         }
-
-        const adminTrigger = document.getElementById('adminTrigger');
-        if(adminTrigger) {
-            adminTrigger.addEventListener('click', () => {
-                clickCount++;
-                if(clickCount >= 5) {
-                    window.location.href = 'admin_panel.html';
-                    clickCount = 0;
-                }
-            });
-        }
-
         fetchFromDB();
         startTimer();
     }
@@ -273,7 +236,6 @@
         document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
         if(el) el.classList.add('active');
         document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
-        document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">Refreshing...</td></tr>';
         fetchFromDB();
     }
 
