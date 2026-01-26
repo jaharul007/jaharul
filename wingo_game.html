@@ -48,8 +48,6 @@
         .p-num { font-size: 24px; font-weight: bold; }
         .res-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin: 0 2px; }
         .dot-box { display: flex; justify-content: center; align-items: center; gap: 4px; }
-        .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px; background: #22272d; }
-        .pg-btn { background: #333; border: none; color: #fff; width: 40px; height: 40px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -115,7 +113,7 @@
                     <tr><th style="text-align: left; padding-left: 15px;">Period</th><th>Number</th><th>Big Small</th><th>Color</th></tr>
                 </thead>
                 <tbody id="historyBody">
-                    <tr><td colspan="4" style="text-align:center; padding:20px;">Connecting to Database...</td></tr>
+                    <tr><td colspan="4" style="text-align:center; padding:20px;">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -123,31 +121,33 @@
 </div>
 
 <script>
-    // --- SERVER LOGIC ---
     let currentMode = 60;
-    let lastSavedPeriods = {30: "", 60: "", 180: "", 300: ""}; // Har mode ka track rakhne ke liye
+    let lastSavedPeriods = {30: "", 60: "", 180: "", 300: ""}; 
 
+    // --- Result Save Logic ---
     async function saveGameResult(period, mode) {
         try {
             const randomNum = Math.floor(Math.random() * 10);
             await fetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ p: period, n: randomNum, mode: mode }) // Mode bhej rahe hain
+                body: JSON.stringify({ p: period, n: randomNum, mode: mode })
             });
-            console.log(`Result Saved for ${mode}s:`, period, randomNum);
+            console.log(`Saved for ${mode}s: ${period}`);
         } catch (e) { console.error("Save Error:", e); }
     }
 
+    // --- Fetch History from DB ---
     async function fetchFromDB() {
         try {
+            // Balance Fetch
             const userRes = await fetch('/api/user').catch(() => null); 
             if(userRes && userRes.ok) {
                 const userData = await userRes.json();
                 document.getElementById('balDisplay').innerText = userData.balance.toFixed(2);
             }
-            // Sirf current mode ki history mangwa rahe hain
-            const histRes = await fetch(`/api/history?mode=${currentMode}`);
+            // Mode-specific History Fetch with Cache-Busting
+            const histRes = await fetch(`/api/history?mode=${currentMode}&t=${Date.now()}`);
             if(histRes.ok) {
                 const histData = await histRes.json();
                 renderHistory(histData);
@@ -177,13 +177,13 @@
         document.getElementById('historyBody').innerHTML = html;
     }
 
-    // Is timer function mein background mein sabhi modes ke result save honge
+    // --- Main Timer Logic (Background Auto-Saving) ---
     function startTimer() {
         setInterval(async () => {
             let now = new Date();
             let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
             
-            // UI Timer (Current Display Mode ke liye)
+            // 1. Update UI Timer for current selected mode
             let rem = currentMode - (total % currentMode);
             let m = Math.floor(rem/60).toString().padStart(2,'0');
             let s = (rem%60).toString().padStart(2,'0');
@@ -196,15 +196,20 @@
             let p = dateStr + "1000" + Math.floor(total/currentMode).toString().padStart(4, '0');
             document.getElementById('periodDisplay').innerText = p;
 
-            // Background Saving Logic (Check all modes)
+            // 2. Background Check for ALL MODES (30, 60, 180, 300)
             [30, 60, 180, 300].forEach(async (mVal) => {
                 let mRem = mVal - (total % mVal);
                 let mP = dateStr + "1000" + Math.floor(total/mVal).toString().padStart(4, '0');
                 
-                if(mRem === 1 && lastSavedPeriods[mVal] !== mP) {
+                // --- ADVANCE SAVE: Jab 2 second bache ho tabhi save karlo ---
+                if(mRem === 2 && lastSavedPeriods[mVal] !== mP) {
                     lastSavedPeriods[mVal] = mP;
                     await saveGameResult(mP, mVal);
-                    if(mVal === currentMode) setTimeout(fetchFromDB, 2000); // Agar wahi mode open hai to refresh karo
+                }
+                
+                // Refresh UI jab timer reset ho
+                if(mRem === 1 && mVal === currentMode) {
+                    setTimeout(fetchFromDB, 1500); 
                 }
             });
 
@@ -216,7 +221,7 @@
         document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
         if(el) el.classList.add('active');
         document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
-        document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Loading...</td></tr>';
+        document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Refreshing...</td></tr>';
         fetchFromDB();
     }
 
@@ -225,6 +230,7 @@
     }
 
     window.onload = () => {
+        // Build Number Grid
         const grid = document.getElementById('mainGrid');
         grid.innerHTML = '';
         for(let i=0; i<=9; i++) {
