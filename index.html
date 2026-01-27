@@ -27,7 +27,7 @@
       padding-bottom: 70px; 
     }
 
-    /* Imgur लिंक के साथ फ़ास्ट लोडिंग */
+    /* फ़ास्ट लोडिंग इमेज */
     .bg-img {
       width: 100%;
       display: block;
@@ -35,13 +35,13 @@
       -webkit-user-drag: none;
     }
 
-    /* ID और बैलेंस डिस्प्ले */
+    /* ID और बैलेंस डिस्प्ले पट्टी */
     .user-info-patch {
       position: absolute;
       top: 13.4%;
       left: 17%;
       width: 65%;
-      height: 3%;
+      height: 3.5%;
       background: #f1c75b; 
       display: flex;
       align-items: center;
@@ -52,15 +52,17 @@
       z-index: 6;
       border-radius: 2px;
       pointer-events: none;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
 
-    /* गेम बटन्स के क्लिक जोन */
+    /* गेम बटन्स क्लिक जोन */
     .click-zone {
       position: absolute;
       cursor: pointer;
       z-index: 10;
     }
 
+    /* Lottery अब Wingo_game.html पर जाएगी */
     .lottery-card { top: 18.5%; left: 3%; width: 31%; height: 16%; }
     .original-card { top: 18.5%; left: 34.5%; width: 31%; height: 16%; }
     .slots-card { top: 18.5%; right: 3%; width: 31%; height: 16%; }
@@ -109,11 +111,12 @@
 
     <div class="user-info-patch">
       ID: <span id="idBox">GUEST</span> 
-      <span style="margin: 0 8px;">|</span> 
+      <span style="margin: 0 10px;">|</span> 
       ₹<span id="balBox">0.00</span>
     </div>
 
-    <div class="click-zone lottery-card" onclick="location.href='wingo.html'"></div>
+    <div class="click-zone lottery-card" onclick="location.href='Wingo_game.html'"></div>
+    
     <div class="click-zone original-card" onclick="location.href='original.html'"></div>
     <div class="click-zone slots-card" onclick="location.href='slots.html'"></div>
     
@@ -139,23 +142,32 @@
 
   <script>
     async function syncData() {
+      // बैलेंस और ID चेक करने के लिए
       const phone = localStorage.getItem('userPhone');
+      
       if (!phone) {
         document.getElementById('idBox').innerText = "GUEST";
         return;
       }
+
       try {
         document.getElementById('idBox').innerText = phone;
+
+        // आपके सर्वर से बैलेंस फेच करना
         const response = await fetch(`/api/user?phone=${phone}`);
         const data = await response.json();
+
         if (data.success) {
-          document.getElementById('balBox').innerText = data.balance.toFixed(2);
+          // बैलेंस को 2 डेसिमल तक दिखाना (जैसे 100.00)
+          document.getElementById('balBox').innerText = parseFloat(data.balance).toFixed(2);
         }
       } catch (err) {
-        console.log("Database Sync Error:", err);
+        console.error("Data Sync Error:", err);
       }
     }
+
     window.onload = syncData;
+    // हर 5 सेकंड में बैलेंस अपने आप अपडेट होगा
     setInterval(syncData, 5000);
   </script>
 
