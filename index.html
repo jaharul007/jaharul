@@ -27,12 +27,11 @@
       padding-bottom: 70px; 
     }
 
-    /* फ़ास्ट लोडिंग इमेज */
+    /* फ़ास्ट लोडिंग के लिए Imgur लिंक */
     .bg-img {
       width: 100%;
       display: block;
       user-select: none;
-      -webkit-user-drag: none;
     }
 
     /* ID और बैलेंस डिस्प्ले पट्टी */
@@ -48,21 +47,20 @@
       justify-content: center;
       color: #3d2b00;
       font-weight: 800;
-      font-size: 3.2vw;
-      z-index: 6;
+      font-size: 14px;
+      z-index: 20;
       border-radius: 2px;
       pointer-events: none;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
 
     /* गेम बटन्स क्लिक जोन */
     .click-zone {
       position: absolute;
       cursor: pointer;
-      z-index: 10;
+      z-index: 50; /* जेड-इंडेक्स बढ़ा दिया ताकि क्लिक पक्का काम करे */
     }
 
-    /* Lottery अब Wingo_game.html पर जाएगी */
+    /* सारे फाइल नाम स्मॉल लेटर में सेट कर दिए हैं */
     .lottery-card { top: 18.5%; left: 3%; width: 31%; height: 16%; }
     .original-card { top: 18.5%; left: 34.5%; width: 31%; height: 16%; }
     .slots-card { top: 18.5%; right: 3%; width: 31%; height: 16%; }
@@ -98,10 +96,6 @@
 
     .nav-item.active { color: #f1c75b; }
     .nav-icon { font-size: 20px; margin-bottom: 2px; }
-
-    @media (min-width: 500px) {
-      .user-info-patch { font-size: 16px; }
-    }
   </style>
 </head>
 <body>
@@ -115,34 +109,37 @@
       ₹<span id="balBox">0.00</span>
     </div>
 
-    <div class="click-zone lottery-card" onclick="location.href='Wingo_game.html'"></div>
+    <div class="click-zone lottery-card" onclick="goTo('wingo_game.html')"></div>
+    <div class="click-zone original-card" onclick="goTo('original.html')"></div>
+    <div class="click-zone slots-card" onclick="goTo('slots.html')"></div>
     
-    <div class="click-zone original-card" onclick="location.href='original.html'"></div>
-    <div class="click-zone slots-card" onclick="location.href='slots.html'"></div>
-    
-    <div class="click-zone sports-btn" onclick="location.href='sports.html'"></div>
-    <div class="click-zone popular-btn" onclick="location.href='popular.html'"></div>
-    <div class="click-zone casino-btn" onclick="location.href='casino.html'"></div>
+    <div class="click-zone sports-btn" onclick="goTo('sports.html')"></div>
+    <div class="click-zone popular-btn" onclick="goTo('popular.html')"></div>
+    <div class="click-zone casino-btn" onclick="goTo('casino.html')"></div>
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="location.href='index.html'">
+    <div class="nav-item active" onclick="goTo('index.html')">
       <div class="nav-icon">🏠</div><div>Home</div>
     </div>
-    <div class="nav-item" onclick="location.href='activity.html'">
+    <div class="nav-item" onclick="goTo('activity.html')">
       <div class="nav-icon">🎁</div><div>Activity</div>
     </div>
-    <div class="nav-item" onclick="location.href='promotion.html'">
+    <div class="nav-item" onclick="goTo('promotion.html')">
       <div class="nav-icon">📢</div><div>Promotion</div>
     </div>
-    <div class="nav-item" onclick="location.href='account.html'">
+    <div class="nav-item" onclick="goTo('account.html')">
       <div class="nav-icon">👤</div><div>Account</div>
     </div>
   </div>
 
   <script>
+    // पेज चेंज करने का फंक्शन
+    function goTo(page) {
+      window.location.href = page;
+    }
+
     async function syncData() {
-      // बैलेंस और ID चेक करने के लिए
       const phone = localStorage.getItem('userPhone');
       
       if (!phone) {
@@ -152,23 +149,19 @@
 
       try {
         document.getElementById('idBox').innerText = phone;
-
-        // आपके सर्वर से बैलेंस फेच करना
         const response = await fetch(`/api/user?phone=${phone}`);
         const data = await response.json();
 
         if (data.success) {
-          // बैलेंस को 2 डेसिमल तक दिखाना (जैसे 100.00)
           document.getElementById('balBox').innerText = parseFloat(data.balance).toFixed(2);
         }
       } catch (err) {
-        console.error("Data Sync Error:", err);
+        console.error("Sync Error:", err);
       }
     }
 
     window.onload = syncData;
-    // हर 5 सेकंड में बैलेंस अपने आप अपडेट होगा
-    setInterval(syncData, 5000);
+    setInterval(syncData, 5000); // हर 5 सेकंड में बैलेंस अपडेट
   </script>
 
 </body>
