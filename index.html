@@ -5,16 +5,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" />
   <title>JAHARUL GAME</title>
   <style>
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: #1a1d22; overflow-x: hidden; font-family: sans-serif; }
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent; 
+      outline: none;
+    }
+
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      background: #1a1d22; 
+      overflow-x: hidden; 
+      font-family: sans-serif; 
+    }
 
     .container {
       position: relative;
       width: 100%;
       max-width: 500px;
       margin: 0 auto;
+      padding-bottom: 70px; 
     }
 
+    /* Imgur लिंक के साथ फ़ास्ट लोडिंग */
     .bg-img {
       width: 100%;
       display: block;
@@ -22,19 +35,7 @@
       -webkit-user-drag: none;
     }
 
-    /* --- BRANDING FIXES --- */
-    .brand-overlay {
-      position: absolute;
-      background: #1a1d22; 
-      color: #f3c34d;
-      font-weight: 900;
-      z-index: 5;
-    }
-
-    .main-logo { top: 2.2%; left: 4%; width: 45%; height: 3.5%; font-size: 5.5vw; }
-    .welcome-text { top: 8.2%; left: 11%; width: 50%; height: 2%; font-size: 2.8vw; }
-
-    /* --- BALANCE & NAME DISPLAY --- */
+    /* ID और बैलेंस डिस्प्ले */
     .user-info-patch {
       position: absolute;
       top: 13.4%;
@@ -44,21 +45,22 @@
       background: #f1c75b; 
       display: flex;
       align-items: center;
+      justify-content: center;
       color: #3d2b00;
       font-weight: 800;
       font-size: 3.2vw;
       z-index: 6;
+      border-radius: 2px;
       pointer-events: none;
     }
 
-    /* --- CLICKABLE ZONES --- */
+    /* गेम बटन्स के क्लिक जोन */
     .click-zone {
       position: absolute;
       cursor: pointer;
       z-index: 10;
     }
 
-    .cs-btn { top: 1.5%; right: 4%; width: 35%; height: 5%; border-radius: 20px; }
     .lottery-card { top: 18.5%; left: 3%; width: 31%; height: 16%; }
     .original-card { top: 18.5%; left: 34.5%; width: 31%; height: 16%; }
     .slots-card { top: 18.5%; right: 3%; width: 31%; height: 16%; }
@@ -67,12 +69,35 @@
     .popular-btn { top: 35.5%; left: 34.5%; width: 31%; height: 13%; }
     .casino-btn { top: 35.5%; right: 3%; width: 31%; height: 13%; }
 
-    .nav-home { bottom: 0; left: 0; width: 25%; height: 8%; }
-    .nav-account { bottom: 0; right: 0; width: 25%; height: 8%; }
+    /* बॉटम नेविगेशन */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 500px;
+      height: 65px;
+      background: #1a1d22;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid #f1c75b;
+      z-index: 1000;
+    }
+
+    .nav-item {
+      text-align: center;
+      color: #8e949f;
+      font-size: 11px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .nav-item.active { color: #f1c75b; }
+    .nav-icon { font-size: 20px; margin-bottom: 2px; }
 
     @media (min-width: 500px) {
-      .main-logo { font-size: 24px; }
-      .welcome-text { font-size: 14px; }
       .user-info-patch { font-size: 16px; }
     }
   </style>
@@ -80,66 +105,58 @@
 <body>
 
   <div class="container">
-    <img src="https://i.ibb.co/XZ5CDrdM/Picsart-26-01-25-12-57-30-867.jpg" class="bg-img">
-
-    <div class="brand-overlay main-logo">JAHARUL GAME</div>
-    <div class="brand-overlay welcome-text">Welcome to Jaharul Game</div>
+    <img src="https://i.imgur.com/OSddjFM.jpeg" class="bg-img">
 
     <div class="user-info-patch">
-      UID: <span id="userName" style="margin-left:5px;">Loading...</span> 
-      <span style="margin: 0 5px;">|</span> 
-      ₹<span id="balDisplay">0.00</span>
+      ID: <span id="idBox">GUEST</span> 
+      <span style="margin: 0 8px;">|</span> 
+      ₹<span id="balBox">0.00</span>
     </div>
 
-    <div class="click-zone cs-btn" onclick="window.location.href='https://t.me/your_handle'"></div> 
-    <div class="click-zone lottery-card" onclick="location.href='wingo_game.html'"></div>
+    <div class="click-zone lottery-card" onclick="location.href='wingo.html'"></div>
     <div class="click-zone original-card" onclick="location.href='original.html'"></div>
     <div class="click-zone slots-card" onclick="location.href='slots.html'"></div>
     
     <div class="click-zone sports-btn" onclick="location.href='sports.html'"></div>
     <div class="click-zone popular-btn" onclick="location.href='popular.html'"></div>
     <div class="click-zone casino-btn" onclick="location.href='casino.html'"></div>
+  </div>
 
-    <div class="click-zone nav-home" onclick="location.href='index.html'"></div>
-    <div class="click-zone nav-account" onclick="location.href='account.html'"></div>
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="location.href='index.html'">
+      <div class="nav-icon">🏠</div><div>Home</div>
+    </div>
+    <div class="nav-item" onclick="location.href='activity.html'">
+      <div class="nav-icon">🎁</div><div>Activity</div>
+    </div>
+    <div class="nav-item" onclick="location.href='promotion.html'">
+      <div class="nav-icon">📢</div><div>Promotion</div>
+    </div>
+    <div class="nav-item" onclick="location.href='account.html'">
+      <div class="nav-icon">👤</div><div>Account</div>
+    </div>
   </div>
 
   <script>
-    // --- ORIGINAL DATABASE BALANCE SYNC ---
-    async function syncOriginalBalance() {
-        // LocalStorage se phone number lena (Jo login/register ke waqt set hua tha)
-        const userPhone = localStorage.getItem('userPhone'); 
-        
-        if (!userPhone) {
-            console.log("User not logged in");
-            document.getElementById('userName').innerText = "GUEST";
-            // Agar aap chahte hain ki bina login ke page na khule toh niche wali line on kar dein:
-            // window.location.href = 'login.html';
-            return;
+    async function syncData() {
+      const phone = localStorage.getItem('userPhone');
+      if (!phone) {
+        document.getElementById('idBox').innerText = "GUEST";
+        return;
+      }
+      try {
+        document.getElementById('idBox').innerText = phone;
+        const response = await fetch(`/api/user?phone=${phone}`);
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('balBox').innerText = data.balance.toFixed(2);
         }
-
-        try {
-            // Humne userName ki jagah phone number dikha diya
-            document.getElementById('userName').innerText = userPhone;
-
-            // Database (user.js) se fresh balance mangwana
-            const response = await fetch(`/api/user?phone=${userPhone}`);
-            const data = await response.json();
-
-            if (data.success) {
-                const display = document.getElementById('balDisplay');
-                if (display) display.innerText = data.balance.toFixed(2);
-            }
-        } catch (err) {
-            console.error("Sync Error:", err);
-        }
+      } catch (err) {
+        console.log("Database Sync Error:", err);
+      }
     }
-
-    // Page load hote hi chalega
-    window.onload = syncOriginalBalance;
-    
-    // Har 10 second mein balance refresh karega
-    setInterval(syncOriginalBalance, 10000);
+    window.onload = syncData;
+    setInterval(syncData, 5000);
   </script>
 
 </body>
