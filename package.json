@@ -1,16 +1,16 @@
 {
   "name": "wingo-game",
   "version": "1.0.0",
-  "description": "WinGo Game - Vercel Deployment",
-  "main": "index.js",
+  "description": "WinGo Betting Game",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'Build complete'"
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "mongodb": "^6.3.0"
   },
   "engines": {
-    "node": ">=24.x"
+    "node": ">=18.0.0"
   }
 }
