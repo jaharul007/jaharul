@@ -1,47 +1,64 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
-
+  
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+  
   try {
     const { phone } = req.query;
-
+    
     if (!phone) {
-      return res.status(400).json({ success: false, message: 'Phone required' });
+      return res.status(400).json({ success: false, message: 'Phone number required' });
     }
-
+    
     const client = await clientPromise;
     const db = client.db('wingo_game');
-    const usersCollection = db.collection('users');
-
-    let user = await usersCollection.findOne({ phone: phone });
-
+    
+    let user = await db.collection('users').findOne({ phone });
+    
+    // Create new user if doesn't exist
     if (!user) {
-      // Create new user with starting balance
-      const newUser = {
-        phone: phone,
-        balance: 1000.00,
+      user = {
+        phone,
+        balance: 100, // Starting balance ₹100
+        totalDeposit: 0,
+        totalWithdraw: 0,
+        totalBets: 0,
+        totalWins: 0,
+        totalLosses: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-
-      await usersCollection.insertOne(newUser);
-      return res.status(200).json({ success: true, balance: 1000.00 });
+      
+      await db.collection('users').insertOne(user);
+      console.log('✅ New user created:', phone);
     }
-
-    res.status(200).json({ success: true, balance: user.balance || 0 });
-
+    
+    return res.status(200).json({
+      success: true,
+      phone: user.phone,
+      balance: user.balance || 0,
+      totalBets: user.totalBets || 0,
+      totalWins: user.totalWins || 0,
+      totalLosses: user.totalLosses || 0
+    });
+    
   } catch (error) {
-    console.error('User API error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('❌ User API Error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 }
