@@ -22,21 +22,27 @@ export default async function handler(req, res) {
     const db = client.db('wingo_game');
     const betsCollection = db.collection('bets');
 
+    // Query build karein
     const query = { phone: phone };
     if (mode) {
       query.mode = parseInt(mode);
     }
 
+    // IMPORTANT: 'timestamp' ya 'period' par sort karein kyunki 'createdAt' shayad missing ho
     const bets = await betsCollection
       .find(query)
-      .sort({ createdAt: -1 })
-      .limit(100)
+      .sort({ period: -1, timestamp: -1 }) 
+      .limit(50) 
       .toArray();
 
-    res.status(200).json({ success: true, bets: bets });
+    // Data return karein
+    res.status(200).json({ 
+      success: true, 
+      bets: bets 
+    });
 
   } catch (error) {
     console.error('My history API error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, bets: [], message: 'Server error' });
   }
 }
