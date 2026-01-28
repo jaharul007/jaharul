@@ -1,94 +1,101 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
-
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
-
+  
   try {
-    const betData = req.body;
-    const { phone, amount, period, mode, betOn } = betData;
-
-    if (!phone || !amount || !period || !mode || !betOn) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    const { phone, period, mode, betOn, amount, betType, multiplier } = req.body;
+    
+    // Validation
+    if (!phone || !period || !mode || !betOn || !amount) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing required fields' 
+      });
     }
-
+    
     const client = await clientPromise;
     const db = client.db('wingo_game');
-    const usersCollection = db.collection('users');
-    const betsCollection = db.collection('bets');
-
+    
     // Get user
-    const user = await usersCollection.findOne({ phone: phone });
-
+    const user = await db.collection('users').findOne({ phone });
+    
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found. Please refresh page.' 
+      });
     }
-
+    
+    const betAmount = parseFloat(amount);
+    
     // Check balance
-    if (user.balance < amount) {
-      return res.status(400).json({ success: false, message: 'Insufficient balance' });
+    if (user.balance < betAmount) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Insufficient balance! Your balance: ₹${user.balance.toFixed(2)}` 
+      });
     }
-
+    
+    // Create bet document
+    const betData = {
+      phone,
+      period,
+      mode: parseInt(mode),
+      betOn: String(betOn),
+      betType: betType || 'number',
+      amount: betAmount,
+      multiplier: multiplier || 1,
+      status: 'pending',
+      result: null,
+      winAmount: 0,
+      timestamp: new Date(),
+      processedAt: null
+    };
+    
+    // Insert bet
+    await db.collection('bets').insertOne(betData);
+    
     // Deduct balance
-    const newBalance = user.balance - amount;
-    await usersCollection.updateOne(
-      { phone: phone },
-      {
-        $set: {
-          balance: newBalance,
-          updatedAt: new Date()
-        }
+    const newBalance = user.balance - betAmount;
+    
+    await db.collection('users').updateOne(
+      { phone },
+      { 
+        $set: { 
+          balance: newBalance, 
+          updatedAt: new Date() 
+        },
+        $inc: { totalBets: 1 }
       }
     );
-
-    // Determine bet type
-    let betType = 'number';
-    if (['Green', 'Red', 'Violet'].includes(betOn)) {
-      betType = 'color';
-    } else if (['Big', 'Small'].includes(betOn)) {
-      betType = 'size';
-    } else if (betOn === 'Random') {
-      betType = 'random';
-    }
-
-    // Save bet
-    const bet = {
-      phone: phone,
-      period: period,
-      mode: parseInt(mode),
-      betOn: betOn,
-      betType: betType,
-      amount: parseFloat(amount),
-      multiplier: betData.multiplier || 1,
-      status: 'pending',
-      timestamp: new Date(betData.timestamp || Date.now()),
-      createdAt: new Date()
-    };
-
-    await betsCollection.insertOne(bet);
-
-    console.log(`✅ Bet placed: ${phone} - ${betOn} - ₹${amount}`);
-
-    res.status(200).json({
+    
+    console.log(`✅ Bet placed: ${phone} - ₹${betAmount} on ${betOn}`);
+    
+    return res.status(200).json({
       success: true,
       message: 'Bet placed successfully',
       newBalance: newBalance,
-      betId: bet._id
+      betId: betData._id
     });
-
+    
   } catch (error) {
-    console.error('Bet API error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('❌ Bet API Error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error. Please try again.', 
+      error: error.message 
+    });
   }
 }
