@@ -13,26 +13,51 @@ if (!global._mongoClientPromise) {
 clientPromise = global._mongoClientPromise;
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).send();
-
+    // अब हम इसे GET और POST दोनों के लिए खोल रहे हैं ताकि Cron Job इसे चला सके
     try {
         const client = await clientPromise;
         const db = client.db("jaharul_game");
-        
-        // Frontend 'p' (period) aur 'mode' bhej raha hai
-        const { p, period, mode } = req.body; 
-        const finalPeriod = p || period; // Dono mein se jo mile use le lo
 
-        const randomNum = Math.floor(Math.random() * 10);
+        const now = new Date();
+        // IST Time (India) के हिसाब से डेट स्ट्रिंग (YYYYMMDD)
+        const dateStr = now.getFullYear().toString() + 
+                       (now.getMonth() + 1).toString().padStart(2, '0') + 
+                       now.getDate().toString().padStart(2, '0');
 
-        await db.collection('game_results').insertOne({
-            p: finalPeriod,
-            n: randomNum,
-            mode: parseInt(mode) || 60, 
-            timestamp: new Date()
+        const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+
+        // हम 4 मुख्य मोड्स के लिए रिजल्ट एक साथ जनरेट करेंगे
+        const modes = [30, 60, 180, 300]; 
+        const resultsToInsert = [];
+
+        for (let mode of modes) {
+            const periodCount = Math.floor(totalSeconds / mode).toString().padStart(4, '0');
+            const finalPeriod = dateStr + periodCount;
+            const randomNum = Math.floor(Math.random() * 10);
+
+            // डुप्लिकेट रोकने के लिए चेक करें कि क्या इस Period का रिजल्ट पहले से है
+            const exists = await db.collection('game_results').findOne({ p: finalPeriod, mode: mode });
+            
+            if (!exists) {
+                resultsToInsert.push({
+                    p: finalPeriod,
+                    n: randomNum,
+                    mode: mode,
+                    timestamp: new Date()
+                });
+            }
+        }
+
+        if (resultsToInsert.length > 0) {
+            await db.collection('game_results').insertMany(resultsToInsert);
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: `${resultsToInsert.length} modes updated`,
+            data: resultsToInsert 
         });
 
-        res.status(200).json({ success: true, n: randomNum });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
