@@ -1,139 +1,176 @@
 import clientPromise from '../lib/mongodb.js';
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+// Generate random number 0-9
+function generateRandomNumber() {
+  return Math.floor(Math.random() * 10);
+}
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+// Calculate winnings based on bet type
+function calculateWinnings(betOn, betType, amount, result) {
+  let won = false;
+  let multiplier = 0;
+  
+  switch(betType) {
+    case 'number':
+      won = parseInt(betOn) === result;
+      multiplier = 9;
+      break;
+      
+    case 'color':
+      if (betOn === 'Green') {
+        won = [1, 3, 5, 7, 9].includes(result);
+        multiplier = result === 5 ? 4.5 : 2;
+      } else if (betOn === 'Red') {
+        won = [0, 2, 4, 6, 8].includes(result);
+        multiplier = result === 0 ? 4.5 : 2;
+      } else if (betOn === 'Violet') {
+        won = [0, 5].includes(result);
+        multiplier = 4.5;
+      }
+      break;
+      
+    case 'size':
+      if (betOn === 'Big') {
+        won = result >= 5;
+      } else if (betOn === 'Small') {
+        won = result < 5;
+      }
+      multiplier = 2;
+      break;
+      
+    case 'random':
+      won = Math.random() > 0.5;
+      multiplier = 9;
+      break;
   }
+  
+  return {
+    won,
+    winAmount: won ? amount * multiplier : 0
+  };
+}
 
+export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
-
+  
   try {
     const { period, mode } = req.body;
-
+    
     if (!period || !mode) {
-      return res.status(400).json({ success: false, message: 'Missing data' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing period or mode' 
+      });
     }
-
+    
     const client = await clientPromise;
     const db = client.db('wingo_game');
-    const historyCollection = db.collection('history');
-    const betsCollection = db.collection('bets');
-    const usersCollection = db.collection('users');
-
-    // Get result
-    const result = await historyCollection.findOne({
-      period: period,
-      mode: parseInt(mode)
+    
+    // Check if result already exists
+    let result = await db.collection('results').findOne({ 
+      period, 
+      mode: parseInt(mode) 
     });
-
+    
+    // Generate new result if not exists
     if (!result) {
-      return res.status(404).json({ success: false, message: 'Result not found yet' });
-    }
-
-    const winningNumber = result.number;
-
-    // Get pending bets
-    const pendingBets = await betsCollection.find({
-      period: period,
-      mode: parseInt(mode),
-      status: 'pending'
-    }).toArray();
-
-    console.log(`Processing ${pendingBets.length} bets for period ${period}, number ${winningNumber}`);
-
-    // Process each bet
-    for (let bet of pendingBets) {
-      let isWin = false;
-      let winMultiplier = 0;
-
-      // Check win conditions
-      if (bet.betType === 'number') {
-        if (parseInt(bet.betOn) === winningNumber) {
-          isWin = true;
-          winMultiplier = 9;
-        }
-      } else if (bet.betType === 'color') {
-        if (bet.betOn === 'Green' && [1, 3, 7, 9].includes(winningNumber)) {
-          isWin = true;
-          winMultiplier = 2;
-        } else if (bet.betOn === 'Red' && [2, 4, 6, 8].includes(winningNumber)) {
-          isWin = true;
-          winMultiplier = 2;
-        } else if (bet.betOn === 'Violet' && [0, 5].includes(winningNumber)) {
-          isWin = true;
-          winMultiplier = 4.5;
-        }
-      } else if (bet.betType === 'size') {
-        if (bet.betOn === 'Big' && winningNumber >= 5) {
-          isWin = true;
-          winMultiplier = 2;
-        } else if (bet.betOn === 'Small' && winningNumber < 5) {
-          isWin = true;
-          winMultiplier = 2;
-        }
-      }
-
-      // Update bet
-      const updateData = {
-        status: isWin ? 'won' : 'lost',
-        resultNumber: winningNumber,
-        processedAt: new Date()
+      const randomNumber = generateRandomNumber();
+      result = {
+        period,
+        mode: parseInt(mode),
+        number: randomNumber,
+        timestamp: new Date()
       };
-
-      if (isWin) {
-        const winAmount = bet.amount * winMultiplier;
-        updateData.winAmount = winAmount;
-
-        // Credit user
-        await usersCollection.updateOne(
+      
+      await db.collection('results').insertOne(result);
+      console.log(`🎲 New result generated: Period ${period} = ${randomNumber}`);
+    }
+    
+    // Get all pending bets for this period
+    const pendingBets = await db.collection('bets')
+      .find({ 
+        period, 
+        mode: parseInt(mode), 
+        status: 'pending' 
+      })
+      .toArray();
+    
+    console.log(`⏳ Processing ${pendingBets.length} pending bets for period ${period}`);
+    
+    // Process each bet
+    for (const bet of pendingBets) {
+      const { won, winAmount } = calculateWinnings(
+        bet.betOn,
+        bet.betType,
+        bet.amount,
+        result.number
+      );
+      
+      const status = won ? 'won' : 'lost';
+      
+      // Update bet status
+      await db.collection('bets').updateOne(
+        { _id: bet._id },
+        { 
+          $set: { 
+            status, 
+            winAmount,
+            result: result.number,
+            processedAt: new Date()
+          }
+        }
+      );
+      
+      // Update user balance and stats
+      if (won) {
+        await db.collection('users').updateOne(
           { phone: bet.phone },
-          {
-            $inc: { balance: winAmount },
+          { 
+            $inc: { 
+              balance: winAmount,
+              totalWins: 1
+            },
             $set: { updatedAt: new Date() }
           }
         );
-
-        console.log(`✅ Win: ${bet.phone} won ₹${winAmount}`);
+        console.log(`✅ ${bet.phone} won ₹${winAmount.toFixed(2)}`);
+      } else {
+        await db.collection('users').updateOne(
+          { phone: bet.phone },
+          { 
+            $inc: { totalLosses: 1 },
+            $set: { updatedAt: new Date() }
+          }
+        );
+        console.log(`❌ ${bet.phone} lost ₹${bet.amount.toFixed(2)}`);
       }
-
-      await betsCollection.updateOne(
-        { _id: bet._id },
-        { $set: updateData }
-      );
     }
-
-    res.status(200).json({ success: true, message: 'Results processed' });
-
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Results processed successfully',
+      result: result.number,
+      processedBets: pendingBets.length,
+      period: period
+    });
+    
   } catch (error) {
-    console.error('Process results API error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('❌ Process Results Error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 }
-```
-
----
-
-## 1️⃣1️⃣ **public/wingo_game.html** (Same as before - pehle diya hua code)
-
-*Previous wala complete HTML code use karein*
-
----
-
-## 🚀 Deployment Steps
-
-### **1. MongoDB Atlas Setup**
-
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create free cluster
-3. Create database: `wingo_game`
-4. Get connection string:
-```
-mongodb+srv://username:password@cluster.mongodb.net/wingo_game?retryWrites=true&w=majority
