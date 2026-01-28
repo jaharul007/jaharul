@@ -729,6 +729,7 @@ let currentUserPhone = null;
 let currentPage = 1;
 let totalPages = 50;
 let userBets = [];
+let currentBalance = 0; // ✅ CRITICAL: Track balance
 
 // ========================================
 // USER AUTHENTICATION
@@ -741,7 +742,7 @@ function getCurrentUserPhone() {
     
     if (!currentUserPhone) {
         console.warn('No user phone found - using demo mode');
-        currentUserPhone = 'demo_user'; // For testing - Replace with actual login system
+        currentUserPhone = 'demo_user';
     }
     
     return currentUserPhone;
@@ -757,7 +758,7 @@ function getCookieValue(name) {
 }
 
 // ========================================
-// BALANCE MANAGEMENT
+// BALANCE MANAGEMENT - ✅ FIXED
 // ========================================
 
 async function loadBalance() {
@@ -769,7 +770,9 @@ async function loadBalance() {
         const data = await res.json();
         
         if (data.success) {
-            document.getElementById('balDisplay').innerText = data.balance.toFixed(2);
+            currentBalance = parseFloat(data.balance); // ✅ Store balance
+            document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
+            console.log('✅ Balance loaded:', currentBalance);
         } else {
             console.error('Balance load failed:', data.message);
         }
@@ -857,7 +860,7 @@ function getBetType(betValue) {
 }
 
 // ========================================
-// CONFIRM BET - MAIN FUNCTION
+// ✅ CONFIRM BET - FIXED WITH BALANCE CHECK
 // ========================================
 
 async function confirmBet() {
@@ -869,6 +872,12 @@ async function confirmBet() {
 
     const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
     const period = document.getElementById('periodDisplay').innerText;
+    
+    // ✅ CRITICAL: Balance validation
+    if (currentBalance < totalAmt) {
+        alert(`❌ Insufficient Balance!\n\nYour Balance: ₹${currentBalance.toFixed(2)}\nBet Amount: ₹${totalAmt.toFixed(2)}\n\nPlease deposit money first.`);
+        return;
+    }
     
     const confirmBtn = document.getElementById('confirmBtn');
     const originalText = confirmBtn.innerHTML;
@@ -905,12 +914,14 @@ async function confirmBet() {
             return;
         }
 
+        // ✅ Update balance immediately
+        currentBalance = parseFloat(betResult.newBalance);
+        document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
+        
         userBets.unshift(betData);
         localStorage.setItem('userBets_' + phone, JSON.stringify(userBets.slice(0, 50)));
-
-        document.getElementById('balDisplay').innerText = betResult.newBalance.toFixed(2);
         
-        alert(`✅ Bet Placed Successfully!\n\nAmount: ₹${totalAmt}\nBet: ${selectedBetValue}\nPeriod: ${period}\nNew Balance: ₹${betResult.newBalance.toFixed(2)}`);
+        alert(`✅ Bet Placed Successfully!\n\nAmount: ₹${totalAmt}\nBet: ${selectedBetValue}\nPeriod: ${period}\nNew Balance: ₹${currentBalance.toFixed(2)}`);
         
         closeBetPopup();
         loadMyHistory();
@@ -925,7 +936,7 @@ async function confirmBet() {
 }
 
 // ========================================
-// HISTORY FUNCTIONS
+// ✅ HISTORY FUNCTIONS - FIXED
 // ========================================
 
 function switchHistoryTab(index, btn) {
@@ -951,7 +962,10 @@ function changePage(direction) {
     fetchFromDB();
 }
 
+// ✅ FIXED: Better history rendering with multiple API response formats
 function renderHistory(history) {
+    console.log('📊 Rendering history:', history);
+    
     if(!history || history.length === 0) {
         document.getElementById('historyBody').innerHTML = 
             '<tr><td colspan="4" style="text-align:center; padding:30px; color:#6b7280;">No results yet</td></tr>';
@@ -959,7 +973,11 @@ function renderHistory(history) {
     }
     
     const html = history.slice(0, 10).map(i => {
-        const n = parseInt(i.n || i.number);
+        // ✅ Handle multiple response formats
+        const n = parseInt(i.n || i.number || i.result || 0);
+        const period = i.p || i.period || 'N/A';
+        
+        console.log('Processing row:', { n, period, raw: i });
         
         let numColor = '#10b981';
         if (n === 0) numColor = '#3b82f6';
@@ -978,7 +996,7 @@ function renderHistory(history) {
         }
         
         return `<tr>
-            <td class="p-period">${i.p || i.period}</td>
+            <td class="p-period">${period}</td>
             <td><span class="res-number" style="color:${numColor};">${n}</span></td>
             <td style="color:#fff; font-weight:400; font-size:18px;">${n >= 5 ? 'Big' : 'Small'}</td>
             <td>${dots}</td>
@@ -986,15 +1004,20 @@ function renderHistory(history) {
     }).join('');
     
     document.getElementById('historyBody').innerHTML = html;
+    console.log('✅ History rendered successfully');
 }
 
 async function loadMyHistory() {
     const phone = getCurrentUserPhone();
     if (!phone) return;
     
+    console.log('Loading my history for:', phone);
+    
     try {
         const res = await fetch(`/api/myhistory?phone=${phone}&mode=${currentMode}`);
         const data = await res.json();
+        
+        console.log('My history response:', data);
         
         if (data.success && data.bets && data.bets.length > 0) {
             userBets = data.bets;
@@ -1044,20 +1067,51 @@ async function loadMyHistory() {
     }
 }
 
+// ✅ FIXED: Better API handling
 async function fetchFromDB() {
+    console.log('📡 Fetching history from DB...');
+    
     try {
         const res = await fetch(`/api/history?mode=${currentMode}&page=${currentPage}`);
         
+        console.log('API Response status:', res.status);
+        
         if(res.ok) { 
-            const data = await res.json(); 
-            if (data && data.length > 0) {
-                renderHistory(data);
+            const data = await res.json();
+            console.log('API Response data:', data);
+            
+            // ✅ Handle different response formats
+            let historyData = null;
+            
+            if (Array.isArray(data)) {
+                historyData = data;
+            } else if (data.results && Array.isArray(data.results)) {
+                historyData = data.results;
+            } else if (data.history && Array.isArray(data.history)) {
+                historyData = data.history;
+            } else if (data.data && Array.isArray(data.data)) {
+                historyData = data.data;
             }
+            
+            if (historyData && historyData.length > 0) {
+                console.log('✅ Found history data:', historyData.length, 'items');
+                renderHistory(historyData);
+            } else {
+                console.warn('⚠️ No history data found in response');
+                document.getElementById('historyBody').innerHTML = 
+                    '<tr><td colspan="4" style="text-align:center; padding:30px; color:#6b7280;">No history available</td></tr>';
+            }
+        } else {
+            console.error('❌ API request failed:', res.status);
+            document.getElementById('historyBody').innerHTML = 
+                '<tr><td colspan="4" style="text-align:center; padding:30px; color:#ef4444;">Failed to load history</td></tr>';
         }
         
         loadBalance();
     } catch (e) {
-        console.error('Fetch error:', e);
+        console.error('❌ Fetch error:', e);
+        document.getElementById('historyBody').innerHTML = 
+            '<tr><td colspan="4" style="text-align:center; padding:30px; color:#ef4444;">Connection error</td></tr>';
     }
 }
 
@@ -1137,7 +1191,7 @@ function switchM(s, el) {
 }
 
 // ========================================
-// INITIALIZATION
+// ✅ INITIALIZATION - ENHANCED
 // ========================================
 
 window.onload = () => {
@@ -1188,6 +1242,7 @@ window.onload = () => {
     setInterval(fetchFromDB, 30000);
     
     console.log('✅ All systems running');
+    console.log('💰 Initial balance:', currentBalance);
 };
 </script>
 </body>
