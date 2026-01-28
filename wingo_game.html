@@ -1065,10 +1065,42 @@ async function loadMyHistory() {
     }
 }
 
+// ========================================
+// ✅ UPDATED fetchFromDB() - CALLS /api/save-result FIRST
+// ========================================
+
 async function fetchFromDB() {
     console.log('📡 Fetching history from DB...');
     
     try {
+        // ✅ पहले /api/save-result को कॉल करें
+        console.log('💾 Saving current result...');
+        const now = new Date();
+        const total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
+        const dateStr = now.getFullYear().toString() + 
+                       (now.getMonth()+1).toString().padStart(2,'0') + 
+                       now.getDate().toString().padStart(2,'0');
+        const currentPeriod = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
+        
+        try {
+            const saveRes = await fetch('/api/save-result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    period: currentPeriod,
+                    mode: currentMode
+                })
+            });
+            
+            if (saveRes.ok) {
+                const saveData = await saveRes.json();
+                console.log('✅ Result saved:', saveData);
+            }
+        } catch (saveErr) {
+            console.warn('⚠️ Save result error (continuing):', saveErr);
+        }
+        
+        // ✅ अब हिस्ट्री फेच करें
         const res = await fetch(`/api/history?mode=${currentMode}&page=${currentPage}`);
         
         console.log('API Response status:', res.status);
@@ -1115,34 +1147,6 @@ async function fetchFromDB() {
 // TIMER & PERIOD FUNCTIONS
 // ========================================
 
-function startTimer() {
-    setInterval(() => {
-        let now = new Date();
-        let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
-        let rem = currentMode - (total % currentMode);
-        let m = Math.floor(rem/60).toString().padStart(2,'0');
-        let s = (rem%60).toString().padStart(2,'0');
-        
-        document.getElementById('timerDigits').innerHTML = 
-            `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>` +
-            `<span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span>` +
-            `<span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
-        
-        let dateStr = now.getFullYear().toString() + 
-                     (now.getMonth()+1).toString().padStart(2,'0') + 
-                     now.getDate().toString().padStart(2,'0');
-        let p = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
-        document.getElementById('periodDisplay').innerText = p;
-        
-        if (rem === 3) {
-            setTimeout(() => {
-                fetchFromDB();
-                checkBetResults();
-            }, 3000);
-        }
-    }, 1000);
-}
-
 async function checkBetResults() {
     const phone = getCurrentUserPhone();
     if (!phone) return;
@@ -1174,6 +1178,40 @@ async function checkBetResults() {
     } catch (e) {
         console.error('Result check error:', e);
     }
+}
+
+// ========================================
+// ✅ UPDATED startTimer() - CALLS fetchFromDB() AT 2 SECONDS
+// ========================================
+
+function startTimer() {
+    setInterval(() => {
+        let now = new Date();
+        let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
+        let rem = currentMode - (total % currentMode);
+        let m = Math.floor(rem/60).toString().padStart(2,'0');
+        let s = (rem%60).toString().padStart(2,'0');
+        
+        document.getElementById('timerDigits').innerHTML = 
+            `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>` +
+            `<span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span>` +
+            `<span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
+        
+        let dateStr = now.getFullYear().toString() + 
+                     (now.getMonth()+1).toString().padStart(2,'0') + 
+                     now.getDate().toString().padStart(2,'0');
+        let p = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
+        document.getElementById('periodDisplay').innerText = p;
+        
+        // ✅ जब 2 सेकंड बचें, तब fetchFromDB() को कॉल करें
+        if (rem === 2) {
+            console.log('⏰ Timer at 2 seconds - calling fetchFromDB()');
+            setTimeout(() => {
+                fetchFromDB();
+                checkBetResults();
+            }, 1000);
+        }
+    }, 1000);
 }
 
 function switchM(s, el) {
