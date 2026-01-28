@@ -1,48 +1,55 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
-
+  
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+  
   try {
-    const { phone, mode } = req.query;
-
+    const { phone, mode = 60 } = req.query;
+    
     if (!phone) {
-      return res.status(400).json({ success: false, message: 'Phone required' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Phone number required' 
+      });
     }
-
+    
     const client = await clientPromise;
     const db = client.db('wingo_game');
-    const betsCollection = db.collection('bets');
-
-    // Query build karein
-    const query = { phone: phone };
-    if (mode) {
-      query.mode = parseInt(mode);
-    }
-
-    // IMPORTANT: 'timestamp' ya 'period' par sort karein kyunki 'createdAt' shayad missing ho
-    const bets = await betsCollection
-      .find(query)
-      .sort({ period: -1, timestamp: -1 }) 
-      .limit(50) 
+    
+    const bets = await db.collection('bets')
+      .find({ 
+        phone, 
+        mode: parseInt(mode) 
+      })
+      .sort({ timestamp: -1 })
+      .limit(50)
       .toArray();
-
-    // Data return karein
-    res.status(200).json({ 
-      success: true, 
-      bets: bets 
+    
+    console.log(`📜 My History: ${bets.length} bets for ${phone}`);
+    
+    return res.status(200).json({
+      success: true,
+      bets: bets,
+      count: bets.length
     });
-
+    
   } catch (error) {
-    console.error('My history API error:', error);
-    res.status(500).json({ success: false, bets: [], message: 'Server error' });
+    console.error('❌ My History API Error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 }
