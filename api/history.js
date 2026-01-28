@@ -1,44 +1,43 @@
-// api/history.js - Game History API
-import { MongoClient } from 'mongodb';
-
-const uri = process.env.MONGODB_URI || 'mongodb+srv://alluserdatabase:alluserdatabase@cluster0.bcpe0i1.mongodb.net/BDG_GAME?retryWrites=true&w=majority&appName=Cluster0';
-const client = new MongoClient(uri);
+import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
-    await client.connect();
-    const db = client.db("BDG_GAME");
-    const gameResults = db.collection("game_results");
+    const { mode, page } = req.query;
+    const currentMode = parseInt(mode) || 60;
+    const currentPage = parseInt(page) || 1;
+    const perPage = 10;
 
-    if (req.method === 'GET') {
-      const { mode, page = 1 } = req.query;
-      const limit = 10;
-      const skip = (parseInt(page) - 1) * limit;
+    const client = await clientPromise;
+    const db = client.db('wingo_game');
+    const historyCollection = db.collection('history');
 
-      const query = mode ? { mode: parseInt(mode) } : {};
+    const history = await historyCollection
+      .find({ mode: currentMode })
+      .sort({ period: -1 })
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage)
+      .toArray();
 
-      const results = await gameResults
-        .find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
+    const formatted = history.map(h => ({
+      p: h.period,
+      n: h.number,
+      mode: h.mode
+    }));
 
-      // Format for frontend
-      const formatted = results.map(r => ({
-        p: r.period,
-        n: r.number,
-        mode: r.mode
-      }));
+    res.status(200).json(formatted);
 
-      return res.status(200).json(formatted);
-    }
-
-  } catch (e) {
-    console.error('History API Error:', e);
-    res.status(500).json({ 
-      success: false, 
-      error: e.message 
-    });
+  } catch (error) {
+    console.error('History API error:', error);
+    res.status(500).json([]);
   }
 }
