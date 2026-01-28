@@ -131,9 +131,14 @@
         }
 
         /* =========================================
-           7. GAME CONTROLS (COLOR & NUMBERS)
+           7. COLOR BUTTONS (Green, Violet, Red)
            ========================================= */
-        .color-row { display: flex; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
+        .color-row { 
+            display: flex; 
+            gap: 10px; 
+            padding: 0 15px; 
+            margin-bottom: 15px; 
+        }
         .c-btn { 
             flex: 1; 
             padding: 18px; 
@@ -144,52 +149,318 @@
             cursor: pointer; 
             font-size: 16px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
         }
-        .green { background: #2ead6d; } .violet { background: #9b51e0; } .red { background: #ff4d4d; }
+        .c-btn:active { transform: scale(0.95); }
+        .green { background: #2ead6d; } 
+        .violet { background: #9b51e0; } 
+        .red { background: #ff4d4d; }
 
-        .num-grid-box { background: #22272d; padding: 20px; border-radius: 20px; margin: 0 15px 20px 15px; }
-        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
-        .n-btn { 
-            aspect-ratio: 1; 
+        /* =========================================
+           8. NUMBER BALLS GRID - DARK THEME
+           ========================================= */
+        .num-grid-container {
+            background: #0a0e27;
+            padding: 25px 20px;
+            margin: 0;
+        }
+
+        .num-grid { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .ball-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .n-ball { 
+            width: 60px;
+            height: 60px;
             border-radius: 50%; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             font-weight: 900; 
-            font-size: 22px; 
+            font-size: 28px; 
             color: #fff; 
             cursor: pointer; 
             border: none;
-            box-shadow: inset -4px -4px 8px rgba(0,0,0,0.4), inset 4px 4px 8px rgba(255,255,255,0.3), 0 5px 10px rgba(0,0,0,0.5);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.25), inset -3px -3px 8px rgba(0,0,0,0.3), inset 3px 3px 8px rgba(255,255,255,0.4);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            position: relative;
+            transition: transform 0.2s;
         }
 
-        .bs-row { display: flex; gap: 12px; margin-top: 20px; }
+        .n-ball:active {
+            transform: scale(0.95);
+        }
+
+        /* Glossy effect on balls */
+        .n-ball::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            filter: blur(4px);
+        }
+
+        .multiplier-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b92a8;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        /* Random button styling - DARK THEME */
+        .random-btn {
+            background: transparent;
+            border: 2px solid #e53e3e;
+            color: #e53e3e;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .random-btn:active {
+            transform: scale(0.97);
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        /* Multiplier buttons row - DARK THEME */
+        .multiplier-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: nowrap;
+        }
+
+        .mult-btn {
+            background: #1a1f3a;
+            border: 1px solid #2d3455;
+            color: #8b92a8;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 0 0 auto;
+        }
+
+        .mult-btn.active {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+        }
+
+        /* Big/Small buttons - EXACT PHOTO STYLE */
+        .bs-row { 
+            display: flex; 
+            gap: 0;
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
         .bs-btn { 
             flex: 1; 
-            padding: 16px; 
+            padding: 18px;
             font-weight: 900; 
-            border-radius: 30px; 
             border: none; 
-            font-size: 18px; 
+            font-size: 20px; 
             color: #fff; 
-            cursor: pointer; 
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: opacity 0.2s;
         }
-        .big { background: #e6a23c; } 
-        .small { background: #409eff; }
+
+        .bs-btn:active {
+            opacity: 0.8;
+        }
+
+        .big { 
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+        }
+
+        .small { 
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+        }
+
+        .bs-multiplier {
+            background: rgba(255,255,255,0.3);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 16px;
+        }
 
         /* =========================================
-           8. HISTORY TABLE
+           9. HISTORY TABS & TABLE - DARK THEME
            ========================================= */
-        .photo-history-card { background: #22272d; margin: 15px; border-radius: 15px; overflow: hidden; }
-        .p-table { width: 100%; border-collapse: collapse; }
-        .p-table th { color: #9aa0ac; font-size: 13px; padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; }
-        .p-table td { padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-size: 14px; }
-        .p-period { color: #fff; font-size: 12px; font-weight: bold; }
-        .res-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin: 0 2px; }
+        .history-tabs {
+            display: flex;
+            background: #0a0e27;
+            border-radius: 0;
+            margin: 0;
+            border-bottom: none;
+        }
+
+        .hist-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 15px;
+            color: #6b7280;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .hist-tab.active {
+            background: transparent;
+            color: #10b981;
+            border-bottom: 3px solid #10b981;
+        }
+
+        .hist-tab:hover {
+            color: #9ca3af;
+        }
+
+        .photo-history-card { 
+            background: #0a0e27;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .p-table { 
+            width: 100%; 
+            border-collapse: collapse;
+        }
+
+        .p-table th { 
+            background: #374151;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 18px 10px;
+            text-align: center;
+            border-bottom: none;
+        }
+
+        .p-table td { 
+            padding: 20px 10px;
+            text-align: center;
+            border-bottom: 1px solid #1f2937;
+            font-size: 16px;
+            background: #1f2937;
+            color: #fff;
+        }
+
+        .p-table tbody tr:hover td {
+            background: #2d3748;
+        }
+
+        .p-period { 
+            color: #9ca3af;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .res-number {
+            font-size: 32px;
+            font-weight: 900;
+        }
+
+        .res-dot { 
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Hidden sections for Chart and My History */
+        .history-content {
+            display: none;
+            padding: 30px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .history-content.active {
+            display: block;
+        }
+
+        /* Pagination controls at bottom */
+        .pagination-bar {
+            background: #0a0e27;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-btn {
+            background: #374151;
+            border: none;
+            color: #9ca3af;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover {
+            background: #4b5563;
+        }
+
+        .page-btn:active {
+            transform: scale(0.95);
+        }
+
+        .page-btn.next {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+        }
+
+        .page-info {
+            color: #9ca3af;
+            font-size: 18px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
 
         /* =========================================
-           9. BETTING MODAL (FIXED HEIGHT)
+           9. BETTING MODAL
            ========================================= */
         .modal-overlay { 
             display: none; 
@@ -206,7 +477,6 @@
             background: #2b3038; 
             border-radius: 20px 20px 0 0; 
             overflow: hidden; 
-            /* Height adjusted to be flatter */
             max-height: 70vh; 
             animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
         }
@@ -214,7 +484,7 @@
         
         .modal-blue-hdr { 
             background: #4fa1f9; 
-            padding: 15px 10px 40px 10px; /* Reduced padding for flat look */
+            padding: 15px 10px 40px 10px;
             text-align: center; 
             color: #fff; 
             font-size: 18px; 
@@ -225,7 +495,7 @@
             background: #fff; 
             color: #4fa1f9; 
             width: 70%; 
-            margin: -25px auto 15px auto; /* Tighter margins */
+            margin: -25px auto 15px auto;
             padding: 10px; 
             border-radius: 12px; 
             font-weight: 900; 
@@ -235,7 +505,7 @@
         }
         
         .modal-body { padding: 5px 25px 20px 25px; color: #fff; }
-        .row-item { display: flex; align-items: center; margin-bottom: 15px; } /* Reduced spacing */
+        .row-item { display: flex; align-items: center; margin-bottom: 15px; }
         .label-txt { width: 90px; font-size: 14px; color: #aaa; font-weight: bold; }
         
         .chip-grid { display: flex; gap: 8px; flex: 1; }
@@ -295,34 +565,84 @@
             </div>
         </div>
 
+        <!-- COLOR BUTTONS (Green, Violet, Red) -->
         <div class="color-row">
             <button onclick="openBet('Green')" class="c-btn green">Green</button>
             <button onclick="openBet('Violet')" class="c-btn violet">Violet</button>
             <button onclick="openBet('Red')" class="c-btn red">Red</button>
         </div>
-        
-        <div class="num-grid-box">
+
+        <!-- NUMBER BALLS SECTION - PHOTO EXACT DESIGN -->
+        <div class="num-grid-container">
             <div class="num-grid" id="mainGrid"></div>
+
+            <div class="multiplier-row">
+                <button class="random-btn" onclick="openBet('Random')">Random</button>
+                <button class="mult-btn active" onclick="setMultiplier(1, this)">X1</button>
+                <button class="mult-btn" onclick="setMultiplier(5, this)">X5</button>
+                <button class="mult-btn" onclick="setMultiplier(10, this)">X10</button>
+                <button class="mult-btn" onclick="setMultiplier(20, this)">X20</button>
+                <button class="mult-btn" onclick="setMultiplier(50, this)">X50</button>
+                <button class="mult-btn" onclick="setMultiplier(100, this)">X100</button>
+            </div>
+
             <div class="bs-row">
-                <button onclick="openBet('Big')" class="bs-btn big">Big</button>
-                <button onclick="openBet('Small')" class="bs-btn small">Small</button>
+                <button onclick="openBet('Big')" class="bs-btn big">
+                    <span>Big</span>
+                    <span class="bs-multiplier">2X</span>
+                </button>
+                <button onclick="openBet('Small')" class="bs-btn small">
+                    <span>Small</span>
+                    <span class="bs-multiplier">2X</span>
+                </button>
             </div>
         </div>
 
+        <!-- HISTORY SECTION - CLICKABLE TABS -->
+        <div class="history-tabs">
+            <button class="hist-tab active" onclick="switchHistoryTab(0, this)">Game history</button>
+            <button class="hist-tab" onclick="switchHistoryTab(1, this)">Chart</button>
+            <button class="hist-tab" onclick="switchHistoryTab(2, this)">My history</button>
+        </div>
+
         <div class="photo-history-card">
-            <table class="p-table">
-                <thead>
-                    <tr>
-                        <th style="text-align: left; padding-left: 15px;">Period</th>
-                        <th>Number</th>
-                        <th>Size</th>
-                        <th>Color</th>
-                    </tr>
-                </thead>
-                <tbody id="historyBody">
-                    <tr><td colspan="4" style="text-align:center; padding:30px; color:#666;">Synchronizing...</td></tr>
-                </tbody>
-            </table>
+            <!-- Game History Table -->
+            <div class="history-content active" id="gameHistory">
+                <table class="p-table">
+                    <thead>
+                        <tr>
+                            <th>Period</th>
+                            <th>Number</th>
+                            <th>Big Small</th>
+                            <th>Color</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr><td colspan="4" style="text-align:center; padding:30px; color:#6b7280;">Synchronizing...</td></tr>
+                    </tbody>
+                </table>
+                
+                <!-- Pagination Bar -->
+                <div class="pagination-bar">
+                    <button class="page-btn prev" onclick="changePage(-1)">
+                        <span>‹</span>
+                    </button>
+                    <span class="page-info" id="pageInfo">1/50</span>
+                    <button class="page-btn next" onclick="changePage(1)">
+                        <span>›</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="history-content" id="chartSection">
+                <p>📊 Chart view coming soon...</p>
+            </div>
+
+            <!-- My History Section -->
+            <div class="history-content" id="myHistory">
+                <p>📝 Your betting history will appear here</p>
+            </div>
         </div>
     </div>
 
@@ -389,6 +709,43 @@
     function setX(v, b) { multiplier = v; document.querySelectorAll('.x-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); updateTotal(); }
     function changeQty(v) { let i = document.getElementById('qtyInput'); i.value = Math.max(1, (parseInt(i.value) || 0) + v); updateTotal(); }
     function updateTotal() { let qty = parseInt(document.getElementById('qtyInput').value) || 1; document.getElementById('totalTxt').innerText = (baseAmount * qty * multiplier).toFixed(2); }
+    
+    function setMultiplier(val, btn) {
+        document.querySelectorAll('.mult-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // History Tab Switching Function
+    function switchHistoryTab(index, btn) {
+        // Remove active class from all tabs
+        document.querySelectorAll('.hist-tab').forEach(t => t.classList.remove('active'));
+        // Add active class to clicked tab
+        btn.classList.add('active');
+        
+        // Hide all content sections
+        document.querySelectorAll('.history-content').forEach(c => c.classList.remove('active'));
+        
+        // Show selected content
+        const sections = ['gameHistory', 'chartSection', 'myHistory'];
+        document.getElementById(sections[index]).classList.add('active');
+    }
+
+    // Pagination variables
+    let currentPage = 1;
+    let totalPages = 50;
+    let allHistory = [];
+
+    // Change page function
+    function changePage(direction) {
+        currentPage += direction;
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        
+        document.getElementById('pageInfo').innerText = currentPage + '/' + totalPages;
+        
+        // In a real app, fetch data for current page
+        // For now, just show the page number
+    }
 
     async function syncOriginalBalance() {
         const phone = localStorage.getItem('userPhone'); 
@@ -419,14 +776,34 @@
 
     function renderHistory(history) {
         if(!history || history.length === 0) return;
-        const html = history.slice(0, 15).map(i => {
+        const html = history.slice(0, 10).map(i => {
             const n = parseInt(i.n);
-            const nColor = (n === 0) ? 'linear-gradient(to bottom right, #ff4d4d 50%, #9b51e0 50%)' : (n === 5 ? 'linear-gradient(to bottom right, #2ead6d 50%, #9b51e0 50%)' : (n % 2 === 0 ? '#ff4d4d' : '#2ead6d'));
+            
+            // Color logic matching photo
+            let numColor = '#10b981'; // Default green
+            if (n === 0) numColor = '#3b82f6'; // Blue for 0
+            else if (n === 5) numColor = '#10b981'; // Green for 5
+            else if (n % 2 === 0) numColor = '#ef4444'; // Red for even
+            
+            // Dot colors
+            let dots = '';
+            if (n === 0 || n === 5) {
+                // Both colors for 0 and 5
+                if (n === 0) {
+                    dots = '<span class="res-dot" style="background:#3b82f6;"></span><span class="res-dot" style="background:#ec4899;"></span>';
+                } else {
+                    dots = '<span class="res-dot" style="background:#10b981;"></span><span class="res-dot" style="background:#ec4899;"></span>';
+                }
+            } else {
+                // Single color
+                dots = `<span class="res-dot" style="background:${numColor};"></span>`;
+            }
+            
             return `<tr>
                 <td class="p-period">${i.p}</td>
-                <td style="color:${(n%2==0 && n!=0)?'#ff4d4d':'#2ead6d'}; font-weight:bold; font-size:18px;">${n}</td>
-                <td style="color:#aaa;">${n >= 5 ? 'Big' : 'Small'}</td>
-                <td><span class="res-dot" style="background:${nColor}"></span></td>
+                <td><span class="res-number" style="color:${numColor};">${n}</span></td>
+                <td style="color:#fff; font-weight:400; font-size:18px;">${n >= 5 ? 'Big' : 'Small'}</td>
+                <td>${dots}</td>
             </tr>`;
         }).join('');
         document.getElementById('historyBody').innerHTML = html;
@@ -462,35 +839,43 @@
         fetchFromDB();
     }
 
-    // --- PHOTO MATCHING COLOR LOGIC ---
+    // NUMBER BALLS - PHOTO EXACT DESIGN
     window.onload = () => {
         const grid = document.getElementById('mainGrid');
         grid.innerHTML = '';
+        
         const ballColors = {
-            0: 'linear-gradient(135deg, #ff4d4d 50%, #9b51e0 50%)', // Red-Violet
-            1: '#2ead6d', // Green
-            2: '#ff4d4d', // Red
-            3: '#2ead6d', // Green
-            4: '#ff4d4d', // Red
-            5: 'linear-gradient(135deg, #2ead6d 50%, #9b51e0 50%)', // Green-Violet
-            6: '#ff4d4d', // Red
-            7: '#2ead6d', // Green
-            8: '#ff4d4d', // Red
-            9: '#2ead6d'  // Green
+            0: { base: 'linear-gradient(135deg, #ef5350 45%, #ab47bc 55%)', border: '#d32f2f' },
+            1: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)', border: '#388e3c' },
+            2: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)', border: '#c62828' },
+            3: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)', border: '#388e3c' },
+            4: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)', border: '#c62828' },
+            5: { base: 'linear-gradient(135deg, #66bb6a 45%, #ab47bc 55%)', border: '#388e3c' },
+            6: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)', border: '#c62828' },
+            7: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)', border: '#388e3c' },
+            8: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)', border: '#c62828' },
+            9: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)', border: '#388e3c' }
         };
 
         for(let i=0; i<=9; i++) {
-            let btn = document.createElement('button');
-            btn.className = 'n-btn'; btn.innerText = i;
-            btn.onclick = () => openBet(i);
-            let col = ballColors[i];
-            if(i==0 || i==5) {
-                btn.style.background = col;
-            } else {
-                btn.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 85%)`;
-            }
-            grid.appendChild(btn);
+            let wrapper = document.createElement('div');
+            wrapper.className = 'ball-wrapper';
+            
+            let ball = document.createElement('button');
+            ball.className = 'n-ball';
+            ball.innerText = i;
+            ball.onclick = () => openBet(i);
+            ball.style.background = ballColors[i].base;
+            
+            let mult = document.createElement('span');
+            mult.className = 'multiplier-text';
+            mult.innerText = '9X';
+            
+            wrapper.appendChild(ball);
+            wrapper.appendChild(mult);
+            grid.appendChild(wrapper);
         }
+        
         fetchFromDB();
         startTimer();
         setInterval(syncOriginalBalance, 8000); 
