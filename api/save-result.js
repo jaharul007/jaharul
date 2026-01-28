@@ -13,52 +13,51 @@ if (!global._mongoClientPromise) {
 clientPromise = global._mongoClientPromise;
 
 export default async function handler(req, res) {
-    // अब हम इसे GET और POST दोनों के लिए खोल रहे हैं ताकि Cron Job इसे चला सके
+    // इसे GET या POST किसी से भी चला सकते हैं
     try {
         const client = await clientPromise;
-        const db = client.db("jaharul_game");
+        const db = client.db("jaharul_game"); // आपका पुराना DB नाम
 
         const now = new Date();
-        // IST Time (India) के हिसाब से डेट स्ट्रिंग (YYYYMMDD)
+        // IST (India Time) के हिसाब से डेट
         const dateStr = now.getFullYear().toString() + 
                        (now.getMonth() + 1).toString().padStart(2, '0') + 
                        now.getDate().toString().padStart(2, '0');
 
         const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
 
-        // हम 4 मुख्य मोड्स के लिए रिजल्ट एक साथ जनरेट करेंगे
+        // चारों मोड (30s, 1m, 3m, 5m) की हिस्ट्री एक साथ मैनेज होगी
         const modes = [30, 60, 180, 300]; 
-        const resultsToInsert = [];
+        let updatedCount = 0;
 
         for (let mode of modes) {
             const periodCount = Math.floor(totalSeconds / mode).toString().padStart(4, '0');
             const finalPeriod = dateStr + periodCount;
-            const randomNum = Math.floor(Math.random() * 10);
 
-            // डुप्लिकेट रोकने के लिए चेक करें कि क्या इस Period का रिजल्ट पहले से है
+            // 1. पहले चेक करो कि क्या ये पीरियड पहले से सेव है? (ताकि डुप्लिकेट न हो)
             const exists = await db.collection('game_results').findOne({ p: finalPeriod, mode: mode });
             
             if (!exists) {
-                resultsToInsert.push({
+                const randomNum = Math.floor(Math.random() * 10);
+                
+                // 2. मोंगो डीबी में रिजल्ट सेव करना
+                await db.collection('game_results').insertOne({
                     p: finalPeriod,
                     n: randomNum,
                     mode: mode,
                     timestamp: new Date()
                 });
+                updatedCount++;
             }
-        }
-
-        if (resultsToInsert.length > 0) {
-            await db.collection('game_results').insertMany(resultsToInsert);
         }
 
         res.status(200).json({ 
             success: true, 
-            message: `${resultsToInsert.length} modes updated`,
-            data: resultsToInsert 
+            message: `DB Updated: ${updatedCount} new results saved.` 
         });
 
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error("MongoDB Error:", e);
+        res.status(500).json({ error: "Database connection failed" });
     }
 }
