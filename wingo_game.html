@@ -36,13 +36,13 @@
         }
 
         /* =========================================
-           3. CONTENT SCROLL AREA
+           3. CONTENT SCROLL AREA - COMPACT
            ========================================= */
         .content { 
             flex: 1; 
             overflow-y: auto; 
             scrollbar-width: none; 
-            padding-bottom: 50px; 
+            padding-bottom: 10px; 
         }
         .content::-webkit-scrollbar { display: none; }
 
@@ -51,14 +51,14 @@
            ========================================= */
         .wallet-card { 
             background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); 
-            margin: 15px; 
+            margin: 12px 15px; 
             border-radius: 20px; 
-            padding: 25px; 
+            padding: 20px; 
             text-align: center; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
-        .bal-txt { font-size: 36px; font-weight: 800; margin-bottom: 5px; color: #f3c34d; }
-        .w-btn-row { display: flex; gap: 15px; margin-top: 20px; }
+        .bal-txt { font-size: 32px; font-weight: 800; margin-bottom: 3px; color: #f3c34d; }
+        .w-btn-row { display: flex; gap: 15px; margin-top: 15px; }
         .w-btn { 
             flex: 1; 
             padding: 14px; 
@@ -102,15 +102,15 @@
            ========================================= */
         .timer-box { 
             background: #f3c34d; 
-            margin: 15px; 
+            margin: 12px 15px; 
             border-radius: 15px; 
             display: flex; 
             color: #5a3e00; 
-            min-height: 110px; 
+            min-height: 100px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-        .t-left { flex: 1.2; padding: 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
-        .t-right { flex: 1; padding: 15px; text-align: right; }
+        .t-left { flex: 1.2; padding: 12px 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
+        .t-right { flex: 1; padding: 12px 15px; text-align: right; }
         .timer-display { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
         .t-digit { 
             background: #333; 
@@ -137,17 +137,17 @@
             display: flex; 
             gap: 10px; 
             padding: 0 15px; 
-            margin-bottom: 15px; 
+            margin-bottom: 12px; 
         }
         .c-btn { 
             flex: 1; 
-            padding: 18px; 
+            padding: 15px; 
             border-radius: 10px; 
             border: none; 
             color: #fff; 
             font-weight: bold; 
             cursor: pointer; 
-            font-size: 16px;
+            font-size: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: transform 0.2s;
         }
@@ -161,15 +161,15 @@
            ========================================= */
         .num-grid-container {
             background: #0a0e27;
-            padding: 25px 20px;
+            padding: 18px 20px;
             margin: 0;
         }
 
         .num-grid { 
             display: grid; 
             grid-template-columns: repeat(5, 1fr); 
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .ball-wrapper {
@@ -180,14 +180,14 @@
         }
 
         .n-ball { 
-            width: 60px;
-            height: 60px;
+            width: 55px;
+            height: 55px;
             border-radius: 50%; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             font-weight: 900; 
-            font-size: 28px; 
+            font-size: 26px; 
             color: #fff; 
             cursor: pointer; 
             border: none;
@@ -278,16 +278,16 @@
 
         .bs-btn { 
             flex: 1; 
-            padding: 18px;
+            padding: 15px;
             font-weight: 900; 
             border: none; 
-            font-size: 20px; 
+            font-size: 18px; 
             color: #fff; 
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             transition: opacity 0.2s;
         }
 
@@ -360,18 +360,18 @@
         .p-table th { 
             background: #374151;
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            padding: 18px 10px;
+            padding: 15px 10px;
             text-align: center;
             border-bottom: none;
         }
 
         .p-table td { 
-            padding: 20px 10px;
+            padding: 16px 10px;
             text-align: center;
             border-bottom: 1px solid #1f2937;
-            font-size: 16px;
+            font-size: 15px;
             background: #1f2937;
             color: #fff;
         }
@@ -387,13 +387,13 @@
         }
 
         .res-number {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 900;
         }
 
         .res-dot { 
-            height: 16px;
-            width: 16px;
+            height: 14px;
+            width: 14px;
             border-radius: 50%;
             display: inline-block;
             margin: 0 3px;
@@ -413,24 +413,24 @@
             display: block;
         }
 
-        /* Pagination controls at bottom */
+        /* Pagination controls at bottom - COMPACT */
         .pagination-bar {
             background: #0a0e27;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .page-btn {
             background: #374151;
             border: none;
             color: #9ca3af;
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 10px;
-            font-size: 24px;
+            font-size: 22px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -469,7 +469,7 @@
             background: rgba(0,0,0,0.85); 
             z-index: 9999; 
             align-items: flex-end; 
-            justify-content: center; 
+            justify-content: center;
         }
         .bet-modal { 
             width: 100%; 
@@ -477,8 +477,9 @@
             background: #2b3038; 
             border-radius: 20px 20px 0 0; 
             overflow: hidden; 
-            max-height: 70vh; 
-            animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
+            max-height: 65vh; 
+            animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
@@ -646,8 +647,8 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="betModalOverlay">
-        <div class="bet-modal">
+    <div class="modal-overlay" id="betModalOverlay" onclick="closeModalOnOverlay(event)">
+        <div class="bet-modal" onclick="event.stopPropagation()">
             <div class="modal-blue-hdr" id="popHeader">WinGo 1 Min</div>
             <div class="modal-white-sel" id="selType">Select --</div>
 
@@ -704,7 +705,16 @@
         updateTotal();
     }
 
-    function closeBetPopup() { document.getElementById('betModalOverlay').style.display = 'none'; }
+    function closeBetPopup() { 
+        document.getElementById('betModalOverlay').style.display = 'none'; 
+    }
+    
+    function closeModalOnOverlay(event) {
+        // Close modal only if overlay (not modal content) is clicked
+        if (event.target.id === 'betModalOverlay') {
+            closeBetPopup();
+        }
+    }
     function setBase(v, b) { baseAmount = v; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); b.classList.add('active'); updateTotal(); }
     function setX(v, b) { multiplier = v; document.querySelectorAll('.x-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); updateTotal(); }
     function changeQty(v) { let i = document.getElementById('qtyInput'); i.value = Math.max(1, (parseInt(i.value) || 0) + v); updateTotal(); }
