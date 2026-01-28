@@ -1,43 +1,60 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
-
+  
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+  
   try {
-    const { mode, page } = req.query;
-    const currentMode = parseInt(mode) || 60;
-    const currentPage = parseInt(page) || 1;
-    const perPage = 10;
-
+    const { mode = 60, page = 1 } = req.query;
+    const limit = 10;
+    const skip = (parseInt(page) - 1) * limit;
+    
     const client = await clientPromise;
     const db = client.db('wingo_game');
-    const historyCollection = db.collection('history');
-
-    const history = await historyCollection
-      .find({ mode: currentMode })
+    
+    const history = await db.collection('results')
+      .find({ mode: parseInt(mode) })
       .sort({ period: -1 })
-      .skip((currentPage - 1) * perPage)
-      .limit(perPage)
+      .skip(skip)
+      .limit(limit)
       .toArray();
-
-    const formatted = history.map(h => ({
-      p: h.period,
-      n: h.number,
-      mode: h.mode
+    
+    // Format response (multiple formats for compatibility)
+    const formattedHistory = history.map(item => ({
+      p: item.period,
+      n: item.number,
+      period: item.period,
+      number: item.number,
+      result: item.number
     }));
-
-    res.status(200).json(formatted);
-
+    
+    console.log(`📊 History loaded: ${formattedHistory.length} results for mode ${mode}`);
+    
+    return res.status(200).json({
+      success: true,
+      results: formattedHistory,
+      history: formattedHistory,
+      data: formattedHistory,
+      page: parseInt(page),
+      mode: parseInt(mode)
+    });
+    
   } catch (error) {
-    console.error('History API error:', error);
-    res.status(500).json([]);
+    console.error('❌ History API Error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 }
