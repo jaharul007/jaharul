@@ -3,64 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>JAHARUL GAME</title>
+    <title>JAHARUL GAME - OFFICIAL</title>
     <style>
-        /* --- TERA ORIGINAL CSS (No changes) --- */
+        /* =========================================
+           1. CORE LAYOUT & RESET
+           ========================================= */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 450px; background: #0f1217; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .nav-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #22272d; color: #f3c34d; font-weight: bold; }
-        .content { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
+        body { background: #1a1d22; font-family: 'Inter', sans-serif; color: #fff; display: flex; justify-content: center; overflow: hidden; }
+        
+        .container { 
+            width: 100%; 
+            max-width: 450px; 
+            background: #0f1217; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+        }
+
+        /* =========================================
+           2. HEADER & NAVIGATION
+           ========================================= */
+        .nav-header { 
+            padding: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #22272d; 
+            color: #f3c34d; 
+            font-weight: bold; 
+            border-bottom: 1px solid #333;
+        }
+
+        /* =========================================
+           3. CONTENT SCROLL AREA
+           ========================================= */
+        .content { 
+            flex: 1; 
+            overflow-y: auto; 
+            scrollbar-width: none; 
+            padding-bottom: 50px; 
+        }
         .content::-webkit-scrollbar { display: none; }
-        .wallet-card { background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); margin: 15px; border-radius: 20px; padding: 25px; text-align: center; }
-        .bal-txt { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
-        .w-btn-row { display: flex; gap: 15px; margin-top: 15px; }
-        .w-btn { flex: 1; padding: 12px; border-radius: 25px; border: none; font-weight: bold; color: #fff; cursor: pointer; text-decoration: none; text-align: center; }
-        .withdraw { background: #ff4d4d; } .deposit { background: #2ead6d; }
+
+        /* =========================================
+           4. WALLET SECTION
+           ========================================= */
+        .wallet-card { 
+            background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); 
+            margin: 15px; 
+            border-radius: 20px; 
+            padding: 25px; 
+            text-align: center; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .bal-txt { font-size: 36px; font-weight: 800; margin-bottom: 5px; color: #f3c34d; }
+        .w-btn-row { display: flex; gap: 15px; margin-top: 20px; }
+        .w-btn { 
+            flex: 1; 
+            padding: 14px; 
+            border-radius: 30px; 
+            border: none; 
+            font-weight: bold; 
+            color: #fff; 
+            cursor: pointer; 
+            text-decoration: none; 
+            text-align: center; 
+            font-size: 14px;
+        }
+        .withdraw { background: #ff4d4d; }
+        .deposit { background: #2ead6d; }
+
+        /* =========================================
+           5. GAME TABS (30s, 1m, 3m, 5m)
+           ========================================= */
         .game-tabs { display: flex; justify-content: space-between; padding: 10px 15px; gap: 8px; }
-        .g-tab { flex: 1; background: #333; border-radius: 12px; padding: 10px 5px; text-align: center; cursor: pointer; color: #999; font-size: 11px; }
-        .g-tab.active { background: #f3c34d; color: #5a3e00; font-weight: bold; box-shadow: 0 0 15px rgba(243, 195, 77, 0.3); }
+        .g-tab { 
+            flex: 1; 
+            background: #333; 
+            border-radius: 12px; 
+            padding: 12px 5px; 
+            text-align: center; 
+            cursor: pointer; 
+            color: #999; 
+            font-size: 11px; 
+            transition: 0.3s;
+        }
+        .g-tab.active { 
+            background: #f3c34d; 
+            color: #5a3e00; 
+            font-weight: bold; 
+            box-shadow: 0 0 15px rgba(243, 195, 77, 0.4); 
+        }
         .tab-icon { display: block; font-size: 18px; margin-bottom: 4px; }
-        .timer-box { background: #f3c34d; margin: 15px; border-radius: 15px; display: flex; color: #5a3e00; min-height: 110px; }
+
+        /* =========================================
+           6. TIMER BOX
+           ========================================= */
+        .timer-box { 
+            background: #f3c34d; 
+            margin: 15px; 
+            border-radius: 15px; 
+            display: flex; 
+            color: #5a3e00; 
+            min-height: 110px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
         .t-left { flex: 1.2; padding: 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
         .t-right { flex: 1; padding: 15px; text-align: right; }
         .timer-display { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
-        .t-digit { background: #333; color: #fff; padding: 4px 6px; border-radius: 4px; font-weight: bold; font-size: 22px; }
-        .btn-container { padding: 0 15px; }
-        .color-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .c-btn { flex: 1; padding: 15px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; }
+        .t-digit { 
+            background: #333; 
+            color: #fff; 
+            padding: 6px 8px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            font-size: 24px; 
+        }
+        .how-btn {
+            background: none; 
+            border: 1px solid #5a3e00; 
+            padding: 3px 10px; 
+            border-radius: 15px; 
+            font-size: 11px; 
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* =========================================
+           7. GAME CONTROLS (COLOR & NUMBERS)
+           ========================================= */
+        .color-row { display: flex; gap: 10px; padding: 0 15px; margin-bottom: 20px; }
+        .c-btn { 
+            flex: 1; 
+            padding: 18px; 
+            border-radius: 10px; 
+            border: none; 
+            color: #fff; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
         .green { background: #2ead6d; } .violet { background: #9b51e0; } .red { background: #ff4d4d; }
-        .num-grid-box { background: #22272d; padding: 15px; border-radius: 15px; margin-bottom: 15px; }
-        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .n-btn { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff; cursor: pointer; text-decoration: none; }
-        .bs-row { display: flex; gap: 10px; margin-top: 15px; }
-        .bs-btn { flex: 1; padding: 15px; font-weight: bold; text-decoration: none; text-align: center; font-size: 18px; color: #fff; }
-        .big { background: #e6a23c; border-radius: 30px 0 0 30px; } 
-        .small { background: #409eff; border-radius: 0 30px 30px 0; }
-        .photo-history-card { background: #22272d; margin: 15px; border-radius: 10px; overflow: hidden; }
-        .p-tabs { display: flex; background: #333; }
-        .p-tab-item { flex: 1; padding: 12px; text-align: center; font-size: 14px; color: #999; }
-        .p-tab-item.active { background: #f3c34d; color: #000; font-weight: bold; }
+
+        .num-grid-box { background: #22272d; padding: 20px; border-radius: 20px; margin: 0 15px 20px 15px; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
+        .n-btn { 
+            aspect-ratio: 1; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 900; 
+            font-size: 22px; 
+            color: #fff; 
+            cursor: pointer; 
+            border: none;
+            box-shadow: inset -4px -4px 8px rgba(0,0,0,0.4), inset 4px 4px 8px rgba(255,255,255,0.3), 0 5px 10px rgba(0,0,0,0.5);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+
+        .bs-row { display: flex; gap: 12px; margin-top: 20px; }
+        .bs-btn { 
+            flex: 1; 
+            padding: 16px; 
+            font-weight: 900; 
+            border-radius: 30px; 
+            border: none; 
+            font-size: 18px; 
+            color: #fff; 
+            cursor: pointer; 
+        }
+        .big { background: #e6a23c; } 
+        .small { background: #409eff; }
+
+        /* =========================================
+           8. HISTORY TABLE
+           ========================================= */
+        .photo-history-card { background: #22272d; margin: 15px; border-radius: 15px; overflow: hidden; }
         .p-table { width: 100%; border-collapse: collapse; }
-        .p-table th { color: #9aa0ac; font-size: 13px; padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-weight: normal; }
-        .p-table td { padding: 12px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-size: 15px; }
-        .p-period { color: #fff; font-size: 13px; text-align: left !important; padding-left: 15px !important; }
-        .p-num { font-size: 24px; font-weight: bold; }
+        .p-table th { color: #9aa0ac; font-size: 13px; padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; }
+        .p-table td { padding: 15px 5px; text-align: center; border-bottom: 1px solid #1a1d22; font-size: 14px; }
+        .p-period { color: #fff; font-size: 12px; font-weight: bold; }
         .res-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin: 0 2px; }
-        .dot-box { display: flex; justify-content: center; align-items: center; gap: 4px; }
+
+        /* =========================================
+           9. BETTING MODAL (FIXED HEIGHT)
+           ========================================= */
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 9999; 
+            align-items: flex-end; 
+            justify-content: center; 
+        }
+        .bet-modal { 
+            width: 100%; 
+            max-width: 450px; 
+            background: #2b3038; 
+            border-radius: 20px 20px 0 0; 
+            overflow: hidden; 
+            /* Height adjusted to be flatter */
+            max-height: 70vh; 
+            animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-blue-hdr { 
+            background: #4fa1f9; 
+            padding: 15px 10px 40px 10px; /* Reduced padding for flat look */
+            text-align: center; 
+            color: #fff; 
+            font-size: 18px; 
+            font-weight: 900; 
+            clip-path: polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%); 
+        }
+        .modal-white-sel { 
+            background: #fff; 
+            color: #4fa1f9; 
+            width: 70%; 
+            margin: -25px auto 15px auto; /* Tighter margins */
+            padding: 10px; 
+            border-radius: 12px; 
+            font-weight: 900; 
+            text-align: center; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4); 
+            font-size: 16px;
+        }
+        
+        .modal-body { padding: 5px 25px 20px 25px; color: #fff; }
+        .row-item { display: flex; align-items: center; margin-bottom: 15px; } /* Reduced spacing */
+        .label-txt { width: 90px; font-size: 14px; color: #aaa; font-weight: bold; }
+        
+        .chip-grid { display: flex; gap: 8px; flex: 1; }
+        .chip { background: #3d444d; color: #fff; border: none; padding: 10px 5px; border-radius: 8px; font-weight: 900; flex: 1; cursor: pointer; transition: 0.2s; }
+        .chip.active { background: #4fa1f9; box-shadow: 0 0 10px rgba(79, 161, 249, 0.5); }
+        
+        .qty-control { display: flex; align-items: center; background: #1a1d22; border-radius: 10px; border: 1px solid #444; overflow: hidden; }
+        .qty-btn { background: #4fa1f9; border: none; color: #fff; width: 40px; height: 40px; font-size: 22px; font-weight: 900; cursor: pointer; }
+        .qty-input { background: transparent; border: none; color: #fff; width: 60px; text-align: center; font-size: 18px; font-weight: 900; }
+        
+        .x-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 15px; }
+        .x-btn { background: #3d444d; border: none; color: #fff; padding: 10px 0; border-radius: 8px; font-size: 11px; font-weight: 900; cursor: pointer; }
+        .x-btn.active { background: #4fa1f9; }
+        
+        .modal-footer { display: flex; margin-top: 20px; }
+        .f-btn { border: none; padding: 20px; font-weight: 900; font-size: 18px; cursor: pointer; flex: 1; }
+        .f-cancel { background: #3d444d; color: #ccc; }
+        .f-confirm { background: #4fa1f9; color: #fff; flex: 2; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="nav-header">
-        <span onclick="history.back()" style="cursor:pointer;"><</span> <span>JAHARUL GAME</span> <span>🕒</span>
+        <span onclick="location.href='index.html'" style="cursor:pointer; font-size: 20px;">❮</span>
+        <span>JAHARUL GAME</span>
+        <span onclick="fetchFromDB()" style="cursor:pointer;">🕒</span>
     </div>
 
     <div class="content">
         <div class="wallet-card">
             <div class="bal-txt">₹<span id="balDisplay">0.00</span></div>
-            <span style="font-size:12px; color:#ccc;">💰 Wallet balance</span>
+            <span style="font-size:12px; color:#ccc; letter-spacing: 1px;">AVAILABLE BALANCE</span>
             <div class="w-btn-row">
                 <a href="withdraw.html" class="w-btn withdraw">Withdraw</a>
                 <a href="deposit.html" class="w-btn deposit">Deposit</a>
@@ -68,54 +276,95 @@
         </div>
 
         <div class="game-tabs">
-            <div class="g-tab" onclick="switchM(30, this)"><span class="tab-icon">🕒</span>WinGo 30s</div>
-            <div class="g-tab active" onclick="switchM(60, this)"><span class="tab-icon">🕒</span>WinGo 1m</div>
-            <div class="g-tab" onclick="switchM(180, this)"><span class="tab-icon">🕒</span>WinGo 3m</div>
-            <div class="g-tab" onclick="switchM(300, this)"><span class="tab-icon">🕒</span>WinGo 5m</div>
+            <div class="g-tab" onclick="switchM(30, this)"><span class="tab-icon">⏱</span>WinGo 30s</div>
+            <div class="g-tab active" onclick="switchM(60, this)"><span class="tab-icon">⏱</span>WinGo 1m</div>
+            <div class="g-tab" onclick="switchM(180, this)"><span class="tab-icon">⏱</span>WinGo 3m</div>
+            <div class="g-tab" onclick="switchM(300, this)"><span class="tab-icon">⏱</span>WinGo 5m</div>
         </div>
 
         <div class="timer-box">
             <div class="t-left">
-                <button style="background:none; border:1px solid #5a3e00; padding:2px 8px; border-radius:10px; font-size:10px;">How to play</button>
-                <p id="modeName" style="margin-top:10px; font-size:13px; font-weight:bold;">WinGo 1 Min</p>
-                <div id="miniDots" style="margin-top:5px; display:flex; gap:3px;"></div>
+                <button class="how-btn" onclick="location.href='admin_panel.html'">How to play</button>
+                <p id="modeName" style="margin-top:15px; font-size:14px; font-weight:bold; color: #333;">WinGo 1 Min</p>
+                <div id="miniDots" style="margin-top:8px; display:flex; gap:4px;"></div>
             </div>
             <div class="t-right">
-                <p style="font-size:11px; font-weight:bold;">Time remaining</p>
+                <p style="font-size:11px; font-weight:bold; color: #555;">Time remaining</p>
                 <div class="timer-display" id="timerDigits"></div>
-                <p id="periodDisplay" style="margin-top:10px; font-size:13px; font-weight:bold; letter-spacing:1px;"></p>
+                <p id="periodDisplay" style="margin-top:12px; font-size:14px; font-weight:900; letter-spacing:1px; color: #222;"></p>
             </div>
         </div>
 
-        <div class="btn-container">
-            <div class="color-row">
-                <button onclick="openBet('Green')" class="c-btn green">Green</button>
-                <button onclick="openBet('Violet')" class="c-btn violet">Violet</button>
-                <button onclick="openBet('Red')" class="c-btn red">Red</button>
-            </div>
-            <div class="num-grid-box">
-                <div class="num-grid" id="mainGrid"></div>
-                <div class="bs-row">
-                    <button onclick="openBet('Big')" class="bs-btn big">Big</button>
-                    <button onclick="openBet('Small')" class="bs-btn small">Small</button>
-                </div>
+        <div class="color-row">
+            <button onclick="openBet('Green')" class="c-btn green">Green</button>
+            <button onclick="openBet('Violet')" class="c-btn violet">Violet</button>
+            <button onclick="openBet('Red')" class="c-btn red">Red</button>
+        </div>
+        
+        <div class="num-grid-box">
+            <div class="num-grid" id="mainGrid"></div>
+            <div class="bs-row">
+                <button onclick="openBet('Big')" class="bs-btn big">Big</button>
+                <button onclick="openBet('Small')" class="bs-btn small">Small</button>
             </div>
         </div>
 
         <div class="photo-history-card">
-            <div class="p-tabs">
-                <div class="p-tab-item active">Game history</div>
-                <div class="p-tab-item">Chart</div>
-                <div class="p-tab-item">My history</div>
-            </div>
             <table class="p-table">
                 <thead>
-                    <tr><th style="text-align: left; padding-left: 15px;">Period</th><th>Number</th><th>Big Small</th><th>Color</th></tr>
+                    <tr>
+                        <th style="text-align: left; padding-left: 15px;">Period</th>
+                        <th>Number</th>
+                        <th>Size</th>
+                        <th>Color</th>
+                    </tr>
                 </thead>
                 <tbody id="historyBody">
-                    <tr><td colspan="4" style="text-align:center; padding:20px;">Loading...</td></tr>
+                    <tr><td colspan="4" style="text-align:center; padding:30px; color:#666;">Synchronizing...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="betModalOverlay">
+        <div class="bet-modal">
+            <div class="modal-blue-hdr" id="popHeader">WinGo 1 Min</div>
+            <div class="modal-white-sel" id="selType">Select --</div>
+
+            <div class="modal-body">
+                <div class="row-item">
+                    <div class="label-txt">Amount</div>
+                    <div class="chip-grid">
+                        <button class="chip active" onclick="setBase(1, this)">1</button>
+                        <button class="chip" onclick="setBase(10, this)">10</button>
+                        <button class="chip" onclick="setBase(100, this)">100</button>
+                        <button class="chip" onclick="setBase(1000, this)">1000</button>
+                    </div>
+                </div>
+
+                <div class="row-item" style="justify-content: space-between;">
+                    <div class="label-txt">Quantity</div>
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="changeQty(-1)">-</button>
+                        <input type="number" class="qty-input" id="qtyInput" value="1" oninput="updateTotal()">
+                        <button class="qty-btn" onclick="changeQty(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="x-grid">
+                    <button class="x-btn active" onclick="setX(1, this)">X1</button>
+                    <button class="x-btn" onclick="setX(5, this)">X5</button>
+                    <button class="x-btn" onclick="setX(10, this)">X10</button>
+                    <button class="x-btn" onclick="setX(20, this)">X20</button>
+                    <button class="x-btn" onclick="setX(50, this)">X50</button>
+                    <button class="x-btn" onclick="setX(100, this)">X100</button>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="f-btn f-cancel" onclick="closeBetPopup()">Cancel</button>
+                <button class="f-confirm f-btn" onclick="confirmBet()">Confirm ₹<span id="totalTxt">1.00</span></button>
+            </div>
         </div>
     </div>
 </div>
@@ -123,131 +372,128 @@
 <script>
     let currentMode = 60;
     let lastSavedPeriods = {30: "", 60: "", 180: "", 300: ""}; 
+    let baseAmount = 1; 
+    let multiplier = 1; 
+    let selectedBetValue = "";
 
-    // --- GLOBAL BALANCE SYNC (Database se balance laane ke liye) ---
-    async function syncOriginalBalance() {
-        const userPhone = localStorage.getItem('userPhone'); 
-        if (!userPhone) return;
-        try {
-            const response = await fetch(`/api/user?phone=${userPhone}`);
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById('balDisplay').innerText = data.balance.toFixed(2);
-            }
-        } catch (err) { console.error("Balance Sync Error:", err); }
+    function openBet(val) {
+        selectedBetValue = val;
+        document.getElementById('selType').innerText = "Select " + val;
+        document.getElementById('popHeader').innerText = document.getElementById('modeName').innerText;
+        document.getElementById('betModalOverlay').style.display = 'flex';
+        updateTotal();
     }
 
-    // --- Result Save Logic ---
-    async function saveGameResult(period, mode) {
+    function closeBetPopup() { document.getElementById('betModalOverlay').style.display = 'none'; }
+    function setBase(v, b) { baseAmount = v; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); b.classList.add('active'); updateTotal(); }
+    function setX(v, b) { multiplier = v; document.querySelectorAll('.x-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); updateTotal(); }
+    function changeQty(v) { let i = document.getElementById('qtyInput'); i.value = Math.max(1, (parseInt(i.value) || 0) + v); updateTotal(); }
+    function updateTotal() { let qty = parseInt(document.getElementById('qtyInput').value) || 1; document.getElementById('totalTxt').innerText = (baseAmount * qty * multiplier).toFixed(2); }
+
+    async function syncOriginalBalance() {
+        const phone = localStorage.getItem('userPhone'); 
+        if (!phone) return;
         try {
-            const randomNum = Math.floor(Math.random() * 10);
-            await fetch('/api/history', {
+            const res = await fetch(`/api/user?phone=${phone}`);
+            const data = await res.json();
+            if (data.success) document.getElementById('balDisplay').innerText = data.balance.toFixed(2);
+        } catch (err) { }
+    }
+
+    async function confirmBet() {
+        const phone = localStorage.getItem('userPhone');
+        const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
+        const period = document.getElementById('periodDisplay').innerText;
+        if(!phone) return alert("Please Login First!");
+        try {
+            const res = await fetch('/api/bet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ p: period, n: randomNum, mode: mode })
+                body: JSON.stringify({ phone, amount: totalAmt, betOn: selectedBetValue, mode: currentMode, period })
             });
-            console.log(`Saved for ${mode}s: ${period}`);
-        } catch (e) { console.error("Save Error:", e); }
-    }
-
-    // --- Fetch History from DB ---
-    async function fetchFromDB() {
-        try {
-            // Fresh Balance Sync
-            await syncOriginalBalance();
-
-            // Mode-specific History Fetch
-            const histRes = await fetch(`/api/history?mode=${currentMode}&t=${Date.now()}`);
-            if(histRes.ok) {
-                const histData = await histRes.json();
-                renderHistory(histData);
-            }
-        } catch (e) { console.error("Sync Error:", e); }
+            const data = await res.json();
+            if(data.success) { alert("Bet Placed!"); syncOriginalBalance(); closeBetPopup(); }
+            else { alert(data.message || "Error!"); }
+        } catch(e) { alert("Server Error!"); }
     }
 
     function renderHistory(history) {
-        if(!history || history.length === 0) {
-            document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No history for this mode</td></tr>';
-            return;
-        }
-        const html = history.map(i => {
+        if(!history || history.length === 0) return;
+        const html = history.slice(0, 15).map(i => {
             const n = parseInt(i.n);
-            const nColor = (n === 0 || n === 5) ? '#9b51e0' : (n % 2 === 0 ? '#ff4d4d' : '#2ead6d');
-            const bigSmall = n >= 5 ? 'Big' : 'Small';
-            let dots = `<span class="res-dot" style="background:${nColor}"></span>`;
-            if(n === 0) dots += `<span class="res-dot" style="background:#ff4d4d"></span>`;
-            if(n === 5) dots += `<span class="res-dot" style="background:#2ead6d"></span>`;
+            const nColor = (n === 0) ? 'linear-gradient(to bottom right, #ff4d4d 50%, #9b51e0 50%)' : (n === 5 ? 'linear-gradient(to bottom right, #2ead6d 50%, #9b51e0 50%)' : (n % 2 === 0 ? '#ff4d4d' : '#2ead6d'));
             return `<tr>
                 <td class="p-period">${i.p}</td>
-                <td class="p-num" style="color:${nColor}">${n}</td>
-                <td style="color:#ccc;">${bigSmall}</td>
-                <td><div class="dot-box">${dots}</div></td>
+                <td style="color:${(n%2==0 && n!=0)?'#ff4d4d':'#2ead6d'}; font-weight:bold; font-size:18px;">${n}</td>
+                <td style="color:#aaa;">${n >= 5 ? 'Big' : 'Small'}</td>
+                <td><span class="res-dot" style="background:${nColor}"></span></td>
             </tr>`;
         }).join('');
         document.getElementById('historyBody').innerHTML = html;
     }
 
-    // --- Main Timer Logic ---
+    async function fetchFromDB() {
+        try {
+            const res = await fetch(`/api/history?mode=${currentMode}&t=${Date.now()}`);
+            if(res.ok) { const data = await res.json(); renderHistory(data); }
+            syncOriginalBalance();
+        } catch (e) { }
+    }
+
     function startTimer() {
         setInterval(async () => {
             let now = new Date();
             let total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
-            
             let rem = currentMode - (total % currentMode);
             let m = Math.floor(rem/60).toString().padStart(2,'0');
             let s = (rem%60).toString().padStart(2,'0');
-            document.getElementById('timerDigits').innerHTML = `
-                <span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>
-                <span style="color:#333; font-weight:bold; margin:0 2px;">:</span>
-                <span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
-
+            document.getElementById('timerDigits').innerHTML = `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span><span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span><span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
             let dateStr = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0');
-            let p = dateStr + "1000" + Math.floor(total/currentMode).toString().padStart(4, '0');
+            let p = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
             document.getElementById('periodDisplay').innerText = p;
-
-            [30, 60, 180, 300].forEach(async (mVal) => {
-                let mRem = mVal - (total % mVal);
-                let mP = dateStr + "1000" + Math.floor(total/mVal).toString().padStart(4, '0');
-                
-                if(mRem === 2 && lastSavedPeriods[mVal] !== mP) {
-                    lastSavedPeriods[mVal] = mP;
-                    await saveGameResult(mP, mVal);
-                }
-                
-                if(mRem === 1 && mVal === currentMode) {
-                    setTimeout(fetchFromDB, 1500); 
-                }
-            });
         }, 1000);
     }
 
     function switchM(s, el) {
         currentMode = s;
         document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
-        if(el) el.classList.add('active');
+        el.classList.add('active');
         document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
-        document.getElementById('historyBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Refreshing...</td></tr>';
         fetchFromDB();
     }
 
-    function openBet(type) {
-        window.location.href = `betting_popup.html?type=${type}&mode=${currentMode}`;
-    }
-
+    // --- PHOTO MATCHING COLOR LOGIC ---
     window.onload = () => {
         const grid = document.getElementById('mainGrid');
         grid.innerHTML = '';
+        const ballColors = {
+            0: 'linear-gradient(135deg, #ff4d4d 50%, #9b51e0 50%)', // Red-Violet
+            1: '#2ead6d', // Green
+            2: '#ff4d4d', // Red
+            3: '#2ead6d', // Green
+            4: '#ff4d4d', // Red
+            5: 'linear-gradient(135deg, #2ead6d 50%, #9b51e0 50%)', // Green-Violet
+            6: '#ff4d4d', // Red
+            7: '#2ead6d', // Green
+            8: '#ff4d4d', // Red
+            9: '#2ead6d'  // Green
+        };
+
         for(let i=0; i<=9; i++) {
             let btn = document.createElement('button');
             btn.className = 'n-btn'; btn.innerText = i;
             btn.onclick = () => openBet(i);
-            let col = (i==0||i==5)?'#9b51e0':(i%2==0?'#ff4d4d':'#2ead6d');
-            btn.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 75%)`;
+            let col = ballColors[i];
+            if(i==0 || i==5) {
+                btn.style.background = col;
+            } else {
+                btn.style.background = `radial-gradient(circle at 30% 30%, #fff 0%, ${col} 85%)`;
+            }
             grid.appendChild(btn);
         }
         fetchFromDB();
         startTimer();
-        setInterval(syncOriginalBalance, 10000); // Har 10 sec mein balance sync
+        setInterval(syncOriginalBalance, 8000); 
     };
 </script>
 </body>
