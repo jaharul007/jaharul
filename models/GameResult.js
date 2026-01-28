@@ -15,3 +15,14 @@ export async function createResult(db, period, mode, number) {
     timestamp: new Date()
   };
   
+  await db.collection('results').insertOne(result);
+  return result;
+}
+
+export async function getHistory(db, mode, limit = 10) {
+  return await db.collection('results')
+    .find({ mode })
+    .sort({ period: -1 })
+    .limit(limit)
+    .toArray();
+}
