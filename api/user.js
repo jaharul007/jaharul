@@ -1,58 +1,47 @@
-import { MongoClient } from 'mongodb';
-
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
+import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
-    await client.connect();
-    const db = client.db("jaharul_game");
-    const users = db.collection("users");
+    const { phone } = req.query;
 
-    // 1. GET BALANCE: Jab koi bhi page load ho
-    if (req.method === 'GET') {
-      const { phone } = req.query; // URL se phone number lega
-
-      if (!phone) {
-        return res.status(400).json({ success: false, message: "Phone number required" });
-      }
-
-      const user = await users.findOne({ phone: phone });
-      
-      if (!user) {
-        return res.status(404).json({ success: false, message: "User not found" });
-      }
-
-      return res.status(200).json({ success: true, balance: user.balance });
+    if (!phone) {
+      return res.status(400).json({ success: false, message: 'Phone required' });
     }
 
-    // 2. UPDATE BALANCE: Registration ya Betting ke liye
-    if (req.method === 'POST') {
-      const { phone, password, action, amount, balance } = req.body;
+    const client = await clientPromise;
+    const db = client.db('wingo_game');
+    const usersCollection = db.collection('users');
 
-      // Agar Naya User Register ho raha hai
-      if (phone && password && balance !== undefined) {
-        const exists = await users.findOne({ phone: phone });
-        if (exists) return res.status(400).json({ success: false, message: "Already Registered" });
+    let user = await usersCollection.findOne({ phone: phone });
 
-        await users.insertOne({ phone, password, balance: parseFloat(balance), createdAt: new Date() });
-        return res.status(201).json({ success: true });
-      }
+    if (!user) {
+      // Create new user with starting balance
+      const newUser = {
+        phone: phone,
+        balance: 1000.00,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-      // Agar Betting se balance deduct/add ho raha hai
-      if (phone && action && amount) {
-        const updateVal = action === 'deduct' ? -Math.abs(amount) : Math.abs(amount);
-        const result = await users.findOneAndUpdate(
-          { phone: phone },
-          { $inc: { balance: updateVal } },
-          { returnDocument: 'after' }
-        );
-        return res.status(200).json({ success: true, balance: result.value.balance });
-      }
+      await usersCollection.insertOne(newUser);
+      return res.status(200).json({ success: true, balance: 1000.00 });
     }
 
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, error: e.message });
+    res.status(200).json({ success: true, balance: user.balance || 0 });
+
+  } catch (error) {
+    console.error('User API error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 }
