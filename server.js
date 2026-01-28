@@ -1,408 +1,501 @@
+// ============================================
+// WINGO GAME - BACKEND API (Node.js + MongoDB)
+// ============================================
+
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
-
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// MongoDB connection
-const mongoUrl = 'mongodb://localhost:27017';
-const client = new MongoClient(mongoUrl);
-let db;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public')); // Static files ke liye
 
-// Connect to MongoDB
-async function connectDB() {
-    try {
-        await client.connect();
-        db = client.db('wingo_game');
-        console.log('✅ Connected to MongoDB');
-        
-        await db.collection('users').createIndex({ phone: 1 }, { unique: true });
-        await db.collection('bets').createIndex({ phone: 1, period: 1, mode: 1 });
-        await db.collection('history').createIndex({ period: 1, mode: 1 }, { unique: true });
-        
-        console.log('✅ Indexes created');
-    } catch (error) {
-        console.error('❌ MongoDB connection error:', error);
-        process.exit(1);
-    }
+// ============================================
+// MONGODB CONNECTION
+// ============================================
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/wingo_game';
+
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('✅ MongoDB Connected Successfully'))
+.catch(err => console.error('❌ MongoDB Connection Error:', err));
+
+// ============================================
+// MONGOOSE SCHEMAS
+// ============================================
+
+// User Schema
+const userSchema = new mongoose.Schema({
+    phone: { type: String, required: true, unique: true, index: true },
+    balance: { type: Number, default: 0 },
+    name: String,
+    email: String,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+
+// Game Result Schema (History)
+const gameResultSchema = new mongoose.Schema({
+    period: { type: String, required: true, unique: true, index: true },
+    mode: { type: Number, required: true, index: true }, // 30, 60, 180, 300
+    number: { type: Number, required: true, min: 0, max: 9 },
+    color: { type: String, enum: ['Green', 'Red', 'Violet'] },
+    size: { type: String, enum: ['Big', 'Small'] },
+    timestamp: { type: Date, default: Date.now, index: true }
+}, { timestamps: true });
+
+// Bet Schema
+const betSchema = new mongoose.Schema({
+    phone: { type: String, required: true, index: true },
+    period: { type: String, required: true, index: true },
+    mode: { type: Number, required: true },
+    betOn: { type: String, required: true }, // Green, Red, Violet, 0-9, Big, Small
+    betType: { type: String, enum: ['color', 'number', 'size', 'random'] },
+    amount: { type: Number, required: true },
+    multiplier: { type: Number, default: 1 },
+    status: { type: String, enum: ['pending', 'won', 'lost'], default: 'pending', index: true },
+    resultNumber: Number,
+    winAmount: Number,
+    timestamp: { type: Date, default: Date.now, index: true }
+}, { timestamps: true });
+
+// Create compound index for efficient queries
+betSchema.index({ phone: 1, period: 1 });
+betSchema.index({ period: 1, mode: 1 });
+gameResultSchema.index({ mode: 1, timestamp: -1 });
+
+const User = mongoose.model('User', userSchema);
+const GameResult = mongoose.model('GameResult', gameResultSchema);
+const Bet = mongoose.model('Bet', betSchema);
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Generate random number (0-9) for game result
+function generateRandomNumber() {
+    return Math.floor(Math.random() * 10);
 }
 
-// Get user balance
+// Determine color based on number
+function getColor(num) {
+    if (num === 0 || num === 5) return 'Violet';
+    if (num % 2 === 0) return 'Red';
+    return 'Green';
+}
+
+// Determine size based on number
+function getSize(num) {
+    return num >= 5 ? 'Big' : 'Small';
+}
+
+// Calculate win amount based on bet type
+function calculateWinAmount(bet, resultNumber) {
+    const resultColor = getColor(resultNumber);
+    const resultSize = getSize(resultNumber);
+    
+    // Number bet (0-9)
+    if (bet.betType === 'number' && parseInt(bet.betOn) === resultNumber) {
+        return bet.amount * 9;
+    }
+    
+    // Color bet
+    if (bet.betType === 'color') {
+        if (bet.betOn === resultColor) {
+            // Violet has higher multiplier
+            return bet.amount * (resultColor === 'Violet' ? 4.5 : 2);
+        }
+    }
+    
+    // Size bet (Big/Small)
+    if (bet.betType === 'size' && bet.betOn === resultSize) {
+        return bet.amount * 2;
+    }
+    
+    // Random bet - always wins something
+    if (bet.betType === 'random') {
+        return bet.amount * 1.5;
+    }
+    
+    return 0; // Lost
+}
+
+// Check if bet won
+function checkBetWin(bet, resultNumber) {
+    const resultColor = getColor(resultNumber);
+    const resultSize = getSize(resultNumber);
+    
+    if (bet.betType === 'number') {
+        return parseInt(bet.betOn) === resultNumber;
+    }
+    
+    if (bet.betType === 'color') {
+        return bet.betOn === resultColor;
+    }
+    
+    if (bet.betType === 'size') {
+        return bet.betOn === resultSize;
+    }
+    
+    if (bet.betType === 'random') {
+        return true; // Random always wins
+    }
+    
+    return false;
+}
+
+// ============================================
+// API ENDPOINTS
+// ============================================
+
+// 1. Get/Create User Balance
 app.get('/api/user', async (req, res) => {
     try {
         const { phone } = req.query;
         
         if (!phone) {
-            return res.json({ success: false, message: 'Phone required' });
+            return res.status(400).json({ success: false, message: 'Phone number required' });
         }
         
-        const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ phone: phone });
+        let user = await User.findOne({ phone });
         
+        // Create user if doesn't exist
         if (!user) {
-            const newUser = {
-                phone: phone,
-                balance: 1000.00,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            };
-            
-            await usersCollection.insertOne(newUser);
-            return res.json({ success: true, balance: 1000.00 });
+            user = new User({ 
+                phone, 
+                balance: 1000 // Starting balance
+            });
+            await user.save();
+            console.log('✅ New user created:', phone);
         }
         
-        res.json({ success: true, balance: user.balance || 0 });
+        res.json({ 
+            success: true, 
+            balance: user.balance,
+            phone: user.phone 
+        });
         
-    } catch (error) {
-        console.error('Get user error:', error);
-        res.json({ success: false, message: 'Server error' });
+    } catch (err) {
+        console.error('❌ User API Error:', err);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
-// Place a bet
+// 2. Get Game History (for Game History tab)
+app.get('/api/history', async (req, res) => {
+    try {
+        const { mode = 60, page = 1, limit = 10 } = req.query;
+        
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        
+        const results = await GameResult.find({ mode: parseInt(mode) })
+            .sort({ timestamp: -1 })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .select('period number color size timestamp')
+            .lean();
+        
+        // Format response for frontend
+        const formattedResults = results.map(r => ({
+            p: r.period,
+            n: r.number,
+            color: r.color,
+            size: r.size,
+            timestamp: r.timestamp
+        }));
+        
+        console.log(`📊 Fetched ${formattedResults.length} results for mode ${mode}`);
+        
+        res.json(formattedResults);
+        
+    } catch (err) {
+        console.error('❌ History API Error:', err);
+        res.status(500).json([]);
+    }
+});
+
+// 3. Get User's Bet History (for My History tab)
+app.get('/api/myhistory', async (req, res) => {
+    try {
+        const { phone, mode = 60, limit = 50 } = req.query;
+        
+        if (!phone) {
+            return res.status(400).json({ success: false, message: 'Phone required' });
+        }
+        
+        const bets = await Bet.find({ 
+            phone, 
+            mode: parseInt(mode) 
+        })
+        .sort({ timestamp: -1 })
+        .limit(parseInt(limit))
+        .lean();
+        
+        console.log(`📋 Fetched ${bets.length} bets for ${phone}`);
+        
+        res.json({ 
+            success: true, 
+            bets: bets 
+        });
+        
+    } catch (err) {
+        console.error('❌ My History API Error:', err);
+        res.status(500).json({ success: false, bets: [] });
+    }
+});
+
+// 4. Place Bet
 app.post('/api/bet', async (req, res) => {
     try {
-        const betData = req.body;
-        const { phone, amount, period, mode, betOn } = betData;
+        const { phone, period, mode, betOn, amount, betType, multiplier } = req.body;
         
-        if (!phone || !amount || !period || !mode || !betOn) {
-            return res.json({ success: false, message: 'Missing required fields' });
+        // Validation
+        if (!phone || !period || !betOn || !amount) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Missing required fields' 
+            });
         }
         
-        const usersCollection = db.collection('users');
-        const betsCollection = db.collection('bets');
-        
-        const user = await usersCollection.findOne({ phone: phone });
-        
+        // Get user
+        const user = await User.findOne({ phone });
         if (!user) {
-            return res.json({ success: false, message: 'User not found' });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'User not found' 
+            });
         }
         
+        // Check balance
         if (user.balance < amount) {
-            return res.json({ success: false, message: 'Insufficient balance' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Insufficient balance' 
+            });
         }
         
-        const newBalance = user.balance - amount;
-        await usersCollection.updateOne(
-            { phone: phone },
-            { 
-                $set: { 
-                    balance: newBalance,
-                    updatedAt: new Date()
-                } 
-            }
-        );
-        
-        let betType = 'number';
-        if (['Green', 'Red', 'Violet'].includes(betOn)) {
-            betType = 'color';
-        } else if (['Big', 'Small'].includes(betOn)) {
-            betType = 'size';
-        } else if (betOn === 'Random') {
-            betType = 'random';
+        // Check if bet already placed for this period
+        const existingBet = await Bet.findOne({ phone, period, betOn });
+        if (existingBet) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Bet already placed for this period' 
+            });
         }
         
-        const bet = {
-            phone: phone,
-            period: period,
+        // Deduct balance
+        user.balance -= amount;
+        await user.save();
+        
+        // Create bet
+        const bet = new Bet({
+            phone,
+            period,
             mode: parseInt(mode),
-            betOn: betOn,
-            betType: betType,
-            amount: parseFloat(amount),
-            multiplier: betData.multiplier || 1,
-            status: 'pending',
-            timestamp: new Date(betData.timestamp || Date.now()),
-            createdAt: new Date()
-        };
+            betOn,
+            betType: betType || 'color',
+            amount,
+            multiplier: multiplier || 1,
+            status: 'pending'
+        });
         
-        await betsCollection.insertOne(bet);
+        await bet.save();
         
-        console.log(`✅ Bet placed: ${phone} - ${betOn} - ₹${amount} - Period: ${period}`);
+        console.log(`✅ Bet placed: ${phone} - ${betOn} - ₹${amount}`);
         
         res.json({ 
             success: true, 
             message: 'Bet placed successfully',
-            newBalance: newBalance,
+            newBalance: user.balance,
             betId: bet._id
         });
         
-    } catch (error) {
-        console.error('Bet placement error:', error);
-        res.json({ success: false, message: 'Server error' });
-    }
-});
-
-// Get user's betting history
-app.get('/api/myhistory', async (req, res) => {
-    try {
-        const { phone, mode } = req.query;
-        
-        if (!phone) {
-            return res.json({ success: false, message: 'Phone required' });
-        }
-        
-        const betsCollection = db.collection('bets');
-        
-        const query = { phone: phone };
-        if (mode) {
-            query.mode = parseInt(mode);
-        }
-        
-        const bets = await betsCollection
-            .find(query)
-            .sort({ createdAt: -1 })
-            .limit(100)
-            .toArray();
-        
-        res.json({ success: true, bets: bets });
-        
-    } catch (error) {
-        console.error('My history error:', error);
-        res.json({ success: false, message: 'Server error' });
-    }
-});
-
-// Get game history
-app.get('/api/history', async (req, res) => {
-    try {
-        const { mode, page } = req.query;
-        const currentMode = parseInt(mode) || 60;
-        const currentPage = parseInt(page) || 1;
-        const perPage = 10;
-        
-        const historyCollection = db.collection('history');
-        
-        const history = await historyCollection
-            .find({ mode: currentMode })
-            .sort({ period: -1 })
-            .skip((currentPage - 1) * perPage)
-            .limit(perPage)
-            .toArray();
-        
-        const formatted = history.map(h => ({
-            p: h.period,
-            n: h.number,
-            mode: h.mode
-        }));
-        
-        res.json(formatted);
-        
-    } catch (error) {
-        console.error('History error:', error);
-        res.json([]);
-    }
-});
-
-// Add new result
-app.post('/api/add-result', async (req, res) => {
-    try {
-        const { period, mode, number } = req.body;
-        
-        if (!period || mode === undefined || number === undefined) {
-            return res.json({ success: false, message: 'Missing data' });
-        }
-        
-        const historyCollection = db.collection('history');
-        
-        const existing = await historyCollection.findOne({ 
-            period: period, 
-            mode: parseInt(mode) 
+    } catch (err) {
+        console.error('❌ Bet API Error:', err);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error' 
         });
-        
-        if (existing) {
-            return res.json({ success: false, message: 'Result already exists' });
-        }
-        
-        const result = {
-            period: period,
-            mode: parseInt(mode),
-            number: parseInt(number),
-            timestamp: new Date(),
-            createdAt: new Date()
-        };
-        
-        await historyCollection.insertOne(result);
-        
-        console.log(`✅ Result added: Period ${period} - Number ${number}`);
-        
-        await processBetsForPeriod(period, parseInt(mode), parseInt(number));
-        
-        res.json({ success: true, message: 'Result added' });
-        
-    } catch (error) {
-        console.error('Add result error:', error);
-        res.json({ success: false, message: 'Server error' });
     }
 });
 
-// Process results for a period
+// 5. Process Results (Called automatically or manually)
 app.post('/api/process-results', async (req, res) => {
     try {
         const { period, mode } = req.body;
         
         if (!period || !mode) {
-            return res.json({ success: false, message: 'Missing data' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Period and mode required' 
+            });
         }
         
-        const historyCollection = db.collection('history');
-        
-        const result = await historyCollection.findOne({ 
-            period: period, 
-            mode: parseInt(mode) 
-        });
+        // Check if result already exists
+        let result = await GameResult.findOne({ period });
         
         if (!result) {
-            return res.json({ success: false, message: 'Result not found yet' });
+            // Generate new result
+            const randomNumber = generateRandomNumber();
+            
+            result = new GameResult({
+                period,
+                mode: parseInt(mode),
+                number: randomNumber,
+                color: getColor(randomNumber),
+                size: getSize(randomNumber)
+            });
+            
+            await result.save();
+            console.log(`🎲 New result generated: Period ${period} = ${randomNumber}`);
         }
         
-        await processBetsForPeriod(period, parseInt(mode), result.number);
+        // Process all pending bets for this period
+        const pendingBets = await Bet.find({ period, status: 'pending' });
         
-        res.json({ success: true, message: 'Results processed' });
+        console.log(`⚙️ Processing ${pendingBets.length} bets for period ${period}`);
         
-    } catch (error) {
-        console.error('Process results error:', error);
-        res.json({ success: false, message: 'Server error' });
-    }
-});
-
-// Helper function to process all bets
-async function processBetsForPeriod(period, mode, winningNumber) {
-    try {
-        const betsCollection = db.collection('bets');
-        const usersCollection = db.collection('users');
-        
-        const pendingBets = await betsCollection.find({
-            period: period,
-            mode: mode,
-            status: 'pending'
-        }).toArray();
-        
-        console.log(`Processing ${pendingBets.length} bets for period ${period}, number ${winningNumber}`);
-        
-        for (let bet of pendingBets) {
-            let isWin = false;
-            let winMultiplier = 0;
+        for (const bet of pendingBets) {
+            const isWin = checkBetWin(bet, result.number);
             
-            if (bet.betType === 'number') {
-                if (parseInt(bet.betOn) === winningNumber) {
-                    isWin = true;
-                    winMultiplier = 9;
-                }
-            } else if (bet.betType === 'color') {
-                if (bet.betOn === 'Green' && [1, 3, 7, 9].includes(winningNumber)) {
-                    isWin = true;
-                    winMultiplier = 2;
-                } else if (bet.betOn === 'Red' && [2, 4, 6, 8].includes(winningNumber)) {
-                    isWin = true;
-                    winMultiplier = 2;
-                } else if (bet.betOn === 'Violet' && [0, 5].includes(winningNumber)) {
-                    isWin = true;
-                    winMultiplier = 4.5;
-                }
-            } else if (bet.betType === 'size') {
-                if (bet.betOn === 'Big' && winningNumber >= 5) {
-                    isWin = true;
-                    winMultiplier = 2;
-                } else if (bet.betOn === 'Small' && winningNumber < 5) {
-                    isWin = true;
-                    winMultiplier = 2;
-                }
-            }
-            
-            const updateData = {
-                status: isWin ? 'won' : 'lost',
-                resultNumber: winningNumber,
-                processedAt: new Date()
-            };
+            bet.status = isWin ? 'won' : 'lost';
+            bet.resultNumber = result.number;
             
             if (isWin) {
-                const winAmount = bet.amount * winMultiplier;
-                updateData.winAmount = winAmount;
+                const winAmount = calculateWinAmount(bet, result.number);
+                bet.winAmount = winAmount;
                 
-                await usersCollection.updateOne(
+                // Add winning to user balance
+                await User.findOneAndUpdate(
                     { phone: bet.phone },
-                    { 
-                        $inc: { balance: winAmount },
-                        $set: { updatedAt: new Date() }
-                    }
+                    { $inc: { balance: winAmount } }
                 );
                 
                 console.log(`✅ Win: ${bet.phone} won ₹${winAmount}`);
             } else {
+                bet.winAmount = 0;
                 console.log(`❌ Loss: ${bet.phone} lost ₹${bet.amount}`);
             }
             
-            await betsCollection.updateOne(
-                { _id: bet._id },
-                { $set: updateData }
-            );
+            await bet.save();
         }
         
-    } catch (error) {
-        console.error('Process bets error:', error);
+        res.json({ 
+            success: true, 
+            message: `Processed ${pendingBets.length} bets`,
+            result: {
+                period: result.period,
+                number: result.number,
+                color: result.color,
+                size: result.size
+            }
+        });
+        
+    } catch (err) {
+        console.error('❌ Process Results Error:', err);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error' 
+        });
+    }
+});
+
+// 6. Auto-generate results (CRON job alternative)
+// This should run every mode interval (30s, 1m, 3m, 5m)
+async function autoGenerateResults() {
+    const modes = [30, 60, 180, 300];
+    
+    for (const mode of modes) {
+        try {
+            const now = new Date();
+            const total = (now.getHours()*3600) + (now.getMinutes()*60) + now.getSeconds();
+            const dateStr = now.getFullYear().toString() + 
+                          (now.getMonth()+1).toString().padStart(2,'0') + 
+                          now.getDate().toString().padStart(2,'0');
+            const currentPeriod = dateStr + Math.floor(total/mode).toString().padStart(4, '0');
+            
+            // Check if result exists
+            const existingResult = await GameResult.findOne({ period: currentPeriod });
+            
+            if (!existingResult) {
+                const randomNumber = generateRandomNumber();
+                
+                const result = new GameResult({
+                    period: currentPeriod,
+                    mode: mode,
+                    number: randomNumber,
+                    color: getColor(randomNumber),
+                    size: getSize(randomNumber)
+                });
+                
+                await result.save();
+                console.log(`🎲 Auto-generated: ${currentPeriod} = ${randomNumber}`);
+                
+                // Process bets
+                setTimeout(async () => {
+                    await fetch('http://localhost:3000/api/process-results', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ period: currentPeriod, mode })
+                    });
+                }, 2000);
+            }
+        } catch (err) {
+            console.error(`❌ Auto-generate error for mode ${mode}:`, err);
+        }
     }
 }
 
-// Auto result generation
-function startAutoResultGeneration() {
-    const modes = [30, 60, 180, 300];
-    
-    setInterval(() => {
-        modes.forEach(async (mode) => {
-            try {
-                const now = new Date();
-                const total = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-                
-                if (total % mode === 0) {
-                    const dateStr = now.getFullYear().toString() + 
-                                   (now.getMonth() + 1).toString().padStart(2, '0') + 
-                                   now.getDate().toString().padStart(2, '0');
-                    const period = dateStr + (Math.floor(total / mode) - 1).toString().padStart(4, '0');
-                    const number = Math.floor(Math.random() * 10);
-                    
-                    const historyCollection = db.collection('history');
-                    
-                    const exists = await historyCollection.findOne({ period, mode });
-                    
-                    if (!exists) {
-                        await historyCollection.insertOne({
-                            period: period,
-                            mode: mode,
-                            number: number,
-                            timestamp: new Date(),
-                            createdAt: new Date()
-                        });
-                        
-                        console.log(`🎲 Auto result: Mode ${mode}, Period ${period}, Number ${number}`);
-                        
-                        await processBetsForPeriod(period, mode, number);
-                    }
-                }
-            } catch (error) {
-                console.error('Auto result error:', error);
-            }
-        });
-    }, 1000);
-}
+// Run auto-generation every 10 seconds
+setInterval(autoGenerateResults, 10000);
 
-// Start server
-app.listen(PORT, async () => {
-    await connectDB();
-    console.log(`✅ Server running on http://localhost:${PORT}`);
-    
-    startAutoResultGeneration();
-    console.log('🎲 Auto result generation started');
+// 7. Admin: Add balance (for testing)
+app.post('/api/admin/add-balance', async (req, res) => {
+    try {
+        const { phone, amount } = req.body;
+        
+        const user = await User.findOneAndUpdate(
+            { phone },
+            { $inc: { balance: amount } },
+            { new: true, upsert: true }
+        );
+        
+        console.log(`💰 Added ₹${amount} to ${phone}`);
+        
+        res.json({ 
+            success: true, 
+            newBalance: user.balance 
+        });
+        
+    } catch (err) {
+        console.error('❌ Add Balance Error:', err);
+        res.status(500).json({ success: false });
+    }
 });
 
+// ============================================
+// START SERVER
+// ============================================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`
+╔════════════════════════════════════════╗
+║   🎮 WINGO GAME API SERVER RUNNING   ║
+║   📡 Port: ${PORT}                        ║
+║   🗄️  MongoDB: Connected               ║
+║   ✅ All Systems Ready                 ║
+╚════════════════════════════════════════╝
+    `);
+});
+
+// Handle graceful shutdown
 process.on('SIGINT', async () => {
-    await client.close();
-    console.log('MongoDB connection closed');
+    console.log('\n🛑 Shutting down gracefully...');
+    await mongoose.connection.close();
     process.exit(0);
 });
