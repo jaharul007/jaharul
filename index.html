@@ -27,29 +27,26 @@
       padding-bottom: 70px; 
     }
 
-    /* फ़ास्ट लोडिंग के लिए Imgur लिंक */
     .bg-img {
       width: 100%;
       display: block;
       user-select: none;
     }
 
-    /* ID और बैलेंस डिस्प्ले पट्टी */
+    /* सिर्फ बैलेंस डिस्प्ले (ID पट्टी हटा दी गई है) */
     .user-info-patch {
       position: absolute;
       top: 13.4%;
       left: 17%;
       width: 65%;
       height: 3.5%;
-      background: #f1c75b; 
       display: flex;
       align-items: center;
       justify-content: center;
       color: #3d2b00;
       font-weight: 800;
-      font-size: 14px;
+      font-size: 16px;
       z-index: 20;
-      border-radius: 2px;
       pointer-events: none;
     }
 
@@ -57,10 +54,9 @@
     .click-zone {
       position: absolute;
       cursor: pointer;
-      z-index: 50; /* जेड-इंडेक्स बढ़ा दिया ताकि क्लिक पक्का काम करे */
+      z-index: 50;
     }
 
-    /* सारे फाइल नाम स्मॉल लेटर में सेट कर दिए हैं */
     .lottery-card { top: 18.5%; left: 3%; width: 31%; height: 16%; }
     .original-card { top: 18.5%; left: 34.5%; width: 31%; height: 16%; }
     .slots-card { top: 18.5%; right: 3%; width: 31%; height: 16%; }
@@ -68,6 +64,10 @@
     .sports-btn { top: 35.5%; left: 3%; width: 31%; height: 13%; }
     .popular-btn { top: 35.5%; left: 34.5%; width: 31%; height: 13%; }
     .casino-btn { top: 35.5%; right: 3%; width: 31%; height: 13%; }
+
+    /* Withdraw और Deposit बटन क्लिक जोन (अब काम करेंगे) */
+    .withdraw-btn { top: 11.5%; left: 45%; width: 22%; height: 5.5%; }
+    .deposit-btn { top: 11.5%; left: 69%; width: 22%; height: 5.5%; }
 
     /* बॉटम नेविगेशन */
     .bottom-nav {
@@ -101,16 +101,17 @@
 <body>
 
   <div class="container">
-    <img src="https://i.imgur.com/OSddjFM.jpeg" class="bg-img">
+    <img src="https://i.imgur.com/chb68bf.png" class="bg-img">
 
     <div class="user-info-patch">
-      ID: <span id="idBox">GUEST</span> 
-      <span style="margin: 0 10px;">|</span> 
       ₹<span id="balBox">0.00</span>
     </div>
 
+    <div class="click-zone withdraw-btn" onclick="goTo('withdraw.html')"></div>
+    <div class="click-zone deposit-btn" onclick="goTo('deposit.html')"></div>
+
     <div class="click-zone lottery-card" onclick="goTo('wingo_game.html')"></div>
-    <div class="click-zone original-card" onclick="goTo('original.html')"></div>
+    <div class="click-zone original-card" onclick="goTo('aviator_game.html')"></div>
     <div class="click-zone slots-card" onclick="goTo('slots.html')"></div>
     
     <div class="click-zone sports-btn" onclick="goTo('sports.html')"></div>
@@ -134,24 +135,17 @@
   </div>
 
   <script>
-    // पेज चेंज करने का फंक्शन
     function goTo(page) {
       window.location.href = page;
     }
 
     async function syncData() {
       const phone = localStorage.getItem('userPhone');
-      
-      if (!phone) {
-        document.getElementById('idBox').innerText = "GUEST";
-        return;
-      }
+      if (!phone) return;
 
       try {
-        document.getElementById('idBox').innerText = phone;
         const response = await fetch(`/api/user?phone=${phone}`);
         const data = await response.json();
-
         if (data.success) {
           document.getElementById('balBox').innerText = parseFloat(data.balance).toFixed(2);
         }
@@ -161,7 +155,7 @@
     }
 
     window.onload = syncData;
-    setInterval(syncData, 5000); // हर 5 सेकंड में बैलेंस अपडेट
+    setInterval(syncData, 5000); 
   </script>
 
 </body>
