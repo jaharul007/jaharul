@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Aviator Game - Admin</title>
+    <title>Aviator Game - Dynamic</title>
     <style>
         * {
             margin: 0;
@@ -994,6 +994,38 @@
         .provably-fair span {
             color: #4ade80;
         }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10002;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #2a2a2a;
+            border-top: 4px solid #4ade80;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -1011,7 +1043,7 @@
             <div class="balance">
                 <div class="info-icon">?</div>
                 <div>
-                    <span class="balance-amount" id="balanceDisplay">5.39</span>
+                    <span class="balance-amount" id="balanceDisplay">0.00</span>
                     <span class="balance-currency">INR</span>
                 </div>
             </div>
@@ -1260,37 +1292,26 @@
                 <div class="user-list" id="usersList"></div>
             </div>
         </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+        </div>
     </div>
 
     <script>
-        // GLOBAL BALANCE MANAGEMENT
-        const BALANCE_KEY = 'aviator_user_balance';
-        
-        // Load balance from localStorage
-        function loadBalance() {
-            const savedBalance = localStorage.getItem(BALANCE_KEY);
-            return savedBalance ? parseFloat(savedBalance) : 0.00; // Default 0.00 INR
-        }
-        
-        // Save balance to localStorage
-        function saveBalance(newBalance) {
-            localStorage.setItem(BALANCE_KEY, newBalance.toString());
-            // Dispatch event for other pages
-            window.dispatchEvent(new Event('balanceUpdated'));
-        }
-        
-        // Listen for balance updates from other pages
-        window.addEventListener('storage', function(e) {
-            if (e.key === BALANCE_KEY) {
-                balance = parseFloat(e.newValue);
-                updateBalance();
-            }
-        });
+        // ============================================
+        // CONFIGURATION - REPLACE WITH YOUR VALUES
+        // ============================================
+        const API_BASE_URL = 'YOUR_VERCEL_URL_HERE'; // e.g., 'https://your-app.vercel.app'
+        const USER_PHONE = 'DYNAMIC_USER_PHONE'; // e.g., '+919876543210'
 
-        // Game State
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
         let gameState = 'waiting';
         let currentMultiplier = 1.00;
-        let balance = loadBalance(); // Load from localStorage
+        let balance = 0.00;
         let roundId = 18035825;
         let betAmount1 = 10.00;
         let betAmount2 = 10.00;
@@ -1313,7 +1334,7 @@
         // Admin Controls
         let adminMode = false;
         let targetCrashMultiplier = null;
-        let allUsers = {};
+        let serverCrashPoint = null; // Will be fetched from server
 
         // Canvas Setup
         const canvas = document.getElementById('gameCanvas');
@@ -1323,7 +1344,6 @@
         let planeY = 280;
         let pathPoints = [];
 
-        // User names for fake bets
         const userNames = ['j***7', 'w***6', 'h***7', 's***3', '1***0', '1***8', '1***5', '1***2', 'm***9', 'r***4'];
         const avatarColors = [
             'linear-gradient(135deg, #ff6b6b, #ee5a6f)',
@@ -1334,22 +1354,255 @@
             'linear-gradient(135deg, #ec4899, #db2777)',
         ];
 
-        // Initialize fake users with balances
-        function initializeUsers() {
-            allUsers = {
-                'You': balance,
-                'j***7': 150.50,
-                'w***6': 89.20,
-                'h***7': 234.75,
-                's***3': 456.30,
-                '1***0': 67.80,
-                '1***8': 189.90,
-                '1***5': 345.60,
-                '1***2': 98.45,
-                'm***9': 276.15,
-                'r***4': 523.40
-            };
+        // ============================================
+        // API FUNCTIONS
+        // ============================================
+        
+        // Show/Hide Loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
         }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        // Fetch User Data
+        async function syncUserData() {
+            try {
+                showLoading();
+                const response = await fetch(`${API_BASE_URL}/user?phone=${encodeURIComponent(USER_PHONE)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    balance = data.user.balance || 0;
+                    updateBalance();
+                } else {
+                    showToast('Failed to load user data', 'error');
+                }
+            } catch (error) {
+                console.error('Error syncing user data:', error);
+                showToast('Connection error. Using offline mode.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Fetch Next Round Data (crash point, roundId)
+        async function fetchNextRound() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/aviator/next-round`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    roundId = data.roundId;
+                    serverCrashPoint = data.crashPoint;
+                    document.getElementById('roundId').textContent = roundId;
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error fetching next round:', error);
+                return false;
+            }
+        }
+
+        // Place Bet (API Integration)
+        async function placeBet(slot) {
+            if (gameState === 'crashed') {
+                showToast('Wait for next round!', 'error');
+                return;
+            }
+            
+            const amount = slot === 1 ? betAmount1 : betAmount2;
+            
+            if (amount > balance) {
+                showToast('Insufficient balance!', 'error');
+                return;
+            }
+            
+            if (gameState === 'playing') {
+                showToast('Round already started!', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                const response = await fetch(`${API_BASE_URL}/aviator/bet`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phone: USER_PHONE,
+                        amount: amount,
+                        roundId: roundId
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    balance = data.newBalance;
+                    updateBalance();
+                    
+                    const bet = {
+                        slot: slot,
+                        betId: data.betId,
+                        amount: amount,
+                        roundId: roundId,
+                        multiplier: 0,
+                        result: 'pending',
+                        currentWin: 0,
+                        time: new Date().toLocaleTimeString()
+                    };
+                    
+                    if (slot === 1) {
+                        activeBet1 = bet;
+                    } else {
+                        activeBet2 = bet;
+                    }
+                    
+                    updateBetButtons();
+                    showToast(`Bet placed: ₹${amount.toFixed(2)}`, 'success');
+                } else {
+                    showToast(data.message || 'Bet failed', 'error');
+                }
+            } catch (error) {
+                console.error('Error placing bet:', error);
+                showToast('Network error. Please try again.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Cash Out (API Integration)
+        async function cashOut(slot) {
+            if (gameState !== 'playing') return;
+            
+            const bet = slot === 1 ? activeBet1 : activeBet2;
+            if (!bet || !bet.betId) return;
+
+            try {
+                showLoading();
+                const response = await fetch(`${API_BASE_URL}/aviator/cashout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        phone: USER_PHONE,
+                        betId: bet.betId,
+                        multiplier: currentMultiplier
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    balance = data.newBalance;
+                    updateBalance();
+                    
+                    bet.multiplier = currentMultiplier;
+                    bet.result = 'win';
+                    bet.winAmount = data.winAmount;
+                    saveBet(bet);
+                    
+                    if (slot === 1) {
+                        activeBet1 = null;
+                    } else {
+                        activeBet2 = null;
+                    }
+                    
+                    updateBetButtons();
+                    showToast(`Cashed out: ₹${data.winAmount.toFixed(2)} at ${currentMultiplier.toFixed(2)}x!`, 'success');
+                } else {
+                    showToast(data.message || 'Cashout failed', 'error');
+                }
+            } catch (error) {
+                console.error('Error cashing out:', error);
+                showToast('Network error during cashout', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Admin: Set Crash Multiplier
+        async function setCrashMultiplier() {
+            const value = parseFloat(document.getElementById('targetMultiplier').value);
+            if (!value || value < 1.1) {
+                showToast('Invalid multiplier!', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                const response = await fetch(`${API_BASE_URL}/admin/set-crash`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        roundId: roundId,
+                        crashPoint: value
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    targetCrashMultiplier = value;
+                    serverCrashPoint = value;
+                    showToast(`Crash point set to ${value.toFixed(2)}x`, 'success');
+                } else {
+                    showToast(data.message || 'Failed to set crash point', 'error');
+                }
+            } catch (error) {
+                console.error('Error setting crash point:', error);
+                showToast('Network error', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Admin: Force Crash
+        async function forceCrash() {
+            if (gameState !== 'playing') {
+                showToast('No active game!', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                const response = await fetch(`${API_BASE_URL}/admin/force-crash`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        roundId: roundId
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    crashGame();
+                    showToast('Game crashed manually!', 'success');
+                } else {
+                    showToast(data.message || 'Failed to crash game', 'error');
+                }
+            } catch (error) {
+                console.error('Error forcing crash:', error);
+                showToast('Network error', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ============================================
+        // GAME LOGIC
+        // ============================================
 
         // Double tap detection for ping area
         let tapCount = 0;
@@ -1358,11 +1611,11 @@
         document.getElementById('pingArea').addEventListener('click', function() {
             tapCount++;
             
-            if(tapCount === 1) {
+            if (tapCount === 1) {
                 tapTimer = setTimeout(function() {
                     tapCount = 0;
                 }, 300);
-            } else if(tapCount === 2) {
+            } else if (tapCount === 2) {
                 clearTimeout(tapTimer);
                 tapCount = 0;
                 openAdminPanel();
@@ -1371,54 +1624,11 @@
 
         function openAdminPanel() {
             document.getElementById('adminPanel').classList.add('show');
-            updateUsersList();
             showToast('Admin panel opened', 'success');
         }
 
         function closeAdminPanel() {
             document.getElementById('adminPanel').classList.remove('show');
-        }
-
-        function updateUsersList() {
-            allUsers['You'] = balance; // Update current user balance
-            const usersList = document.getElementById('usersList');
-            let html = '';
-            
-            for(let [username, userBalance] of Object.entries(allUsers)) {
-                const avatarBg = avatarColors[Math.floor(Math.random() * avatarColors.length)];
-                const initial = username[0].toUpperCase();
-                
-                html += `
-                    <div class="user-list-item">
-                        <div class="user-info">
-                            <div class="user-avatar" style="background: ${avatarBg}">${initial}</div>
-                            <div class="user-name">${username}</div>
-                        </div>
-                        <div class="user-balance">₹${userBalance.toFixed(2)}</div>
-                    </div>
-                `;
-            }
-            
-            usersList.innerHTML = html;
-        }
-
-        function setCrashMultiplier() {
-            const value = parseFloat(document.getElementById('targetMultiplier').value);
-            if(value && value >= 1.1) {
-                targetCrashMultiplier = value;
-                showToast(`Crash point set to ${value.toFixed(2)}x`, 'success');
-            } else {
-                showToast('Invalid multiplier!', 'error');
-            }
-        }
-
-        function forceCrash() {
-            if(gameState === 'playing') {
-                crashGame();
-                showToast('Game crashed manually!', 'success');
-            } else {
-                showToast('No active game!', 'error');
-            }
         }
 
         function resizeCanvas() {
@@ -1434,22 +1644,22 @@
             ctx.strokeStyle = '#1a1a2e';
             ctx.lineWidth = 1;
             
-            for(let i = 0; i < canvas.width; i += 40) {
+            for (let i = 0; i < canvas.width; i += 40) {
                 ctx.beginPath();
                 ctx.moveTo(i, 0);
                 ctx.lineTo(i, canvas.height);
                 ctx.stroke();
             }
             
-            for(let i = 0; i < canvas.height; i += 40) {
+            for (let i = 0; i < canvas.height; i += 40) {
                 ctx.beginPath();
                 ctx.moveTo(0, i);
                 ctx.lineTo(canvas.width, i);
                 ctx.stroke();
             }
 
-            if(gameState === 'playing') {
-                if(pathPoints.length > 1) {
+            if (gameState === 'playing') {
+                if (pathPoints.length > 1) {
                     const gradient = ctx.createLinearGradient(0, canvas.height, planeX, planeY);
                     gradient.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
                     gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.3)');
@@ -1483,7 +1693,7 @@
         }
 
         function updatePlanePosition() {
-            if(gameState === 'playing') {
+            if (gameState === 'playing') {
                 const maxX = canvas.width - 50;
                 const maxY = 50;
                 
@@ -1492,7 +1702,7 @@
                 planeY = canvas.height - 30 - (Math.pow(progress, 1.2) * (canvas.height - maxY - 30));
                 
                 pathPoints.push({x: planeX, y: planeY});
-                if(pathPoints.length > 200) {
+                if (pathPoints.length > 200) {
                     pathPoints.shift();
                 }
                 
@@ -1506,34 +1716,34 @@
         }
 
         function gameLoop() {
-            if(gameState === 'playing') {
+            if (gameState === 'playing') {
                 currentMultiplier += 0.01;
                 document.getElementById('multiplierDisplay').textContent = currentMultiplier.toFixed(2) + 'x';
                 
-                if(activeBet1 && autoCashout1 && currentMultiplier >= autoCashoutValue1) {
+                if (activeBet1 && autoCashout1 && currentMultiplier >= autoCashoutValue1) {
                     cashOut(1);
                 }
                 
-                if(activeBet2 && autoCashout2 && currentMultiplier >= autoCashoutValue2) {
+                if (activeBet2 && autoCashout2 && currentMultiplier >= autoCashoutValue2) {
                     cashOut(2);
                 }
                 
-                if(activeBet1) {
+                if (activeBet1) {
                     activeBet1.currentWin = (activeBet1.amount * currentMultiplier).toFixed(2);
                 }
-                if(activeBet2) {
+                if (activeBet2) {
                     activeBet2.currentWin = (activeBet2.amount * currentMultiplier).toFixed(2);
                 }
                 
-                // Check if should crash based on admin setting or random
+                // Check if should crash based on server crash point
                 let shouldCrash = false;
-                if(targetCrashMultiplier && currentMultiplier >= targetCrashMultiplier) {
+                if (serverCrashPoint && currentMultiplier >= serverCrashPoint) {
                     shouldCrash = true;
-                } else if(!targetCrashMultiplier && (Math.random() < 0.003 || currentMultiplier > 20)) {
+                } else if (!serverCrashPoint && (Math.random() < 0.003 || currentMultiplier > 20)) {
                     shouldCrash = true;
                 }
                 
-                if(shouldCrash) {
+                if (shouldCrash) {
                     crashGame();
                 }
                 
@@ -1545,13 +1755,15 @@
             animationFrame = requestAnimationFrame(gameLoop);
         }
 
-        function startRound() {
+        async function startRound() {
+            // Fetch next round data from server
+            await fetchNextRound();
+            
             gameState = 'playing';
             currentMultiplier = 1.00;
             planeX = 50;
             planeY = canvas.height - 30;
             pathPoints = [{x: 50, y: canvas.height - 30}];
-            roundId++;
             
             document.getElementById('roundId').textContent = roundId;
             document.getElementById('waitingScreen').style.display = 'none';
@@ -1559,10 +1771,10 @@
             document.getElementById('multiplierDisplay').classList.remove('crashed');
             document.getElementById('planeContainer').style.display = 'block';
             
-            if(autoPlay1 && !activeBet1) {
+            if (autoPlay1 && !activeBet1) {
                 placeBet(1);
             }
-            if(autoPlay2 && !activeBet2) {
+            if (autoPlay2 && !activeBet2) {
                 placeBet(2);
             }
             
@@ -1572,7 +1784,7 @@
 
         function addFakeBets() {
             const numBets = Math.floor(Math.random() * 5) + 3;
-            for(let i = 0; i < numBets; i++) {
+            for (let i = 0; i < numBets; i++) {
                 const name = userNames[Math.floor(Math.random() * userNames.length)];
                 const amount = [100, 200, 300, 500, 1000, 1760, 2500, 6600, 8000][Math.floor(Math.random() * 9)];
                 
@@ -1585,7 +1797,7 @@
                 });
             }
             
-            if(allBets.length > 50) {
+            if (allBets.length > 50) {
                 allBets = allBets.slice(0, 50);
             }
             
@@ -1594,27 +1806,28 @@
 
         function crashGame() {
             gameState = 'crashed';
-            targetCrashMultiplier = null; // Reset admin setting
+            targetCrashMultiplier = null;
+            serverCrashPoint = null;
             
             document.getElementById('multiplierDisplay').classList.add('crashed');
             document.getElementById('statusText').textContent = 'FLEW AWAY!';
             document.getElementById('statusText').style.display = 'block';
             
             allBets.forEach(bet => {
-                if(bet.result === 'pending') {
+                if (bet.result === 'pending') {
                     bet.multiplier = currentMultiplier;
                     bet.result = 'loss';
                 }
             });
             
-            if(activeBet1) {
+            if (activeBet1) {
                 activeBet1.result = 'loss';
                 activeBet1.multiplier = currentMultiplier;
                 saveBet(activeBet1);
                 activeBet1 = null;
             }
             
-            if(activeBet2) {
+            if (activeBet2) {
                 activeBet2.result = 'loss';
                 activeBet2.multiplier = currentMultiplier;
                 saveBet(activeBet2);
@@ -1623,7 +1836,6 @@
             
             addToHistory(currentMultiplier.toFixed(2));
             renderAllBets();
-            updateUsersList();
             
             setTimeout(() => {
                 document.getElementById('statusText').style.display = 'none';
@@ -1658,86 +1870,19 @@
                 document.getElementById('countdown').textContent = countdownTimer;
                 countdownBar.style.width = ((countdownTimer / 5) * 100) + '%';
                 
-                if(countdownTimer <= 0) {
+                if (countdownTimer <= 0) {
                     clearInterval(countdownInterval);
                     startRound();
                 }
             }, 1000);
         }
 
-        function placeBet(slot) {
-            if(gameState === 'crashed') {
-                showToast('Wait for next round!', 'error');
-                return;
-            }
-            
-            const amount = slot === 1 ? betAmount1 : betAmount2;
-            
-            if(amount > balance) {
-                showToast('Insufficient balance!', 'error');
-                return;
-            }
-            
-            if(gameState === 'playing') {
-                showToast('Round already started!', 'error');
-                return;
-            }
-            
-            balance -= amount;
-            updateBalance();
-            
-            const bet = {
-                slot: slot,
-                amount: amount,
-                roundId: roundId + 1,
-                multiplier: 0,
-                result: 'pending',
-                currentWin: 0,
-                time: new Date().toLocaleTimeString()
-            };
-            
-            if(slot === 1) {
-                activeBet1 = bet;
-            } else {
-                activeBet2 = bet;
-            }
-            
-            updateBetButtons();
-            showToast(`Bet placed: ₹${amount.toFixed(2)}`, 'success');
-        }
-
-        function cashOut(slot) {
-            if(gameState !== 'playing') return;
-            
-            const bet = slot === 1 ? activeBet1 : activeBet2;
-            if(!bet) return;
-            
-            const winAmount = bet.amount * currentMultiplier;
-            balance += winAmount;
-            updateBalance();
-            
-            bet.multiplier = currentMultiplier;
-            bet.result = 'win';
-            bet.winAmount = winAmount;
-            saveBet(bet);
-            
-            if(slot === 1) {
-                activeBet1 = null;
-            } else {
-                activeBet2 = null;
-            }
-            
-            updateBetButtons();
-            updateUsersList();
-            showToast(`Cashed out: ₹${winAmount.toFixed(2)} at ${currentMultiplier.toFixed(2)}x!`, 'success');
-        }
-
         function updateBetButtons() {
             const btn1 = document.getElementById('betButton1');
             const btn2 = document.getElementById('betButton2');
             
-            if(activeBet1) {
-                if(gameState === 'playing') {
+            if (activeBet1) {
+                if (gameState === 'playing') {
                     const cashoutAmount = (activeBet1.amount * currentMultiplier).toFixed(2);
                     btn1.textContent = `CASH OUT ${cashoutAmount} INR`;
                     btn1.className = 'bet-button cashout';
@@ -1753,8 +1898,8 @@
                 btn1.onclick = () => placeBet(1);
             }
             
-            if(activeBet2) {
-                if(gameState === 'playing') {
+            if (activeBet2) {
+                if (gameState === 'playing') {
                     const cashoutAmount = (activeBet2.amount * currentMultiplier).toFixed(2);
                     btn2.textContent = `CASH OUT ${cashoutAmount} INR`;
                     btn2.className = 'bet-button cashout';
@@ -1773,12 +1918,12 @@
 
         function cancelBet(slot) {
             const bet = slot === 1 ? activeBet1 : activeBet2;
-            if(!bet) return;
+            if (!bet) return;
             
-            balance += bet.amount;
-            updateBalance();
+            // In a real implementation, you'd call an API to cancel the bet
+            // and refund the amount
             
-            if(slot === 1) {
+            if (slot === 1) {
                 activeBet1 = null;
             } else {
                 activeBet2 = null;
@@ -1800,7 +1945,7 @@
             
             myBets.unshift(historyBet);
             
-            if(myBets.length > 20) myBets.pop();
+            if (myBets.length > 20) myBets.pop();
             
             renderMyBets();
         }
@@ -1809,7 +1954,7 @@
             const container = document.getElementById('allBetsContainer');
             document.getElementById('allBetsCount').textContent = allBets.length;
             
-            if(allBets.length === 0) {
+            if (allBets.length === 0) {
                 container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 30px;">No bets yet</div>';
                 return;
             }
@@ -1817,8 +1962,8 @@
             let html = '';
             allBets.slice(0, 50).forEach(bet => {
                 let multClass = 'low';
-                if(bet.multiplier >= 3) multClass = 'medium';
-                if(bet.multiplier >= 5) multClass = 'high';
+                if (bet.multiplier >= 3) multClass = 'medium';
+                if (bet.multiplier >= 5) multClass = 'high';
                 
                 const multDisplay = bet.multiplier > 0 ? bet.multiplier.toFixed(2) + 'x' : '-';
                 const avatarBg = bet.avatar || avatarColors[Math.floor(Math.random() * avatarColors.length)];
@@ -1842,7 +1987,7 @@
         function renderMyBets() {
             const container = document.getElementById('myBets');
             
-            if(myBets.length === 0) {
+            if (myBets.length === 0) {
                 container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 50px 20px;">Place a bet to see your history</div>';
                 return;
             }
@@ -1868,91 +2013,60 @@
         }
 
         function changeAmount(delta, slot) {
-            if(slot === 1) {
-                betAmount1 = Math.max(10, Math.min(10000, betAmount1 + delta));
-                document.getElementById('betAmount1').textContent = betAmount1.toFixed(2);
+            const input = document.getElementById(`betAmount${slot}`);
+            let currentValue = parseFloat(input.value) || 10;
+            let newValue = Math.max(10, Math.min(10000, currentValue + delta));
+            
+            if (slot === 1) {
+                betAmount1 = newValue;
+                input.value = newValue.toFixed(2);
                 const btnAmount = document.getElementById('betBtnAmount1');
-                if(btnAmount) btnAmount.textContent = betAmount1.toFixed(2);
+                if (btnAmount) btnAmount.textContent = newValue.toFixed(2);
             } else {
-                betAmount2 = Math.max(10, Math.min(10000, betAmount2 + delta));
-                document.getElementById('betAmount2').textContent = betAmount2.toFixed(2);
+                betAmount2 = newValue;
+                input.value = newValue.toFixed(2);
                 const btnAmount = document.getElementById('betBtnAmount2');
-                if(btnAmount) btnAmount.textContent = betAmount2.toFixed(2);
+                if (btnAmount) btnAmount.textContent = newValue.toFixed(2);
             }
         }
 
         function setAmount(amount, slot) {
-            if(slot === 1) {
+            const input = document.getElementById(`betAmount${slot}`);
+            if (slot === 1) {
                 betAmount1 = amount;
-                document.getElementById('betAmount1').textContent = betAmount1.toFixed(2);
+                input.value = amount.toFixed(2);
                 const btnAmount = document.getElementById('betBtnAmount1');
-                if(btnAmount) btnAmount.textContent = betAmount1.toFixed(2);
+                if (btnAmount) btnAmount.textContent = amount.toFixed(2);
             } else {
                 betAmount2 = amount;
-                document.getElementById('betAmount2').textContent = betAmount2.toFixed(2);
+                input.value = amount.toFixed(2);
                 const btnAmount = document.getElementById('betBtnAmount2');
-                if(btnAmount) btnAmount.textContent = betAmount2.toFixed(2);
+                if (btnAmount) btnAmount.textContent = amount.toFixed(2);
+            }
+        }
+
+        function updateBetAmount(slot) {
+            const input = document.getElementById(`betAmount${slot}`);
+            let value = parseFloat(input.value) || 10;
+            
+            if (value < 10) value = 10;
+            if (value > 10000) value = 10000;
+            
+            if (slot === 1) {
+                betAmount1 = value;
+                input.value = value.toFixed(2);
+                const btnAmount = document.getElementById('betBtnAmount1');
+                if (btnAmount) btnAmount.textContent = value.toFixed(2);
+            } else {
+                betAmount2 = value;
+                input.value = value.toFixed(2);
+                const btnAmount = document.getElementById('betBtnAmount2');
+                if (btnAmount) btnAmount.textContent = value.toFixed(2);
             }
         }
 
         function updateBalance() {
             document.getElementById('balanceDisplay').textContent = balance.toFixed(2);
-            allUsers['You'] = balance;
-            saveBalance(balance); // Save to localStorage
-        }
-
-        // Edit Amount Functions
-        function updateBetAmount(slot) {
-            const input = document.getElementById(`betAmount${slot}`);
-            let value = parseFloat(input.value) || 10;
-            
-            if(value < 10) value = 10;
-            if(value > 10000) value = 10000;
-            
-            if(slot === 1) {
-                betAmount1 = value;
-                input.value = value.toFixed(2);
-                const btnAmount = document.getElementById('betBtnAmount1');
-                if(btnAmount) btnAmount.textContent = value.toFixed(2);
-            } else {
-                betAmount2 = value;
-                input.value = value.toFixed(2);
-                const btnAmount = document.getElementById('betBtnAmount2');
-                if(btnAmount) btnAmount.textContent = value.toFixed(2);
-            }
-        }
-
-        function changeAmount(delta, slot) {
-            const input = document.getElementById(`betAmount${slot}`);
-            let currentValue = parseFloat(input.value) || 10;
-            let newValue = Math.max(10, Math.min(10000, currentValue + delta));
-            
-            if(slot === 1) {
-                betAmount1 = newValue;
-                input.value = newValue.toFixed(2);
-                const btnAmount = document.getElementById('betBtnAmount1');
-                if(btnAmount) btnAmount.textContent = newValue.toFixed(2);
-            } else {
-                betAmount2 = newValue;
-                input.value = newValue.toFixed(2);
-                const btnAmount = document.getElementById('betBtnAmount2');
-                if(btnAmount) btnAmount.textContent = newValue.toFixed(2);
-            }
-        }
-
-        function setAmount(amount, slot) {
-            const input = document.getElementById(`betAmount${slot}`);
-            if(slot === 1) {
-                betAmount1 = amount;
-                input.value = amount.toFixed(2);
-                const btnAmount = document.getElementById('betBtnAmount1');
-                if(btnAmount) btnAmount.textContent = amount.toFixed(2);
-            } else {
-                betAmount2 = amount;
-                input.value = amount.toFixed(2);
-                const btnAmount = document.getElementById('betBtnAmount2');
-                if(btnAmount) btnAmount.textContent = amount.toFixed(2);
-            }
         }
 
         function addToHistory(mult) {
@@ -1962,14 +2076,14 @@
             item.textContent = mult + 'x';
             
             const multVal = parseFloat(mult);
-            if(multVal < 2) item.classList.add('low');
-            else if(multVal < 3) item.classList.add('medium');
-            else if(multVal < 5) item.classList.add('high');
+            if (multVal < 2) item.classList.add('low');
+            else if (multVal < 3) item.classList.add('medium');
+            else if (multVal < 5) item.classList.add('high');
             else item.classList.add('mega');
             
             container.insertBefore(item, container.firstChild);
             
-            if(container.children.length > 10) {
+            if (container.children.length > 10) {
                 container.removeChild(container.lastChild);
             }
         }
@@ -1991,10 +2105,10 @@
             
             tabs.forEach(t => t.classList.remove('active'));
             
-            if(mode === 'bet') {
+            if (mode === 'bet') {
                 tabs[0].classList.add('active');
                 document.getElementById(`autoControls${slot}`).classList.remove('active');
-                if(slot === 1) {
+                if (slot === 1) {
                     betMode1 = 'bet';
                     autoPlay1 = false;
                 } else {
@@ -2004,7 +2118,7 @@
             } else {
                 tabs[1].classList.add('active');
                 document.getElementById(`autoControls${slot}`).classList.add('active');
-                if(slot === 1) {
+                if (slot === 1) {
                     betMode1 = 'auto';
                     autoPlay1 = true;
                 } else {
@@ -2018,7 +2132,7 @@
             const toggle = document.getElementById(`autoToggle${slot}`);
             toggle.classList.toggle('active');
             
-            if(slot === 1) {
+            if (slot === 1) {
                 autoCashout1 = !autoCashout1;
                 showToast(autoCashout1 ? 'Auto cash-out enabled' : 'Auto cash-out disabled', 'success');
             } else {
@@ -2042,12 +2156,12 @@
         function confirmAutoCashout() {
             const value = parseFloat(document.getElementById('modalInput').value);
             
-            if(!value || value < 1.1) {
+            if (!value || value < 1.1) {
                 showToast('Minimum value is 1.1x', 'error');
                 return;
             }
             
-            if(editingSlot === 1) {
+            if (editingSlot === 1) {
                 autoCashoutValue1 = value;
                 document.getElementById('autoValue1').textContent = value.toFixed(1);
             } else {
@@ -2069,164 +2183,29 @@
             }, 3000);
         }
 
+        // Ping simulation
         setInterval(() => {
             const ping = Math.floor(Math.random() * 200) + 100;
             document.getElementById('pingDisplay').textContent = ping;
         }, 5000);
 
-        // Initialize
-        initializeUsers();
-        renderAllBets();
-        updateBalance(); // Set initial balance display
-        waitForNextRound();
-        gameLoop();
-    // --- API CONFIGURATION ---
-const API_BASE_URL = 'http://localhost:3000/api'; // अपने सर्वर का URL यहाँ डालें
-const USER_PHONE = "9999999999"; // यहाँ यूजर का असली फोन नंबर डायनामिकली आना चाहिए
-
-// Game State
-let gameState = 'waiting';
-let currentMultiplier = 1.00;
-let balance = 0.00;
-let roundId = Date.now(); // असली roundId के लिए timestamp का उपयोग
-let betAmount1 = 10.00;
-let betAmount2 = 10.00;
-let activeBetId1 = null; // API से मिलने वाली Bet ID
-let activeBetId2 = null;
-let countdownTimer = 5;
-let myBets = [];
-let allBets = [];
-let autoCashout1 = false;
-let autoCashout2 = false;
-let autoCashoutValue1 = 1.1;
-let autoCashoutValue2 = 1.1;
-
-// --- API SYNC FUNCTIONS ---
-
-// 1. सर्वर से बैलेंस लाना
-async function syncUserBalance() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/user?phone=${USER_PHONE}`);
-        const data = await response.json();
-        if (data.success) {
-            balance = data.balance;
-            updateBalanceUI();
-        }
-    } catch (err) {
-        console.error("Balance sync failed", err);
-    }
-}
-
-// 2. सर्वर पर Bet लगाना
-async function placeBetAPI(slot, amount) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/aviator/bet`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                phone: USER_PHONE,
-                amount: amount,
-                roundId: roundId
-            })
-        });
-        const data = await response.json();
-        if (data.success) {
-            if (slot === 1) activeBetId1 = data.betId;
-            else activeBetId2 = data.betId;
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        async function init() {
+            // Sync user data on load
+            await syncUserData();
             
-            balance = data.newBalance;
-            updateBalanceUI();
-            showToast(`Bet Placed: ₹${amount}`, 'success');
-        } else {
-            showToast(data.message, 'error');
+            // Start game loop
+            renderAllBets();
+            updateBalance();
+            waitForNextRound();
+            gameLoop();
         }
-    } catch (err) {
-        showToast("Server Connection Error", 'error');
-    }
-}
 
-// 3. सर्वर पर Cashout करना
-async function cashoutAPI(slot, betId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/aviator/cashout`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                phone: USER_PHONE,
-                betId: betId,
-                multiplier: currentMultiplier
-            })
-        });
-        const data = await response.json();
-        if (data.success) {
-            balance = data.newBalance;
-            updateBalanceUI();
-            if (slot === 1) activeBetId1 = null;
-            else activeBetId2 = null;
-            
-            showToast(`Win: ₹${data.winAmount.toFixed(2)}`, 'success');
-            updateBetButtons();
-        }
-    } catch (err) {
-        console.error("Cashout failed", err);
-    }
-}
-
-// 4. Admin: Crash Point सेट करना
-async function setCrashPointAPI(point) {
-    try {
-        await fetch(`${API_BASE_URL}/admin/set-aviator-crash`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ point })
-        });
-        showToast(`Next Crash Point set to ${point}x`, 'success');
-    } catch (err) {
-        showToast("Admin API Error", 'error');
-    }
-}
-
-// --- UI UPDATES ---
-function updateBalanceUI() {
-    document.getElementById('balanceDisplay').textContent = balance.toFixed(2);
-}
-
-// --- MODIFIED CORE FUNCTIONS ---
-
-function placeBet(slot) {
-    if (gameState !== 'waiting') {
-        showToast('Wait for next round!', 'error');
-        return;
-    }
-    const amount = slot === 1 ? betAmount1 : betAmount2;
-    placeBetAPI(slot, amount);
-}
-
-function cashOut(slot) {
-    const betId = slot === 1 ? activeBetId1 : activeBetId2;
-    if (betId && gameState === 'playing') {
-        cashoutAPI(slot, betId);
-    }
-}
-
-// --- ADMIN PANEL ACTION ---
-function setCrashMultiplier() {
-    const value = parseFloat(document.getElementById('targetMultiplier').value);
-    if(value >= 1.1) {
-        setCrashPointAPI(value);
-    }
-}
-
-// Initialize on Load
-window.onload = () => {
-    syncUserBalance(); // सर्वर से असली बैलेंस उठाओ
-    initializeUsers();
-    renderAllBets();
-    waitForNextRound();
-    gameLoop();
-};
-
-// ... बाकी का Canvas और Animation कोड वैसा ही रहेगा ...
-
+        // Start when page loads
+        window.addEventListener('load', init);
+    </script>
 </body>
 </html>
