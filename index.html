@@ -5,18 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" />
   <title>JAHARUL GAME</title>
   <style>
-    * { 
-      box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent; 
-      outline: none;
-    }
-
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { 
       margin: 0; 
       padding: 0; 
-      background: #1a1d22; 
-      overflow-x: hidden; 
-      font-family: sans-serif; 
+      background: #0d0f12; 
+      font-family: sans-serif;
+      overflow-x: hidden;
     }
 
     .container {
@@ -24,52 +19,35 @@
       width: 100%;
       max-width: 500px;
       margin: 0 auto;
-      padding-bottom: 70px; 
+      padding-bottom: 60px; 
     }
 
-    .bg-img {
-      width: 100%;
-      display: block;
-      user-select: none;
-    }
-
-    /* सिर्फ बैलेंस डिस्प्ले (ID पट्टी हटा दी गई है) */
-    .user-info-patch {
+    /* बैलेंस का स्थान - इसे अपनी इमेज के टेक्स्ट के ऊपर सेट किया गया है */
+    .balance-container {
       position: absolute;
-      top: 13.4%;
-      left: 17%;
-      width: 65%;
-      height: 3.5%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #3d2b00;
-      font-weight: 800;
-      font-size: 16px;
+      top: 13.5%; 
+      left: 12%;
+      color: #f1c75b; 
+      font-weight: bold;
+      font-size: 18px;
       z-index: 20;
-      pointer-events: none;
     }
 
-    /* गेम बटन्स क्लिक जोन */
+    .bg-img { width: 100%; display: block; user-select: none; }
+
     .click-zone {
       position: absolute;
       cursor: pointer;
-      z-index: 50;
+      z-index: 10;
     }
 
-    .lottery-card { top: 18.5%; left: 3%; width: 31%; height: 16%; }
-    .original-card { top: 18.5%; left: 34.5%; width: 31%; height: 16%; }
-    .slots-card { top: 18.5%; right: 3%; width: 31%; height: 16%; }
-    
-    .sports-btn { top: 35.5%; left: 3%; width: 31%; height: 13%; }
-    .popular-btn { top: 35.5%; left: 34.5%; width: 31%; height: 13%; }
-    .casino-btn { top: 35.5%; right: 3%; width: 31%; height: 13%; }
+    /* Buttons */
+    .withdraw-btn { top: 3.5%; right: 23%; width: 19%; height: 5.5%; }
+    .deposit-btn { top: 3.5%; right: 3%; width: 19%; height: 5.5%; }
+    .wingo-btn { top: 35.8%; left: 3%; width: 46%; height: 12.5%; }
+    .aviator-btn { top: 48.8%; left: 3%; width: 31%; height: 15.5%; }
 
-    /* Withdraw और Deposit बटन क्लिक जोन (अब काम करेंगे) */
-    .withdraw-btn { top: 11.5%; left: 45%; width: 22%; height: 5.5%; }
-    .deposit-btn { top: 11.5%; left: 69%; width: 22%; height: 5.5%; }
-
-    /* बॉटम नेविगेशन */
+    /* Nav (50px Slim) */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -77,25 +55,27 @@
       transform: translateX(-50%);
       width: 100%;
       max-width: 500px;
-      height: 65px;
+      height: 50px; 
       background: #1a1d22;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      border-top: 1px solid #f1c75b;
+      border-top: 1px solid #333;
       z-index: 1000;
     }
 
-    .nav-item {
-      text-align: center;
-      color: #8e949f;
-      font-size: 11px;
-      cursor: pointer;
-      flex: 1;
-    }
-
+    .nav-item { text-align: center; color: #8e949f; font-size: 10px; flex: 1; cursor: pointer; }
     .nav-item.active { color: #f1c75b; }
-    .nav-icon { font-size: 20px; margin-bottom: 2px; }
+    .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+    .get-500 {
+      position: absolute;
+      top: -20px; width: 55px; height: 55px;
+      background: linear-gradient(180deg, #f1c75b, #d4a017);
+      border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #3d2b00; font-weight: bold; border: 3px solid #1a1d22;
+    }
   </style>
 </head>
 <body>
@@ -103,59 +83,50 @@
   <div class="container">
     <img src="https://i.imgur.com/chb68bf.png" class="bg-img">
 
-    <div class="user-info-patch">
-      ₹<span id="balBox">0.00</span>
-    </div>
+    <div class="balance-container">
+      ₹ <span id="user-balance"></span> </div>
 
     <div class="click-zone withdraw-btn" onclick="goTo('withdraw.html')"></div>
     <div class="click-zone deposit-btn" onclick="goTo('deposit.html')"></div>
-
-    <div class="click-zone lottery-card" onclick="goTo('wingo_game.html')"></div>
-    <div class="click-zone original-card" onclick="goTo('aviator_game.html')"></div>
-    <div class="click-zone slots-card" onclick="goTo('slots.html')"></div>
-    
-    <div class="click-zone sports-btn" onclick="goTo('sports.html')"></div>
-    <div class="click-zone popular-btn" onclick="goTo('popular.html')"></div>
-    <div class="click-zone casino-btn" onclick="goTo('casino.html')"></div>
+    <div class="click-zone wingo-btn" onclick="goTo('wingo_game.html')"></div>
+    <div class="click-zone aviator-btn" onclick="goTo('aviator_game.html')"></div>
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="goTo('index.html')">
-      <div class="nav-icon">🏠</div><div>Home</div>
+    <div class="nav-item active" onclick="goTo('index.html')"><span class="nav-icon">🏠</span>Home</div>
+    <div class="nav-item" onclick="goTo('activity.html')"><span class="nav-icon">🎁</span>Activity</div>
+    <div class="nav-item" style="position: relative;">
+      <div class="get-500" onclick="goTo('bonus.html')">
+        <span style="font-size: 9px;">Get</span><span style="font-size: 12px;">500</span>
+      </div>
     </div>
-    <div class="nav-item" onclick="goTo('activity.html')">
-      <div class="nav-icon">🎁</div><div>Activity</div>
-    </div>
-    <div class="nav-item" onclick="goTo('promotion.html')">
-      <div class="nav-icon">📢</div><div>Promotion</div>
-    </div>
-    <div class="nav-item" onclick="goTo('account.html')">
-      <div class="nav-icon">👤</div><div>Account</div>
-    </div>
+    <div class="nav-item" onclick="goTo('promotion.html')"><span class="nav-icon">📢</span>Promotion</div>
+    <div class="nav-item" onclick="goTo('account.html')"><span class="nav-icon">👤</span>Account</div>
   </div>
 
   <script>
-    function goTo(page) {
-      window.location.href = page;
-    }
-
-    async function syncData() {
-      const phone = localStorage.getItem('userPhone');
-      if (!phone) return;
-
+    async function fetchUserBalance() {
       try {
-        const response = await fetch(`/api/user?phone=${phone}`);
+        // अपने असली MongoDB API URL का उपयोग करें
+        const response = await fetch('/api/user/balance'); 
         const data = await response.json();
-        if (data.success) {
-          document.getElementById('balBox').innerText = parseFloat(data.balance).toFixed(2);
+
+        if (data && data.balance !== undefined) {
+          document.getElementById('user-balance').innerText = data.balance.toFixed(2);
         }
-      } catch (err) {
-        console.error("Sync Error:", err);
+      } catch (error) {
+        console.error("Balance sync error.");
       }
     }
 
-    window.onload = syncData;
-    setInterval(syncData, 5000); 
+    window.onload = () => {
+      fetchUserBalance();
+      setInterval(fetchUserBalance, 5000); 
+    };
+
+    function goTo(page) {
+      window.location.href = page;
+    }
   </script>
 
 </body>
