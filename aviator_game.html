@@ -2080,6 +2080,153 @@
         updateBalance(); // Set initial balance display
         waitForNextRound();
         gameLoop();
-    </script>
+    // --- API CONFIGURATION ---
+const API_BASE_URL = 'http://localhost:3000/api'; // अपने सर्वर का URL यहाँ डालें
+const USER_PHONE = "9999999999"; // यहाँ यूजर का असली फोन नंबर डायनामिकली आना चाहिए
+
+// Game State
+let gameState = 'waiting';
+let currentMultiplier = 1.00;
+let balance = 0.00;
+let roundId = Date.now(); // असली roundId के लिए timestamp का उपयोग
+let betAmount1 = 10.00;
+let betAmount2 = 10.00;
+let activeBetId1 = null; // API से मिलने वाली Bet ID
+let activeBetId2 = null;
+let countdownTimer = 5;
+let myBets = [];
+let allBets = [];
+let autoCashout1 = false;
+let autoCashout2 = false;
+let autoCashoutValue1 = 1.1;
+let autoCashoutValue2 = 1.1;
+
+// --- API SYNC FUNCTIONS ---
+
+// 1. सर्वर से बैलेंस लाना
+async function syncUserBalance() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/user?phone=${USER_PHONE}`);
+        const data = await response.json();
+        if (data.success) {
+            balance = data.balance;
+            updateBalanceUI();
+        }
+    } catch (err) {
+        console.error("Balance sync failed", err);
+    }
+}
+
+// 2. सर्वर पर Bet लगाना
+async function placeBetAPI(slot, amount) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/aviator/bet`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: USER_PHONE,
+                amount: amount,
+                roundId: roundId
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (slot === 1) activeBetId1 = data.betId;
+            else activeBetId2 = data.betId;
+            
+            balance = data.newBalance;
+            updateBalanceUI();
+            showToast(`Bet Placed: ₹${amount}`, 'success');
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast("Server Connection Error", 'error');
+    }
+}
+
+// 3. सर्वर पर Cashout करना
+async function cashoutAPI(slot, betId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/aviator/cashout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: USER_PHONE,
+                betId: betId,
+                multiplier: currentMultiplier
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            balance = data.newBalance;
+            updateBalanceUI();
+            if (slot === 1) activeBetId1 = null;
+            else activeBetId2 = null;
+            
+            showToast(`Win: ₹${data.winAmount.toFixed(2)}`, 'success');
+            updateBetButtons();
+        }
+    } catch (err) {
+        console.error("Cashout failed", err);
+    }
+}
+
+// 4. Admin: Crash Point सेट करना
+async function setCrashPointAPI(point) {
+    try {
+        await fetch(`${API_BASE_URL}/admin/set-aviator-crash`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ point })
+        });
+        showToast(`Next Crash Point set to ${point}x`, 'success');
+    } catch (err) {
+        showToast("Admin API Error", 'error');
+    }
+}
+
+// --- UI UPDATES ---
+function updateBalanceUI() {
+    document.getElementById('balanceDisplay').textContent = balance.toFixed(2);
+}
+
+// --- MODIFIED CORE FUNCTIONS ---
+
+function placeBet(slot) {
+    if (gameState !== 'waiting') {
+        showToast('Wait for next round!', 'error');
+        return;
+    }
+    const amount = slot === 1 ? betAmount1 : betAmount2;
+    placeBetAPI(slot, amount);
+}
+
+function cashOut(slot) {
+    const betId = slot === 1 ? activeBetId1 : activeBetId2;
+    if (betId && gameState === 'playing') {
+        cashoutAPI(slot, betId);
+    }
+}
+
+// --- ADMIN PANEL ACTION ---
+function setCrashMultiplier() {
+    const value = parseFloat(document.getElementById('targetMultiplier').value);
+    if(value >= 1.1) {
+        setCrashPointAPI(value);
+    }
+}
+
+// Initialize on Load
+window.onload = () => {
+    syncUserBalance(); // सर्वर से असली बैलेंस उठाओ
+    initializeUsers();
+    renderAllBets();
+    waitForNextRound();
+    gameLoop();
+};
+
+// ... बाकी का Canvas और Animation कोड वैसा ही रहेगा ...
+
 </body>
 </html>
