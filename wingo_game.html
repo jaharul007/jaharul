@@ -322,12 +322,12 @@
 
         .hist-tab {
             flex: 1;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             background: #2d3748;
             border: none;
             font-weight: 600;
-            font-size: 15px;
+            font-size: 13px;
             color: #9ca3af;
             cursor: pointer;
             position: relative;
@@ -396,58 +396,43 @@
             width: 100%;
         }
 
-        .pagination-bar {
+        /* Sahi Pagination Styling */
+.pagination-bar {
     background: #1a1d22;
-    padding: 15px;
+    padding: 10px 15px;
     border-top: 1px solid #333;
-    justify-content: space-between; /* Buttons ko dono side push karne ke liye */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .page-btn {
     background: #2d3748;
     color: #f3c34d;
     border-radius: 8px;
-    width: 45px;
-    height: 45px;
-    font-size: 24px;
-    transition: 0.3s;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
-        .page-btn.next {
-    background: #f3c34d; /* Active feel dene ke liye */
+.page-btn.next {
+    background: #f3c34d;
     color: #1a1d22;
 }
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
-            font-size: 22px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
 
-        .page-btn:hover {
-            background: #4b5563;
-        }
+.page-info {
+    color: #9ca3af;
+    font-size: 16px;
+    font-weight: 600;
+}
 
-        .page-btn:active {
-            transform: scale(0.95);
-        }
 
-        .page-btn.next {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #000;
-        }
-
-        .page-info {
-            color: #9ca3af;
-            font-size: 18px;
-            font-weight: 600;
-            min-width: 60px;
-            text-align: center;
-        }
 
         /* =========================================
            10. BETTING MODAL
@@ -499,7 +484,7 @@
         .row-item { display: flex; align-items: center; margin-bottom: 15px; }
         .label-txt { width: 90px; font-size: 14px; color: #aaa; font-weight: bold; }
         
-        .chip-grid { display: flex; gap: 8px; flex: 1; }
+        .chip-grid { display: flex; gap: 20px; flex: 1; }
         .chip { background: #3d444d; color: #fff; border: none; padding: 10px 5px; border-radius: 8px; font-weight: 900; flex: 1; cursor: pointer; transition: 0.2s; }
         .chip.active { background: #4fa1f9; box-shadow: 0 0 10px rgba(79, 161, 249, 0.5); }
         
@@ -605,7 +590,7 @@
             <button class="hist-tab" onclick="switchHistoryTab(2, this)">My history</button>
         </div>
 
-        <div class="photo-history-card">
+                <div class="photo-history-card">
             <div class="history-content active" id="gameHistory">
                 <table class="p-table">
                     <thead>
@@ -620,20 +605,15 @@
                         <tr><td colspan="4" style="text-align:center; padding:30px; color:#6b7280;">Synchronizing...</td></tr>
                     </tbody>
                 </table>
-                
                 <div class="pagination-bar">
-                    <button class="page-btn prev" onclick="changePage(-1)">
-                        <span>‹</span>
-                    </button>
+                    <button class="page-btn prev" onclick="changePage(-1)"><span>‹</span></button>
                     <span class="page-info" id="pageInfo">1/50</span>
-                    <button class="page-btn next" onclick="changePage(1)">
-                        <span>›</span>
-                    </button>
+                    <button class="page-btn next" onclick="changePage(1)"><span>›</span></button>
                 </div>
             </div>
 
             <div class="history-content" id="chartSection">
-                <p>📊 Chart view coming soon...</p>
+                <p style="padding:30px; color:#6b7280;">Chart coming soon...</p>
             </div>
 
             <div class="history-content" id="myHistory">
@@ -651,7 +631,6 @@
                 <p id="myHistoryEmpty" style="padding:30px; color:#6b7280;">Loading your bets...</p>
             </div>
         </div>
-    </div>
 
     <div class="modal-overlay" id="betModalOverlay" onclick="closeModalOnOverlay(event)">
         <div class="bet-modal" onclick="event.stopPropagation()">
@@ -942,8 +921,7 @@ function changePage(direction) {
     document.getElementById('pageInfo').innerText = currentPage + '/' + totalPages;
     fetchFromDB();
 }
-
-function renderHistory(history) {
+      function renderHistory(history) {
     if(!history || history.length === 0) {
         document.getElementById('historyBody').innerHTML = '<tr><td colspan="4">No Data</td></tr>';
         return;
@@ -953,6 +931,7 @@ function renderHistory(history) {
         const n = parseInt(i.n || i.number || i.result || 0);
         const period = i.p || i.period || 'N/A';
         
+        // Sahi Color Logic
         let numColor = (n % 2 === 0) ? '#ff4d4d' : '#10b981';
         if (n === 0 || n === 5) numColor = '#9b51e0';
 
@@ -969,17 +948,15 @@ function renderHistory(history) {
         const sizeColor = n >= 5 ? '#ffa726' : '#42a5f5';
 
         return `<tr>
-            <td class="p-period">${period}</td>
+            <td>${period}</td>
             <td><span class="res-number" style="color:${numColor};">${n}</span></td>
             <td style="color:${sizeColor}; font-weight:600;">${sizeText}</td>
             <td><div style="display:flex; justify-content:center;">${dots}</div></td>
         </tr>`;
-            }).join('');
+    }).join('');
 
     document.getElementById('historyBody').innerHTML = html;
-    console.log('✅ History rendered successfully');
 }
-
 async function loadMyHistory() {
     const phone = getCurrentUserPhone();
     if (!phone) return;
@@ -1248,7 +1225,6 @@ window.onload = () => {
     startTimer();
     
     setInterval(loadBalance, 10000);
-    setInterval(fetchFromDB, 30000);
     
     console.log('✅ All systems running');
     console.log('💰 Initial balance:', currentBalance);
