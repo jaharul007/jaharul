@@ -1,5 +1,6 @@
 import clientPromise from '../../lib/mongodb.js';
 
+
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
