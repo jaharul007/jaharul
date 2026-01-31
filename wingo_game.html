@@ -351,7 +351,7 @@
         }
 
         .photo-history-card { 
-            background: #0a0e27;
+            background: #22272d;
             margin: 0;
             overflow: hidden;
             width: 100%;
@@ -360,54 +360,28 @@
         }
 
         .p-table { 
-            width: 100%; 
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .p-table th { 
-            background: #374151;
-            color: #fff;
-            font-size: 15px;
-            font-weight: 600;
-            padding: 15px 5px;
-            text-align: center;
-            border-bottom: none;
-        }
-
-        .p-table td { 
-            padding: 16px 5px;
-            text-align: center;
-            border-bottom: 1px solid #1f2937;
-            font-size: 15px;
-            background: #1f2937;
-            color: #fff;
-        }
-
-        .p-table tbody tr:hover td {
-            background: #2d3748;
-        }
-
-        .p-period { 
-            color: #9ca3af;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .res-number {
-            font-size: 28px;
-            font-weight: 900;
-        }
-
-        .res-dot { 
-            height: 14px;
-            width: 14px;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 0 3px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
+    width: 100%; 
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.p-table th, .p-table td {
+    padding: 12px 5px;
+    text-align: center;
+    border-bottom: 1px solid #2d3748;
+    background: #1f2937;
+}
+/* Column widths for perfect alignment */
+.p-table th:nth-child(1), .p-table td:nth-child(1) { width: 35%; text-align: left; padding-left: 15px; }
+.p-table th:nth-child(2), .p-table td:nth-child(2) { width: 15%; text-align: center; }
+.p-table th:nth-child(3), .p-table td:nth-child(3) { width: 25%; text-align: center; }
+.p-table th:nth-child(4), .p-table td:nth-child(4) { width: 25%; text-align: center; }
+.res-number { font-size: 18px; font-weight: 800; }
+.res-dot { 
+    height: 12px; width: 12px; border-radius: 50%; 
+    display: inline-block; margin: 0 2px; 
+}
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
         .history-content {
             display: none;
             padding: 30px;
@@ -423,19 +397,26 @@
         }
 
         .pagination-bar {
-            background: #0a0e27;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
-        }
+    background: #1a1d22;
+    padding: 15px;
+    border-top: 1px solid #333;
+    justify-content: space-between; /* Buttons ko dono side push karne ke liye */
+}
 
-        .page-btn {
-            background: #374151;
-            border: none;
-            color: #9ca3af;
+.page-btn {
+    background: #2d3748;
+    color: #f3c34d;
+    border-radius: 8px;
+    width: 45px;
+    height: 45px;
+    font-size: 24px;
+    transition: 0.3s;
+}
+
+        .page-btn.next {
+    background: #f3c34d; /* Active feel dene ke liye */
+    color: #1a1d22;
+}
             width: 45px;
             height: 45px;
             border-radius: 10px;
@@ -963,11 +944,8 @@ function changePage(direction) {
 }
 
 function renderHistory(history) {
-    console.log('📊 Rendering history:', history);
-    
     if(!history || history.length === 0) {
-        document.getElementById('historyBody').innerHTML = 
-            '<tr><td colspan="4" style="text-align:center; padding:30px; color:#6b7280;">No results yet</td></tr>';
+        document.getElementById('historyBody').innerHTML = '<tr><td colspan="4">No Data</td></tr>';
         return;
     }
     
@@ -975,32 +953,29 @@ function renderHistory(history) {
         const n = parseInt(i.n || i.number || i.result || 0);
         const period = i.p || i.period || 'N/A';
         
-        console.log('Processing row:', { n, period, raw: i });
-        
-        let numColor = '#10b981';
-        if (n === 0) numColor = '#3b82f6';
-        else if (n === 5) numColor = '#10b981';
-        else if (n % 2 === 0) numColor = '#ef4444';
-        
+        let numColor = (n % 2 === 0) ? '#ff4d4d' : '#10b981';
+        if (n === 0 || n === 5) numColor = '#9b51e0';
+
         let dots = '';
-        if (n === 0 || n === 5) {
-            if (n === 0) {
-                dots = '<span class="res-dot" style="background:#3b82f6;"></span><span class="res-dot" style="background:#ec4899;"></span>';
-            } else {
-                dots = '<span class="res-dot" style="background:#10b981;"></span><span class="res-dot" style="background:#ec4899;"></span>';
-            }
+        if (n === 0) {
+            dots = '<span class="res-dot" style="background:#ff4d4d;"></span><span class="res-dot" style="background:#9b51e0;"></span>';
+        } else if (n === 5) {
+            dots = '<span class="res-dot" style="background:#10b981;"></span><span class="res-dot" style="background:#9b51e0;"></span>';
         } else {
             dots = `<span class="res-dot" style="background:${numColor};"></span>`;
         }
         
+        const sizeText = n >= 5 ? 'Big' : 'Small';
+        const sizeColor = n >= 5 ? '#ffa726' : '#42a5f5';
+
         return `<tr>
             <td class="p-period">${period}</td>
             <td><span class="res-number" style="color:${numColor};">${n}</span></td>
-            <td style="color:#fff; font-weight:400; font-size:18px;">${n >= 5 ? 'Big' : 'Small'}</td>
-            <td>${dots}</td>
+            <td style="color:${sizeColor}; font-weight:600;">${sizeText}</td>
+            <td><div style="display:flex; justify-content:center;">${dots}</div></td>
         </tr>`;
-    }).join('');
-    
+            }).join('');
+
     document.getElementById('historyBody').innerHTML = html;
     console.log('✅ History rendered successfully');
 }
