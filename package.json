@@ -1,17 +1,18 @@
 {
-  "name": "wingo-game",
+  "name": "wingo-game-vercel",
   "version": "1.0.0",
   "type": "module",
+  "main": "api/index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "mongodb": "^6.3.0",
     "mongoose": "^7.0.0",
+    "mongodb": "^6.3.0",
     "cors": "^2.8.5",
-    "path": "^0.12.7"
+    "dotenv": "^16.0.3"
   },
   "engines": {
     "node": "24.x"
