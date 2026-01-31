@@ -1,78 +1,73 @@
-// ============================================
-// GAME BACKEND API (Wingo + Aviator) - RAILWAY READY
-// ============================================
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+// ES Modules mein __dirname set karne ke liye
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); 
 
 // ============================================
-// MONGODB CONNECTION
+// 1. STATIC FILES (HTML/CSS/JS) SETUP
+// ============================================
+// Aapne kaha ki aapka folder "files" naam se hai.
+// Ye line ensure karegi ki link kholte hi "files/index.html" dikhe.
+app.use(express.static(path.join(__dirname, 'files')));
+
+// ============================================
+// 2. MONGODB CONNECTION
 // ============================================
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/wingo_game';
-
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('✅ MongoDB Connected Successfully'))
-.catch(err => console.error('❌ MongoDB Connection Error:', err));
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // ============================================
-// MONGOOSE SCHEMAS (Keep these for common access)
+// 3. API ROUTES LINKING (ES Modules Style)
 // ============================================
-// (User, GameResult, Bet, Aviator schemas yahan rahenge...)
-// [Mene niche code short kiya hai space ke liye, aapka purana schema yahan rahega]
+// Railway crashes se bachne ke liye ye sahi tarika hai:
+import loginRoute from './api/login.js';
+import registerRoute from './api/register.js';
+import balanceRoute from './api/balance.js';
+import betRoute from './api/bet.js';
+import historyRoute from './api/history.js';
+import myhistoryRoute from './api/myhistory.js';
+import userRoute from './api/user.js';
+import processResults from './api/process-results.js';
+import saveResult from './api/save-result.js';
+import addResult from './api/add-result.js';
 
-// ============================================
-// IMPORTING YOUR 11 FILES (FILES ALAG RAHENGI)
-// ============================================
-
-// Wingo & User Routes
-app.use('/api/login', require('./api/login.js'));
-app.use('/api/register', require('./api/register.js'));
-app.use('/api/balance', require('./api/balance.js'));
-app.use('/api/bet', require('./api/bet.js'));
-app.use('/api/history', require('./api/history.js'));
-app.use('/api/myhistory', require('./api/myhistory.js'));
-app.use('/api/user', require('./api/user.js'));
-
-// Results & Admin Routes
-app.use('/api/process-results', require('./api/process-results.js'));
-app.use('/api/save-result', require('./api/save-result.js'));
-app.use('/api/add-result', require('./api/add-result.js'));
-
-// Aviator Special Routes
-app.use('/api/aviator/bet', require('./api/aviator/bet.js'));
-app.use('/api/aviator/cashout', require('./api/aviator/cashout.js'));
-app.use('/api/aviator/next-round', require('./api/aviator/next-round.js'));
-app.use('/api/admin/set-crash', require('./api/admin/set-crash.js'));
+// Connecting routes to Express
+app.use('/api/login', loginRoute);
+app.use('/api/register', registerRoute);
+app.use('/api/balance', balanceRoute);
+app.use('/api/bet', betRoute);
+app.use('/api/history', historyRoute);
+app.use('/api/myhistory', myhistoryRoute);
+app.use('/api/user', userRoute);
+app.use('/api/process-results', processResults);
+app.use('/api/save-result', saveResult);
+app.use('/api/add-result', addResult);
 
 // ============================================
-// HELPERS & CRON (AUTO GENERATORS)
+// 4. DEFAULT ROUTE (Index.html Load karne ke liye)
 // ============================================
-function getColor(num) {
-    if (num === 0 || num === 5) return 'Violet';
-    if (num % 2 === 0) return 'Red';
-    return 'Green';
-}
-function getSize(num) { return num >= 5 ? 'Big' : 'Small'; }
-
-setInterval(async () => {
-    // Game Auto-generation logic here...
-}, 10000);
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'files', 'index.html'));
+});
 
 // ============================================
-// START SERVER
+// 5. START SERVER
 // ============================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`✅ Server Running on Port ${PORT}`);
-    console.log(`🚀 Ready for Railway!`);
+    console.log(`🚀 Server running at: http://localhost:${PORT}`);
+    console.log(`📂 Serving static files from: /files folder`);
 });
