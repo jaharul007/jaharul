@@ -7,7 +7,7 @@
       "use": "@vercel/node"
     },
     {
-      "src": "index.html",
+      "src": "wingo_game.html",
       "use": "@vercel/static"
     }
   ],
@@ -18,7 +18,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "index.html"
+      "dest": "wingo_game.html"
     }
   ]
 }
