@@ -22,14 +22,15 @@ export default async function handler(req, res) {
     const client = await clientPromise;
     const db = client.db('wingo_game');
     
+    // Results collection se data nikalna
     const history = await db.collection('results')
       .find({ mode: parseInt(mode) })
-      .sort({ period: -1 })
+      .sort({ period: -1 }) // Latest result sabse upar
       .skip(skip)
       .limit(limit)
       .toArray();
     
-    // Format response (multiple formats for compatibility)
+    // Frontend compatibility ke liye format karna
     const formattedHistory = history.map(item => ({
       p: item.period,
       n: item.number,
@@ -38,11 +39,9 @@ export default async function handler(req, res) {
       result: item.number
     }));
     
-    console.log(`📊 History loaded: ${formattedHistory.length} results for mode ${mode}`);
-    
     return res.status(200).json({
       success: true,
-      results: formattedHistory,
+      results: formattedHistory, // Frontend isi ka use kar raha hai
       history: formattedHistory,
       data: formattedHistory,
       page: parseInt(page),
@@ -53,8 +52,7 @@ export default async function handler(req, res) {
     console.error('❌ History API Error:', error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error'
     });
   }
 }
