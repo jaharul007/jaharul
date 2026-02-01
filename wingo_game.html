@@ -934,15 +934,15 @@ function syncAdminData() {
         });
     }).catch(() => {});
 }
-
-
-// 2. एडमिन का नंबर सेव करने के लिए
 function adminSaveForce() {
     let val = document.getElementById('adminForceInp').value;
-    let period = document.getElementById('periodDisplay').innerText; 
+    // पीरियड को स्ट्रिंग की तरह ही लें
+    let period = document.getElementById('periodDisplay').innerText.trim(); 
 
     if (val !== '' && val >= 0 && val <= 9) {
         const saveBtn = document.querySelector('.force-save-btn');
+        const originalBtnText = saveBtn.innerText;
+        
         saveBtn.innerText = "SAVING...";
         saveBtn.disabled = true;
 
@@ -951,30 +951,30 @@ function adminSaveForce() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 number: parseInt(val), 
-                mode: currentMode,
-                period: period 
+                mode: parseInt(currentMode), 
+                period: period // इसे स्ट्रिंग ही भेजें
             })
         })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) { 
+        .then(async res => {
+            const data = await res.json();
+            if(res.ok && data.success) { 
                 alert('✅ सफल! पीरियड ' + period + ' के लिए नंबर ' + val + ' सेट हो गया है।'); 
-                // स्टेटस को तुरंत अपडेट करें
                 document.getElementById('adminStatusTxt').innerText = '⚡ NEXT FORCED: ' + val;
                 document.getElementById('adminStatusTxt').style.color = '#ffff00';
             } else {
-                alert('❌ गलती: ' + data.message);
+                alert('❌ एरर: ' + (data.message || 'Server Error'));
             }
         })
-        .catch(err => alert('❌ सर्वर एरर!'))
+        .catch(err => alert('❌ नेटवर्क एरर!'))
         .finally(() => {
-            saveBtn.innerText = "SAVE RESULT NOW";
+            saveBtn.innerText = originalBtnText;
             saveBtn.disabled = false;
         });
     } else { 
         alert('⚠️ कृपया 0 से 9 के बीच का नंबर डालें'); 
     }
 }
+
 
 // ========================================
 // USER AUTHENTICATION
