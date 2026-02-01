@@ -339,12 +339,10 @@
         }
 
         .hist-tab.active {
-            background: linear-gradient(135deg, #d4a574 0%, #c9954d 100%);
-            color: #2d1810;
-            border-color: rgba(255,255,255,0.2);
-            box-shadow: 0 -2px 10px rgba(212, 165, 116, 0.3);
-        }
-
+    background: linear-gradient(180deg, #5df9d3 0%, #31d7ab 100%) !important;
+    color: #000 !important;
+    border: none !important;
+}
         .hist-tab:hover {
             color: #fff;
             background: #374151;
@@ -367,8 +365,9 @@
 .p-table th, .p-table td {
     padding: 12px 5px;
     text-align: center;
-    border-bottom: 1px solid #2d3748;
-    background: #1f2937;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Patli line */
+    background: #000c2a; /* Image wala Deep Blue color */
+    color: #ffffff;
 }
 /* Column widths for perfect alignment */
 .p-table th:nth-child(1), .p-table td:nth-child(1) { width: 35%; text-align: left; padding-left: 15px; }
@@ -408,22 +407,14 @@
 }
 
 .page-btn {
-    background: #2d3748;
-    color: #f3c34d;
-    border-radius: 8px;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    background: #2b3d63 !important; /* Dark blue button */
+    color: #ffffff !important;
 }
 
-.page-btn.next {
-    background: #f3c34d;
-    color: #1a1d22;
+.page-btn.next, .page-btn.prev {
+    background: #00ffcc !important; /* Cyan/Neon Green button */
+    color: #000 !important;
+    border-radius: 8px;
 }
 
 .page-info {
@@ -1155,13 +1146,14 @@ function startTimer() {
         let p = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
         document.getElementById('periodDisplay').innerText = p;
         
-        // ✅ जब 2 सेकंड बचें, तब fetchFromDB() को कॉल करें
-        if (rem === 2) {
-            console.log('⏰ Timer at 2 seconds - calling fetchFromDB()');
+        // ✅ CHANGE HERE: Jab timer khatam ho (rem == currentMode) 
+        // Yaani jab naya period just shuru hua ho
+        if (rem === currentMode) {
+            console.log('⏰ Round Finished! Fetching new data...');
             setTimeout(() => {
                 fetchFromDB();
                 checkBetResults();
-            }, 1000);
+            }, 1500); // 1.5 second ka wait taaki server result likh le
         }
     }, 1000);
 }
