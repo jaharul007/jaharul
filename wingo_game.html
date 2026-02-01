@@ -936,45 +936,38 @@ function syncAdminData() {
 }
 function adminSaveForce() {
     let val = document.getElementById('adminForceInp').value;
-    // पीरियड को स्ट्रिंग की तरह ही लें
     let period = document.getElementById('periodDisplay').innerText.trim(); 
 
     if (val !== '' && val >= 0 && val <= 9) {
-        const saveBtn = document.querySelector('.force-save-btn');
-        const originalBtnText = saveBtn.innerText;
-        
-        saveBtn.innerText = "SAVING...";
-        saveBtn.disabled = true;
+        // Console check
+        console.log("Sending Data:", { number: val, mode: currentMode, period: period });
 
-        fetch('/api/add-result', { 
+        fetch('/api/add-result', {  // <--- Check karein aapki file ka path yahi hai na?
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 number: parseInt(val), 
                 mode: parseInt(currentMode), 
-                period: period // इसे स्ट्रिंग ही भेजें
+                period: period 
             })
         })
         .then(async res => {
+            if (res.status === 404) throw new Error("API file not found (404)");
             const data = await res.json();
-            if(res.ok && data.success) { 
-                alert('✅ सफल! पीरियड ' + period + ' के लिए नंबर ' + val + ' सेट हो गया है।'); 
-                document.getElementById('adminStatusTxt').innerText = '⚡ NEXT FORCED: ' + val;
-                document.getElementById('adminStatusTxt').style.color = '#ffff00';
+            if(data.success) { 
+                alert('✅ Success! Result set for ' + period); 
             } else {
-                alert('❌ एरर: ' + (data.message || 'Server Error'));
+                alert('❌ Backend Error: ' + data.message);
             }
         })
-        .catch(err => alert('❌ नेटवर्क एरर!'))
-        .finally(() => {
-            saveBtn.innerText = originalBtnText;
-            saveBtn.disabled = false;
+        .catch(err => {
+            console.error(err);
+            alert('❌ Connection Error: ' + err.message);
         });
     } else { 
-        alert('⚠️ कृपया 0 से 9 के बीच का नंबर डालें'); 
+        alert('⚠️ Please enter a number 0-9'); 
     }
 }
-
 
 // ========================================
 // USER AUTHENTICATION
