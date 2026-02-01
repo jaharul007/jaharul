@@ -1,4 +1,4 @@
-import clientPromise from '../lib/mongodb.js'; // Connection file reuse kar rahe hain
+import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -15,7 +15,6 @@ export default async function handler(req, res) {
                        now.getDate().toString().padStart(2, '0');
 
         const { period, mode: reqMode } = req.body;
-        // Agar request mein mode nahi hai toh default modes use honge
         const modes = reqMode ? [parseInt(reqMode)] : [30, 60, 180, 300];
 
         for (let mode of modes) {
@@ -27,7 +26,6 @@ export default async function handler(req, res) {
             
             if (!exists) {
                 // 🔍 2. Admin Force Check
-                // Dhyaan dein: add-result.js forced number isi 'history' collection mein save karna chahiye
                 const adminForced = await db.collection('history').findOne({ 
                     period: finalPeriod, 
                     mode: mode 
@@ -36,9 +34,8 @@ export default async function handler(req, res) {
                 let finalNum;
                 if (adminForced && adminForced.number !== undefined) {
                     finalNum = parseInt(adminForced.number);
-                    console.log(`⚡ Admin Force Active for ${finalPeriod}: ${finalNum}`);
                 } else {
-                    finalNum = Math.floor(Math.random() * 10); // Random number generation
+                    finalNum = Math.floor(Math.random() * 10);
                 }
                 
                 // 3. Save result to 'results'
@@ -49,17 +46,71 @@ export default async function handler(req, res) {
                     timestamp: new Date()
                 });
 
-                // 4. (Optional) Purane forced records delete karna taaki DB bhare nahi
+                // 🚀 4. SETTLEMENT LOGIC (Bets Process Karein)
+                await settleBetsForPeriod(db, finalPeriod, mode, finalNum);
+
+                // 5. Cleanup admin forced record
                 if (adminForced) {
                     await db.collection('history').deleteOne({ _id: adminForced._id });
                 }
             }
         }
 
-        res.status(200).json({ success: true, message: "Result Processed Successfully" });
+        res.status(200).json({ success: true, message: "Result and Settlement Complete" });
 
     } catch (e) {
-        console.error("❌ Save Result Error:", e);
+        console.error("❌ Process Error:", e);
         res.status(500).json({ success: false, error: e.message });
+    }
+}
+
+// Settlement Function: Winners ko paise dene ke liye
+async function settleBetsForPeriod(db, period, mode, winNum) {
+    const pendingBets = await db.collection('bets').find({
+        period: period,
+        mode: mode,
+        status: 'pending'
+    }).toArray();
+
+    if (pendingBets.length === 0) return;
+
+    const winSize = winNum >= 5 ? 'Big' : 'Small';
+    let winColors = [];
+    if (winNum === 0) winColors = ['Red', 'Violet'];
+    else if (winNum === 5) winColors = ['Green', 'Violet'];
+    else if (winNum % 2 === 0) winColors = ['Red'];
+    else winColors = ['Green'];
+
+    for (let bet of pendingBets) {
+        let isWin = false;
+        let mult = 0;
+
+        if (bet.betOn == winNum) { isWin = true; mult = 9; }
+        else if (bet.betOn === winSize) { isWin = true; mult = 2; }
+        else if (winColors.includes(bet.betOn)) {
+            isWin = true;
+            mult = (bet.betOn === 'Violet') ? 4.5 : (winNum === 0 || winNum === 5 ? 1.5 : 2);
+        }
+
+        if (isWin) {
+            const winAmount = bet.amount * mult;
+            await db.collection('users').updateOne(
+                { phone: bet.phone },
+                { $inc: { balance: winAmount, totalWins: 1 } }
+            );
+            await db.collection('bets').updateOne(
+                { _id: bet._id },
+                { $set: { status: 'won', winAmount: winAmount, result: winNum, processedAt: new Date() } }
+            );
+        } else {
+            await db.collection('bets').updateOne(
+                { _id: bet._id },
+                { $set: { status: 'lost', winAmount: 0, result: winNum, processedAt: new Date() } }
+            );
+            await db.collection('users').updateOne(
+                { phone: bet.phone },
+                { $inc: { totalLosses: 1 } }
+            );
+        }
     }
 }
