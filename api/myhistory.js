@@ -27,12 +27,13 @@ export default async function handler(req, res) {
     const client = await clientPromise;
     const db = client.db('wingo_game');
     
+    // Yahan hum ensure kar rahe hain ki mode hamesha Number rahe
     const bets = await db.collection('bets')
       .find({ 
-        phone, 
+        phone: phone, 
         mode: parseInt(mode) 
       })
-      .sort({ timestamp: -1 })
+      .sort({ timestamp: -1 }) // Taki naye bets sabse upar dikhen
       .limit(50)
       .toArray();
     
