@@ -1,11 +1,10 @@
 {
   "name": "jaharul-game",
   "version": "1.0.0",
-  "description": "WinGo Betting Game Backend",
-  "main": "api/save-result.js",
   "dependencies": {
     "mongodb": "^6.3.0",
-    "mongoose": "^8.1.0"
+    "mongoose": "^8.1.0",
+    "express": "^4.18.2"
   },
   "engines": {
     "node": "24.x"
