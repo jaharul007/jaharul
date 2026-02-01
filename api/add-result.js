@@ -26,30 +26,22 @@ export default async function handler(req, res) {
     const db = client.db('wingo_game');
     const historyCollection = db.collection('history');
 
-    // Check if result already exists
-    const existing = await historyCollection.findOne({
-      period: period,
-      mode: parseInt(mode)
-    });
+    // ✅ सुधार: 'insertOne' की जगह 'updateOne' का उपयोग करें
+    // इससे अगर पीरियड पहले से मौजूद है, तो आपका चुना हुआ नंबर वहां अपडेट हो जाएगा
+    const result = await historyCollection.updateOne(
+      { period: period, mode: parseInt(mode) },
+      { 
+        $set: { 
+          number: parseInt(number),
+          timestamp: new Date(),
+          isForced: true // यह पहचानने के लिए कि एडमिन ने इसे बदला है
+        } 
+      },
+      { upsert: true } // अगर नहीं है, तो नया बना दे
+    );
 
-    if (existing) {
-      return res.status(400).json({ success: false, message: 'Result already exists' });
-    }
-
-    // Add result
-    const result = {
-      period: period,
-      mode: parseInt(mode),
-      number: parseInt(number),
-      timestamp: new Date(),
-      createdAt: new Date()
-    };
-
-    await historyCollection.insertOne(result);
-
-    console.log(`✅ Result added: Period ${period} - Number ${number}`);
-
-    res.status(200).json({ success: true, message: 'Result added' });
+    console.log(`✅ Result Updated/Added: Period ${period} - Number ${number}`);
+    res.status(200).json({ success: true, message: 'Result saved successfully' });
 
   } catch (error) {
     console.error('Add result API error:', error);
