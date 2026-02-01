@@ -881,6 +881,13 @@
 // ========================================
 let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
 let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
+let userBets = []; // यह मिसिंग था
+
+function checkBetResults() {
+    console.log("Checking result...");
+    loadMyHistory();
+    loadBalance();
+}
 
 function getCurrentUserPhone() {
     currentUserPhone = sessionStorage.getItem('userPhone') || 'demo_user';
@@ -1231,66 +1238,40 @@ async function loadMyHistory() {
         document.getElementById('myHistoryEmpty').style.display = 'block';
     }
 }
-
 // ========================================
-// fetchFromDB
+// fetchFromDB - FINAL FIXED VERSION
 // ========================================
 async function fetchFromDB() {
     try {
         const now = new Date();
-        const total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
+        const total = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
         const dateStr = now.getFullYear().toString() + 
-                       (now.getMonth()+1).toString().padStart(2,'0') + 
-                       now.getDate().toString().padStart(2,'0');
-        const currentPeriod = dateStr + Math.floor(total/currentMode).toString().padStart(4, '0');
+                       (now.getMonth() + 1).toString().padStart(2, '0') + 
+                       now.getDate().toString().padStart(2, '0');
+        const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
         
+        // 1. रिजल्ट सेव करने की कोशिश करें
         try {
-            await fetch('/api/save-result', {
+            await fetch('/api/save-result.js', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ period: currentPeriod, mode: currentMode })
             });
-        } catch(e) {}
+        } catch(e) { console.log("Save API Error (Normal if using local):", e); }
         
-        const res = await fetch(`/api/history?mode=${currentMode}&page=${currentPage}`);
+        // 2. गेम हिस्ट्री फेच करें
+        const res = await fetch(`/api/history.js?mode=${currentMode}&page=${currentPage}`);
         if(res.ok) { 
             const data = await res.json();
-            let historyData = Array.isArray(data) ? data :
-                (data.results || data.history || data.data || null);
-            if (historyData && historyData.length > 0) {
-                renderHistory(historyData);
-            } else {
-                document.getElementById('historyBody').innerHTML = 
-                    '<tr><td colspan="4" style="text-align:center; padding:30px; color:#6b7280;">No history available</td></tr>';
-            }
+            let historyData = Array.isArray(data) ? data : (data.results || data.history || data.data || []);
+            renderHistory(historyData);
         }
-        loadBalance();
-    } catch (e) {
-        document.getElementById('historyBody').innerHTML = 
-            '<tr><td colspan="4" style="text-align:center; padding:30px; color:#ef4444;">Connection error</td></tr>';
-    }
-}
 
-// ========================================
-// TIMER & PERIOD
-// ========================================
-async function checkBetResults() {
-    const phone = getCurrentUserPhone();
-    if (!phone) return;
-    try {
-        const now = new Date();
-        const total = (now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds();
-        const dateStr = now.getFullYear().toString() + 
-                       (now.getMonth()+1).toString().padStart(2,'0') + 
-                       now.getDate().toString().padStart(2,'0');
-        const previousPeriod = dateStr + (Math.floor(total/currentMode) - 1).toString().padStart(4, '0');
-        await fetch('/api/process-results', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ period: previousPeriod, mode: currentMode })
-        });
-        setTimeout(() => { loadBalance(); loadMyHistory(); }, 2000);
-    } catch(e) {}
+        // 3. बैलेंस भी अपडेट कर लें
+        loadBalance(); 
+    } catch (e) {
+        console.error("Fetch DB Error:", e);
+    }
 }
 
 function startTimer() {
