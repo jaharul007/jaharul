@@ -1,15 +1,13 @@
 {
-  "name": "jaharul-game-backend",
+  "name": "jaharul-game",
   "version": "1.0.0",
-  "description": "Jaharul Game Backend – MongoDB + Vercel Serverless",
-  "type": "module",
-  "scripts": {
-    "dev": "vercel dev"
-  },
+  "description": "WinGo Betting Game Backend",
+  "main": "api/save-result.js",
   "dependencies": {
-    "mongoose": "^8.4.0"
+    "mongodb": "^6.3.0",
+    "mongoose": "^8.1.0"
   },
-  "devDependencies": {
-    "vercel": "^33.0.0"
+  "engines": {
+    "node": "18.x"
   }
 }
