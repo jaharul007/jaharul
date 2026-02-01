@@ -1,54 +1,43 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
   
   try {
     const { phone, period, mode, betOn, amount, betType, multiplier } = req.body;
     
-    // Validation
-    if (!phone || !period || !mode || !betOn || !amount) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields' 
-      });
+    // 1. Validation - Amount ko Number mein convert karna zaroori hai
+    const betAmount = parseFloat(amount);
+    if (!phone || !period || isNaN(betAmount) || betAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid bet details' });
     }
     
     const client = await clientPromise;
     const db = client.db('wingo_game');
     
-    // Get user
-    const user = await db.collection('users').findOne({ phone });
-    
-    if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found. Please refresh page.' 
-      });
+    // 2. Atomic Update (Balance check aur deduct ek saath)
+    // Yeh sabse safe tareeka hai: Sirf tabhi deduct karo jab balance >= betAmount ho
+    const updateResult = await db.collection('users').updateOne(
+      { phone: phone, balance: { $gte: betAmount } }, 
+      { 
+        $inc: { balance: -betAmount, totalBets: 1 },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    // Agar nMatched 0 hai, matlab balance kam hai ya user nahi mila
+    if (updateResult.matchedCount === 0) {
+      const userCheck = await db.collection('users').findOne({ phone });
+      if (!userCheck) return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(400).json({ success: false, message: 'Insufficient balance!' });
     }
     
-    const betAmount = parseFloat(amount);
-    
-    // Check balance
-    if (user.balance < betAmount) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Insufficient balance! Your balance: ₹${user.balance.toFixed(2)}` 
-      });
-    }
-    
-    // Create bet document
+    // 3. Create bet document
     const betData = {
       phone,
       period,
@@ -60,42 +49,25 @@ export default async function handler(req, res) {
       status: 'pending',
       result: null,
       winAmount: 0,
-      timestamp: new Date(),
-      processedAt: null
+      timestamp: new Date()
     };
     
-    // Insert bet
     await db.collection('bets').insertOne(betData);
     
-    // Deduct balance
-    const newBalance = user.balance - betAmount;
-    
-    await db.collection('users').updateOne(
-      { phone },
-      { 
-        $set: { 
-          balance: newBalance, 
-          updatedAt: new Date() 
-        },
-        $inc: { totalBets: 1 }
-      }
-    );
+    // Naya balance fetch karna frontend ko dikhane ke liye
+    const updatedUser = await db.collection('users').findOne({ phone });
     
     console.log(`✅ Bet placed: ${phone} - ₹${betAmount} on ${betOn}`);
     
     return res.status(200).json({
       success: true,
       message: 'Bet placed successfully',
-      newBalance: newBalance,
+      newBalance: updatedUser.balance,
       betId: betData._id
     });
     
   } catch (error) {
     console.error('❌ Bet API Error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Server error. Please try again.', 
-      error: error.message 
-    });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 }
