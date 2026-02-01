@@ -939,10 +939,10 @@ function adminSaveForce() {
     let period = document.getElementById('periodDisplay').innerText.trim(); 
 
     if (val !== '' && val >= 0 && val <= 9) {
-        // Console check
         console.log("Sending Data:", { number: val, mode: currentMode, period: period });
 
-        fetch('/api/add-result', {  // <--- Check karein aapki file ka path yahi hai na?
+        // YAHAN SE UPDATE KAREIN (Line 577 approx)
+        fetch('/api/add-result.js', {  // .js extension zaroori hai
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -956,6 +956,7 @@ function adminSaveForce() {
             const data = await res.json();
             if(data.success) { 
                 alert('✅ Success! Result set for ' + period); 
+                syncAdminData(); // Status update karne ke liye
             } else {
                 alert('❌ Backend Error: ' + data.message);
             }
