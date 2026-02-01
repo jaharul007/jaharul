@@ -881,13 +881,6 @@
 // ========================================
 let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
 let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
-let userBets = []; // यह मिसिंग था
-
-function checkBetResults() {
-    console.log("Checking result...");
-    loadMyHistory();
-    loadBalance();
-}
 
 function getCurrentUserPhone() {
     currentUserPhone = sessionStorage.getItem('userPhone') || 'demo_user';
