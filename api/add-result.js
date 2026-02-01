@@ -1,6 +1,7 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
+  // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
@@ -18,33 +19,44 @@ export default async function handler(req, res) {
   try {
     const { period, mode, number } = req.body;
 
+    // डेटा चेक करें
     if (!period || mode === undefined || number === undefined) {
-      return res.status(400).json({ success: false, message: 'Missing data' });
+      return res.status(400).json({ success: false, message: 'Missing data (period, mode or number)' });
     }
 
     const client = await clientPromise;
     const db = client.db('wingo_game');
     const historyCollection = db.collection('history');
 
-    // ✅ सुधार: 'insertOne' की जगह 'updateOne' का उपयोग करें
-    // इससे अगर पीरियड पहले से मौजूद है, तो आपका चुना हुआ नंबर वहां अपडेट हो जाएगा
+    // ✅ सुधार: 'insertOne' की जगह 'updateOne' का उपयोग
+    // यह चेक करेगा कि क्या उस 'period' और 'mode' का डेटा पहले से है
+    // अगर है तो उसे अपडेट कर देगा, नहीं है तो नया बना देगा (upsert: true)
     const result = await historyCollection.updateOne(
-      { period: period, mode: parseInt(mode) },
+      { 
+        period: period.toString(), 
+        mode: parseInt(mode) 
+      },
       { 
         $set: { 
           number: parseInt(number),
           timestamp: new Date(),
-          isForced: true // यह पहचानने के लिए कि एडमिन ने इसे बदला है
+          isForced: true, // इससे पता चलेगा कि यह एडमिन ने सेट किया है
+          updatedAt: new Date()
         } 
       },
-      { upsert: true } // अगर नहीं है, तो नया बना दे
+      { upsert: true } 
     );
 
-    console.log(`✅ Result Updated/Added: Period ${period} - Number ${number}`);
-    res.status(200).json({ success: true, message: 'Result saved successfully' });
+    console.log(`✅ Result Saved: Period ${period} - Number ${number}`);
+
+    res.status(200).json({ 
+        success: true, 
+        message: 'Result updated successfully',
+        details: result 
+    });
 
   } catch (error) {
     console.error('Add result API error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
   }
 }
