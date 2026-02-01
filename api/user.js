@@ -1,7 +1,8 @@
+// 'Import' ko 'import' (small letter) kiya gaya hai
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-  // CORS headers
+  // CORS headers - Vercel par external request ke liye zaroori hai
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -22,15 +23,17 @@ export default async function handler(req, res) {
     }
     
     const client = await clientPromise;
+    // Database name check kar lijiye jo aapne Atlas mein banaya hai
     const db = client.db('wingo_game');
     
+    // User dhund rahe hain
     let user = await db.collection('users').findOne({ phone });
     
-    // Create new user if doesn't exist
+    // Agar user nahi mila toh naya banayenge (Starting balance 100 ke saath)
     if (!user) {
-      user = {
-        phone,
-        balance: 100, // Starting balance ₹100
+      const newUser = {
+        phone: phone,
+        balance: 100, // Aap ise badal sakte hain
         totalDeposit: 0,
         totalWithdraw: 0,
         totalBets: 0,
@@ -40,10 +43,12 @@ export default async function handler(req, res) {
         updatedAt: new Date()
       };
       
-      await db.collection('users').insertOne(user);
+      await db.collection('users').insertOne(newUser);
+      user = newUser; // Taki niche return mein data mil sake
       console.log('✅ New user created:', phone);
     }
     
+    // Frontend ko data bhej rahe hain
     return res.status(200).json({
       success: true,
       phone: user.phone,
