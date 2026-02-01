@@ -914,46 +914,66 @@ function buildAdminNumGrid() {
         grid.innerHTML += `<div class="admin-num-item"><div class="admin-num-ball" style="background:${col}">${i}</div><span class="admin-num-amt" id="admin-sum-Num${i}">₹0</span></div>`;
     }
 }
-
 function syncAdminData() {
-    // 1. Get Summary
-    fetch(`/api/admin/bet-summary?mode=${currentMode}`).then(r => r.json()).then(data => {
-        if (data.success) {
-            const s = data.summary || {};
-            document.getElementById('admin-sum-Green').innerText = '₹' + (s.Green || 0);
-            document.getElementById('admin-sum-Violet').innerText = '₹' + (s.Violet || 0);
-            document.getElementById('admin-sum-Red').innerText = '₹' + (s.Red || 0);
-            for (let i = 0; i <= 9; i++) {
-                let el = document.getElementById('admin-sum-Num' + i);
-                if (el) el.innerText = '₹' + (s['Num' + i] || s[i] || 0);
-            }
-        }
-    }).catch(() => {});
-
-    // 2. Forced Result Status
-    fetch(`/api/admin/get-forced-status?mode=${currentMode}`).then(r => r.json()).then(data => {
+    // 1. पहले पिछला रिजल्ट चेक करेगा
+    fetch(`/api/history?mode=${currentMode}&limit=1`).then(r => r.json()).then(data => {
         const txt = document.getElementById('adminStatusTxt');
-        if (data.forcedResult !== undefined && data.forcedResult !== null && data.forcedResult !== "") {
-            txt.innerText = '⚡ FORCED: NEXT = ' + data.forcedResult;
-            txt.style.color = '#ffff00';
-        } else {
-            txt.innerText = 'STATUS: AUTO MODE';
-            txt.style.color = '#fff';
-        }
+        let historyData = data.results || data.history || data.data || [];
+        
+        // 2. फिर चेक करेगा कि एडमिन ने कोई नंबर फिक्स तो नहीं किया
+        fetch(`/api/get-forced-status?mode=${currentMode}`).then(res => res.json()).then(forced => {
+            if (forced.number !== undefined && forced.number !== null) {
+                // अगर एडमिन ने नंबर डाला है तो पीला दिखेगा
+                txt.innerText = '⚡ NEXT FORCED: ' + forced.number;
+                txt.style.color = '#ffff00';
+            } else if (historyData.length > 0) {
+                // अगर नहीं डाला तो पिछला नंबर सफेद दिखेगा
+                txt.innerText = 'LAST RESULT: ' + historyData[0].number;
+                txt.style.color = '#fff';
+            }
+        });
     }).catch(() => {});
 }
 
+
+// 2. एडमिन का नंबर सेव करने के लिए
 function adminSaveForce() {
     let val = document.getElementById('adminForceInp').value;
+    let period = document.getElementById('periodDisplay').innerText; 
+
     if (val !== '' && val >= 0 && val <= 9) {
-        fetch('/api/admin/force-result', {
+        const saveBtn = document.querySelector('.force-save-btn');
+        saveBtn.innerText = "SAVING...";
+        saveBtn.disabled = true;
+
+        fetch('/api/add-result', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ result: parseInt(val), mode: currentMode })
-        }).then(res => res.json()).then(data => {
-            if(data.success) { alert('✅ Result Saved: ' + val); syncAdminData(); }
+            body: JSON.stringify({ 
+                number: parseInt(val), 
+                mode: currentMode,
+                period: period 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) { 
+                alert('✅ सफल! पीरियड ' + period + ' के लिए नंबर ' + val + ' सेट हो गया है।'); 
+                // स्टेटस को तुरंत अपडेट करें
+                document.getElementById('adminStatusTxt').innerText = '⚡ NEXT FORCED: ' + val;
+                document.getElementById('adminStatusTxt').style.color = '#ffff00';
+            } else {
+                alert('❌ गलती: ' + data.message);
+            }
+        })
+        .catch(err => alert('❌ सर्वर एरर!'))
+        .finally(() => {
+            saveBtn.innerText = "SAVE RESULT NOW";
+            saveBtn.disabled = false;
         });
-    } else { alert('⚠️ Enter 0-9'); }
+    } else { 
+        alert('⚠️ कृपया 0 से 9 के बीच का नंबर डालें'); 
+    }
 }
 
 // ========================================
