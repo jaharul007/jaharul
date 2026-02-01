@@ -1,24 +1,15 @@
 {
   "version": 2,
-  "name": "jaharul-game",
-  "builds": [
+  "rewrites": [
     {
-      "src": "server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "wingo_game.html",
-      "use": "@vercel/static"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     }
   ],
-  "routes": [
+  "crons": [
     {
-      "src": "/api/(.*)",
-      "dest": "server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "wingo_game.html"
+      "path": "/api/save-result",
+      "schedule": "* * * * *"
     }
   ]
 }
