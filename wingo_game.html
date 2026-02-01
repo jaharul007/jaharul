@@ -312,57 +312,99 @@
         /* =========================================
            9. HISTORY TABS & TABLE - WITH WHITE BORDER
            ========================================= */
-        .history-tabs {
-            display: flex;
-            background: #0a0e27;
-            padding: 10px 10px 0;
-        }
+/* इन स्टाइल को अपने पुराने CSS में बदल लें */
 
-        .hist-tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            background: #2d3748;
-            color: #9ca3af;
-            border: none;
-            font-weight: 600;
-            border-radius: 12px 12px 0 0;
-            margin: 0 1px;
-            cursor: pointer;
-        }
+/* 1. हिस्ट्री टैब्स को छोटा और फोटो जैसा करने के लिए */
+.history-tabs {
+    display: flex;
+    background: #0f1217;
+    padding: 10px 15px 0; /* साइड से गैप बढ़ाया */
+    gap: 5px;
+}
 
-        .hist-tab.active {
-            background: linear-gradient(180deg, #5df9d3 0%, #31d7ab 100%) !important;
-            color: #000 !important;
-        }
+.hist-tab {
+    flex: 1;
+    padding: 13px 1px; /* पैडिंग कम की */
+    text-align: center;
+    background: #1a2744; /* फोटो जैसा डार्क कलर */
+    color: #8b92a8;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+    font-size: 12px; /* फॉन्ट छोटा किया */
+    cursor: pointer;
+}
 
-        .photo-history-card { 
-            background: #000c2a; 
-            margin: 0;
-            border: none;
-        }
+.hist-tab.active {
+    background: linear-gradient(180deg, #5df9d3 0%, #31d7ab 100%) !important;
+    color: #000 !important;
+}
 
-        .pagination-bar {
-            background: #000c2a;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-        }
+/* 2. टेबल को फोटो की तरह स्लिम करने के लिए */
+.photo-history-card { 
+    background: #0a0e27; 
+    padding: 0 19px; /* साइड से खाली जगह छोड़ी ताकि टेबल ज्यादा चौड़ी न दिखे */
+}
 
-        .page-btn {
-            width: 45px;
-            height: 40px;
-            border-radius: 8px;
-            border: none;
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
+.p-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+}
+
+.p-table th { 
+    background: #2b3d63; 
+    color: #fff; 
+    padding: 12px 5px; 
+    font-size: 13px; 
+    font-weight: 500;
+    text-align: center;
+}
+
+.p-table td { 
+    padding: 12px 5px; 
+    text-align: center; 
+    font-size: 13px; 
+    border-bottom: 1px solid #1a2744; 
+    color: #fff; 
+    background: #0a0e27;
+}
+
+/* पीरियड नंबर को फोटो जैसा दिखाने के लिए */
+.p-period { 
+    color: #8b92a8 !important; 
+    font-size: 12px !important; 
+}
+
+/* नंबर को बड़ा और साफ़ दिखाने के लिए */
+.res-number { 
+    font-weight: 600; 
+    font-size: 18px; 
+}
+
+/* 3. पेजिनेशन बटन को छोटा करने के लिए */
+.pagination-bar {
+    background: #0a0e27;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.page-btn {
+    width: 35px; /* छोटा किया */
+    height: 35px;
+    border-radius: 6px;
+    border: none;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
 
         .page-btn.prev {
             background: #1e293b !important;
@@ -1316,9 +1358,8 @@ function switchM(s, el) {
     document.getElementById('pageInfo').innerText = currentPage + '/' + totalPages;
     fetchFromDB();
 }
-
 // ========================================
-// INIT
+// PHOTO STYLE NUMBER BALLS GENERATOR
 // ========================================
 window.onload = () => {
     getCurrentUserPhone();
@@ -1326,29 +1367,62 @@ window.onload = () => {
     
     const grid = document.getElementById('mainGrid');
     grid.innerHTML = '';
-    const ballColors = {
-        0: { base: 'linear-gradient(135deg, #ef5350 45%, #ab47bc 55%)' },
-        1: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)' },
-        2: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)' },
-        3: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)' },
-        4: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)' },
-        5: { base: 'linear-gradient(135deg, #66bb6a 45%, #ab47bc 55%)' },
-        6: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)' },
-        7: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)' },
-        8: { base: 'radial-gradient(circle at 30% 30%, #ef5350, #e53935)' },
-        9: { base: 'radial-gradient(circle at 30% 30%, #81c784, #4caf50)' }
+    
+    // फोटो के हिसाब से रंगों का तालमेल
+    const ballStyles = {
+        0: { color: '#9b51e0', gradient: 'linear-gradient(135deg, #fb4e4e 50%, #9b51e0 50%)' }, // Red-Violet
+        1: { color: '#10b981', gradient: '#10b981' }, 
+        2: { color: '#fb4e4e', gradient: '#fb4e4e' },
+        3: { color: '#10b981', gradient: '#10b981' },
+        4: { color: '#fb4e4e', gradient: '#fb4e4e' },
+        5: { color: '#10b981', gradient: 'linear-gradient(135deg, #10b981 50%, #9b51e0 50%)' }, // Green-Violet
+        6: { color: '#fb4e4e', gradient: '#fb4e4e' },
+        7: { color: '#10b981', gradient: '#10b981' },
+        8: { color: '#fb4e4e', gradient: '#fb4e4e' },
+        9: { color: '#10b981', gradient: '#10b981' }
     };
+
     for(let i=0; i<=9; i++) {
         let wrapper = document.createElement('div');
         wrapper.className = 'ball-wrapper';
+        
         let ball = document.createElement('button');
         ball.className = 'n-ball';
-        ball.innerText = i;
+        
+        // फोटो वाला डिजाईन बनाने के लिए CSS Styles
+        ball.style.background = ballStyles[i].gradient;
+        ball.style.position = 'relative';
+        ball.style.overflow = 'hidden';
+        ball.style.border = 'none';
+        ball.style.width = '55px';
+        ball.style.height = '55px';
+        ball.style.borderRadius = '50%';
+        ball.style.display = 'flex';
+        ball.style.alignItems = 'center';
+        ball.style.justifyContent = 'center';
+        ball.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        
+        // सफ़ेद कर्व्स (The White Pattern in Photo)
+        ball.innerHTML = `
+            <div style="position:absolute; width:100%; height:100%; top:0; left:0; 
+                background-image: radial-gradient(circle at 50% 120%, rgba(255,255,255,0.4) 0%, transparent 60%),
+                                 radial-gradient(circle at 50% -20%, rgba(255,255,255,0.4) 0%, transparent 60%);">
+            </div>
+            <div style="position:absolute; width:120%; height:120%; border: 4px solid rgba(255,255,255,0.2); 
+                border-radius: 50%; top: -10%; left: -10%;"></div>
+            <span style="position:relative; z-index:2; color:white; font-size:24px; font-weight:900; 
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">${i}</span>
+        `;
+        
         ball.onclick = () => openBet(i);
-        ball.style.background = ballColors[i].base;
+        
         let mult = document.createElement('span');
         mult.className = 'multiplier-text';
         mult.innerText = '9X';
+        mult.style.marginTop = '5px';
+        mult.style.color = '#8b92a8';
+        mult.style.fontSize = '12px';
+        
         wrapper.appendChild(ball);
         wrapper.appendChild(mult);
         grid.appendChild(wrapper);
@@ -1356,8 +1430,8 @@ window.onload = () => {
     
     fetchFromDB();
     startTimer();
-    setInterval(loadBalance, 10000);
 };
+
 </script>
 </body>
 </html>
