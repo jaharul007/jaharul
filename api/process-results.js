@@ -1,10 +1,5 @@
 import clientPromise from '../lib/mongodb.js';
 
-// Generate random number 0-9
-function generateRandomNumber() {
-  return Math.floor(Math.random() * 10);
-}
-
 // Calculate winnings based on bet type
 function calculateWinnings(betOn, betType, amount, result) {
   let won = false;
@@ -40,7 +35,7 @@ function calculateWinnings(betOn, betType, amount, result) {
       
     case 'random':
       won = Math.random() > 0.5;
-      multiplier = 9;
+      multiplier = 2; // Random आमतौर पर 2X होता है
       break;
   }
   
@@ -51,126 +46,78 @@ function calculateWinnings(betOn, betType, amount, result) {
 }
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
   
   try {
     const { period, mode } = req.body;
-    
-    if (!period || !mode) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing period or mode' 
-      });
-    }
+    if (!period || !mode) return res.status(400).json({ success: false, message: 'Missing period or mode' });
     
     const client = await clientPromise;
     const db = client.db('wingo_game');
     
-    // Check if result already exists
-    let result = await db.collection('results').findOne({ 
-      period, 
-      mode: parseInt(mode) 
+    // 1. सबसे पहले चेक करें कि क्या एडमिन ने कोई रिजल्ट फोर्स किया है?
+    // हम 'history' कलेक्शन चेक कर रहे हैं जहाँ add-result.js डेटा भेजता है
+    const adminForced = await db.collection('history').findOne({ 
+        period: period, 
+        mode: parseInt(mode) 
     });
+
+    // 2. रिजल्ट ढूँढें या बनाएँ
+    let resultRecord = await db.collection('results').findOne({ period, mode: parseInt(mode) });
     
-    // Generate new result if not exists
-    if (!result) {
-      const randomNumber = generateRandomNumber();
-      result = {
+    if (!resultRecord) {
+      // अगर एडमिन का नंबर है तो वही लें, वरना रैंडम
+      const finalNumber = adminForced ? adminForced.number : Math.floor(Math.random() * 10);
+      
+      resultRecord = {
         period,
         mode: parseInt(mode),
-        number: randomNumber,
+        number: finalNumber,
         timestamp: new Date()
       };
       
-      await db.collection('results').insertOne(result);
-      console.log(`🎲 New result generated: Period ${period} = ${randomNumber}`);
+      await db.collection('results').insertOne(resultRecord);
+      console.log(`🎯 Final Result Set: Period ${period} = ${finalNumber} ${adminForced ? '(Forced)' : '(Random)'}`);
     }
     
-    // Get all pending bets for this period
-    const pendingBets = await db.collection('bets')
-      .find({ 
-        period, 
-        mode: parseInt(mode), 
-        status: 'pending' 
-      })
-      .toArray();
+    // 3. पेंडिंग बेट्स को प्रोसेस करें
+    const pendingBets = await db.collection('bets').find({ period, mode: parseInt(mode), status: 'pending' }).toArray();
     
-    console.log(`⏳ Processing ${pendingBets.length} pending bets for period ${period}`);
-    
-    // Process each bet
     for (const bet of pendingBets) {
-      const { won, winAmount } = calculateWinnings(
-        bet.betOn,
-        bet.betType,
-        bet.amount,
-        result.number
-      );
-      
+      const { won, winAmount } = calculateWinnings(bet.betOn, bet.betType, bet.amount, resultRecord.number);
       const status = won ? 'won' : 'lost';
       
-      // Update bet status
       await db.collection('bets').updateOne(
         { _id: bet._id },
-        { 
-          $set: { 
-            status, 
-            winAmount,
-            result: result.number,
-            processedAt: new Date()
-          }
-        }
+        { $set: { status, winAmount, result: resultRecord.number, processedAt: new Date() } }
       );
       
-      // Update user balance and stats
       if (won) {
         await db.collection('users').updateOne(
           { phone: bet.phone },
-          { 
-            $inc: { 
-              balance: winAmount,
-              totalWins: 1
-            },
-            $set: { updatedAt: new Date() }
-          }
+          { $inc: { balance: winAmount, totalWins: 1 }, $set: { updatedAt: new Date() } }
         );
-        console.log(`✅ ${bet.phone} won ₹${winAmount.toFixed(2)}`);
       } else {
         await db.collection('users').updateOne(
           { phone: bet.phone },
-          { 
-            $inc: { totalLosses: 1 },
-            $set: { updatedAt: new Date() }
-          }
+          { $inc: { totalLosses: 1 }, $set: { updatedAt: new Date() } }
         );
-        console.log(`❌ ${bet.phone} lost ₹${bet.amount.toFixed(2)}`);
       }
     }
     
     return res.status(200).json({
       success: true,
-      message: 'Results processed successfully',
-      result: result.number,
-      processedBets: pendingBets.length,
-      period: period
+      result: resultRecord.number,
+      processedBets: pendingBets.length
     });
     
   } catch (error) {
-    console.error('❌ Process Results Error:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Server error', 
-      error: error.message 
-    });
+    console.error('❌ Error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 }
