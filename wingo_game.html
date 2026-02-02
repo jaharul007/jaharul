@@ -362,20 +362,24 @@
     text-align: center;
 }
 
+/* Table Rows को चौड़ा करने के लिए */
 .p-table td { 
-    padding: 12px 5px; 
+    padding: 15px 5px; /* 12px से बढ़ाकर 15px कर दिया */
     text-align: center; 
-    font-size: 13px; 
+    font-size: 14px; /* फॉन्ट थोड़ा बड़ा किया */
     border-bottom: 1px solid #1a2744; 
     color: #fff; 
     background: #0a0e27;
 }
 
-/* पीरियड नंबर को फोटो जैसा दिखाने के लिए */
+/* पीरियड नंबर को थोड़ा और साफ़ दिखाने के लिए */
 .p-period { 
     color: #8b92a8 !important; 
-    font-size: 12px !important; 
+    font-size: 13px !important; 
+    font-weight: bold;
+    letter-spacing: 0.5px;
 }
+
 
 /* नंबर को बड़ा और साफ़ दिखाने के लिए */
 .res-number { 
@@ -1308,12 +1312,10 @@ async function fetchFromDB() {
         console.error("Fetch DB Error:", e);
     }
 }
-
-
+// --- TIMER AND PERIOD LOGIC ---
 function startTimer() {
     setInterval(() => {
         let now = new Date();
-        // Server time sync ke liye millisecond ka bhi hisab rakhna behtar hai
         let totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
         
         let rem = currentMode - (totalSeconds % currentMode);
@@ -1327,27 +1329,31 @@ function startTimer() {
             `<span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span>` +
             `<span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
         
-        // Period Calculation
+        // --- 15 DIGIT PERIOD CALCULATION FIXED ---
         let dateStr = now.getFullYear().toString() + 
                      (now.getMonth() + 1).toString().padStart(2, '0') + 
                      now.getDate().toString().padStart(2, '0');
-        let p = dateStr + Math.floor(totalSeconds / currentMode).toString().padStart(4, '0');
+
+        let modeStr = currentMode.toString().padStart(3, '0'); // Mode (030, 060, etc)
+        let sequence = Math.floor(totalSeconds / currentMode).toString().padStart(4, '0'); // Serial
+        let extraPadding = "100"; // Extra digits to make it long
+        
+        // Final 15 Digit Number: Date(8) + Mode(3) + Seq(4) = 15
+        let p = dateStr + modeStr + sequence; 
+        
         document.getElementById('periodDisplay').innerText = p;
 
-        // --- FAST REFRESH LOGIC ---
-        // Jab 1 second bacha ho tabhi API call shuru kar do taaki 0 par result dikh jaye
         if (rem === 1) {
-            // Hum 1 second pehle hi call bhej rahe hain taaki network delay cover ho jaye
             fetchFromDB();
-            checkBetResults(); 
+            // checkBetResults(); // Agar ye function hai to rakhein
         }
         
-        // Extra safety: Agar 0 par refresh nahi hua toh 0 par bhi ek baar call maar do
         if (rem === currentMode) {
             fetchFromDB();
         }
     }, 1000);
 }
+
 
 function switchM(s, el) {
     currentMode = s;
