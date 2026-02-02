@@ -76,6 +76,7 @@ export default async function handler(req, res) {
 }
 
 // बेट सेटलमेंट फंक्शन
+// बेट सेटलमेंट फंक्शन
 async function settleBetsForPeriod(db, period, mode, winNum) {
     const pendingBets = await db.collection('bets').find({
         period: period,
@@ -113,30 +114,44 @@ async function settleBetsForPeriod(db, period, mode, winNum) {
             if (bet.betOn === 'Violet') {
                 mult = 4.5;
             } else {
-                // 0 और 5 पर आधा विन (1.5x) अगर सिर्फ कलर पर लगाया है
                 mult = (winNum === 0 || winNum === 5) ? 1.5 : 2;
             }
         }
 
         if (isWin) {
-            const winAmount = parseFloat(bet.amount) * mult;
+            // जीतने वालों के लिए
+            const winAmount = Math.round((parseFloat(bet.amount) * mult) * 100) / 100;
+
             await db.collection('users').updateOne(
                 { phone: bet.phone }, 
                 { $inc: { balance: winAmount, totalWins: 1 } }
             );
+
             await db.collection('bets').updateOne(
                 { _id: bet._id }, 
-                { $set: { status: 'won', winAmount, result: winNum, processedAt: new Date() } }
+                { $set: { 
+                    status: 'won', 
+                    winAmount: winAmount, 
+                    result: winNum, 
+                    processedAt: new Date() 
+                } }
             );
         } else {
+            // हारने वालों के लिए
             await db.collection('bets').updateOne(
                 { _id: bet._id }, 
-                { $set: { status: 'lost', winAmount: 0, result: winNum, processedAt: new Date() } }
+                { $set: { 
+                    status: 'lost', 
+                    winAmount: 0, 
+                    result: winNum, 
+                    processedAt: new Date() 
+                } }
             );
+            
             await db.collection('users').updateOne(
                 { phone: bet.phone }, 
                 { $inc: { totalLosses: 1 } }
             );
         }
-    }
-}
+    } // loop ends
+} // function ends
