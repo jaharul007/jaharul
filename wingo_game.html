@@ -981,7 +981,8 @@
 // GLOBAL SETTINGS & AUTH
 // ========================================
 let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
-let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
+let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 100;
+document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
 let userBets = [];
 
 function getCurrentUserPhone() {
