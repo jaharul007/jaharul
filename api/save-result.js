@@ -1,6 +1,7 @@
-Import clientPromise from '../lib/mongodb.js';
+import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
+    // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -12,63 +13,61 @@ export default async function handler(req, res) {
         const client = await clientPromise;
         const db = client.db("wingo_game");
 
-        const now = new Date();
-        const dateStr = now.getFullYear().toString() + 
-                       (now.getMonth() + 1).toString().padStart(2, '0') + 
-                       now.getDate().toString().padStart(2, '0');
-
         const { period, mode: reqMode } = req.body;
-        const modes = reqMode ? [parseInt(reqMode)] : [30, 60, 180, 300];
 
-        for (let mode of modes) {
-            const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-            const currentCalculatedPeriod = dateStr + Math.floor(totalSeconds / mode).toString().padStart(4, '0');
-            const finalPeriod = period || currentCalculatedPeriod;
-
-            // 1. Check if result already exists
-            const exists = await db.collection('results').findOne({ period: finalPeriod, mode: mode });
-            
-            if (!exists) {
-                // 2. FIXED ADMIN FORCE CHECK
-                // Hum pehle exact period match karenge, agar nahi mila toh latest available forced result uthayenge
-                let adminForced = await db.collection('history').findOne({ 
-                    period: finalPeriod, 
-                    mode: mode 
-                });
-
-                if (!adminForced) {
-                    // Agar specific period ka nahi mila, toh koi bhi pending forced result jo is mode ka ho
-                    adminForced = await db.collection('history').findOne({ mode: mode });
-                }
-
-                let finalNum;
-                if (adminForced && adminForced.number !== undefined) {
-                    finalNum = parseInt(adminForced.number);
-                    console.log(`✅ Admin Force applied: ${finalNum} for period ${finalPeriod}`);
-                } else {
-                    finalNum = Math.floor(Math.random() * 10);
-                    console.log(`🎲 Random result: ${finalNum}`);
-                }
-                
-                // 3. Save result
-                await db.collection('results').insertOne({
-                    period: finalPeriod,
-                    number: finalNum,
-                    mode: mode,
-                    timestamp: new Date()
-                });
-
-                // 4. Run Settlement
-                await settleBetsForPeriod(db, finalPeriod, mode, finalNum);
-
-                // 5. Cleanup admin record (sirf wahi wala delete karein jo use hua)
-                if (adminForced) {
-                    await db.collection('history').deleteOne({ _id: adminForced._id });
-                }
-            }
+        // अगर फ्रंटएंड से पीरियड नहीं आया है, तो एरर दें (ताकि Sync न बिगड़े)
+        if (!period) {
+            return res.status(400).json({ success: false, message: "Period is required from frontend" });
         }
 
-        return res.status(200).json({ success: true, message: "Processed Successfully" });
+        const mode = parseInt(reqMode) || 60;
+
+        // 1. चेक करें कि क्या इस पीरियड का रिजल्ट पहले से मौजूद है
+        const exists = await db.collection('results').findOne({ period: period, mode: mode });
+        
+        if (exists) {
+            return res.status(200).json({ success: true, message: "Result already exists", data: exists });
+        }
+
+        // 2. एडमिन फोर्स (Admin Force) चेक करें
+        // हम 'history' कलेक्शन में देखते हैं जहाँ एडमिन ने नंबर सेव किया होगा
+        let adminForced = await db.collection('history').findOne({ 
+            mode: mode,
+            // आप चाहें तो यहाँ period: period भी जोड़ सकते हैं अगर एडमिन स्पेसिफिक पीरियड के लिए सेट कर रहा है
+        });
+
+        let finalNum;
+        if (adminForced && adminForced.number !== undefined) {
+            finalNum = parseInt(adminForced.number);
+            console.log(`✅ Admin Force applied: ${finalNum} for period ${period}`);
+        } else {
+            // अगर एडमिन ने कुछ सेट नहीं किया, तो रैंडम नंबर
+            finalNum = Math.floor(Math.random() * 10);
+            console.log(`🎲 Random result: ${finalNum} for period ${period}`);
+        }
+        
+        // 3. रिजल्ट को 'results' कलेक्शन में सेव करें
+        const newResult = {
+            period: period,
+            number: finalNum,
+            mode: mode,
+            timestamp: new Date()
+        };
+        await db.collection('results').insertOne(newResult);
+
+        // 4. बेट्स का निपटारा (Settlement) शुरू करें
+        await settleBetsForPeriod(db, period, mode, finalNum);
+
+        // 5. इस्तेमाल किए गए एडमिन रिकॉर्ड को डिलीट करें ताकि अगला रिजल्ट रैंडम आए
+        if (adminForced) {
+            await db.collection('history').deleteOne({ _id: adminForced._id });
+        }
+
+        return res.status(200).json({ 
+            success: true, 
+            message: "Result generated and settled", 
+            number: finalNum 
+        });
 
     } catch (e) {
         console.error("❌ API Error:", e);
@@ -76,6 +75,7 @@ export default async function handler(req, res) {
     }
 }
 
+// बेट सेटलमेंट फंक्शन
 async function settleBetsForPeriod(db, period, mode, winNum) {
     const pendingBets = await db.collection('bets').find({
         period: period,
@@ -86,36 +86,57 @@ async function settleBetsForPeriod(db, period, mode, winNum) {
     if (pendingBets.length === 0) return;
 
     const winSize = winNum >= 5 ? 'Big' : 'Small';
-    let winColors = (winNum === 0) ? ['Red', 'Violet'] : 
-                    (winNum === 5) ? ['Green', 'Violet'] : 
-                    (winNum % 2 === 0) ? ['Red'] : ['Green'];
+    let winColors = [];
+    
+    if (winNum === 0) winColors = ['Red', 'Violet'];
+    else if (winNum === 5) winColors = ['Green', 'Violet'];
+    else if (winNum % 2 === 0) winColors = ['Red'];
+    else winColors = ['Green'];
 
     for (let bet of pendingBets) {
         let isWin = false;
         let mult = 0;
 
         // Number Win (9x)
-        if (bet.betOn == winNum) { isWin = true; mult = 9; }
+        if (parseInt(bet.betOn) === winNum) { 
+            isWin = true; 
+            mult = 9; 
+        }
         // Big/Small Win (2x)
-        else if (bet.betOn === winSize) { isWin = true; mult = 2; }
+        else if (bet.betOn === winSize) { 
+            isWin = true; 
+            mult = 2; 
+        }
         // Color Win
         else if (winColors.includes(bet.betOn)) {
             isWin = true;
             if (bet.betOn === 'Violet') {
                 mult = 4.5;
             } else {
-                // Special case for 0 and 5 (Half win if betting on Red/Green and Violet comes)
+                // 0 और 5 पर आधा विन (1.5x) अगर सिर्फ कलर पर लगाया है
                 mult = (winNum === 0 || winNum === 5) ? 1.5 : 2;
             }
         }
 
         if (isWin) {
             const winAmount = parseFloat(bet.amount) * mult;
-            await db.collection('users').updateOne({ phone: bet.phone }, { $inc: { balance: winAmount, totalWins: 1 } });
-            await db.collection('bets').updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: winNum, processedAt: new Date() } });
+            await db.collection('users').updateOne(
+                { phone: bet.phone }, 
+                { $inc: { balance: winAmount, totalWins: 1 } }
+            );
+            await db.collection('bets').updateOne(
+                { _id: bet._id }, 
+                { $set: { status: 'won', winAmount, result: winNum, processedAt: new Date() } }
+            );
         } else {
-            await db.collection('bets').updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: winNum, processedAt: new Date() } });
-            await db.collection('users').updateOne({ phone: bet.phone }, { $inc: { totalLosses: 1 } });
+            await db.collection('bets').updateOne(
+                { _id: bet._id }, 
+                { $set: { status: 'lost', winAmount: 0, result: winNum, processedAt: new Date() } }
+            );
+            await db.collection('users').updateOne(
+                { phone: bet.phone }, 
+                { $inc: { totalLosses: 1 } }
+            );
         }
     }
 }
