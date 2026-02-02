@@ -1353,9 +1353,10 @@ let userBets = [];
 let activeBetChecks = {}; // Track active bet result checks
 
 function getCurrentUserPhone() {
-    currentUserPhone = sessionStorage.getItem('userPhone') || 'demo_user';
-    return currentUserPhone;
+    // टेस्ट के लिए हमेशा '1234567890' भेजें
+    return '1234567890'; 
 }
+
 
 // ========================================
 // ADMIN SYSTEM (TRIPLE CLICK NAV TO OPEN)
@@ -1444,7 +1445,7 @@ async function loadBalance() {
     const phone = getCurrentUserPhone();
     if (!phone) return;
     try {
-        const res = await fetch(`/api/user?phone=${phone}`);
+        const res = await fetch(`/api/user.js?phone=${phone}`);
         const data = await res.json();
         if (data.success) {
             currentBalance = parseFloat(data.balance);
@@ -1697,12 +1698,14 @@ async function confirmBet() {
         };
 
 // इसे बदलें (Vercel के लिए):
-const betRes = await fetch('/api/bet.js', { ... }); 
-
+// इसे बदलें (Vercel के लिए):
+        const betRes = await fetch('/api/bet.js', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(betData)
         });
+
+
         const betResult = await betRes.json();
         
         if (!betResult.success) {
