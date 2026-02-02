@@ -89,7 +89,7 @@
             text-align: center; 
             cursor: pointer; 
             color: #999; 
-            font-size: 11px; 
+            font-size: 13px; 
             transition: 0.3s;
         }
         .g-tab.active { 
@@ -98,7 +98,7 @@
             font-weight: bold; 
             box-shadow: 0 0 15px rgba(243, 195, 77, 0.4); 
         }
-        .tab-icon { display: block; font-size: 18px; margin-bottom: 4px; }
+        .tab-icon { display: block; font-size: 34px; margin-bottom: 4px; }
 
         /* =========================================
            6. TIMER BOX
@@ -160,7 +160,7 @@
         .red { background: #ff4d4d; }
 
         /* =========================================
-           8. NUMBER BALLS GRID - DARK THEME
+           8. NUMBER BALLS GRID - NEW LOTTERY STYLE
            ========================================= */
         .num-grid-container {
             background: #0a0e27;
@@ -182,47 +182,109 @@
             gap: 8px;
         }
 
-        .n-ball { 
+        /* ================= NEW LOTTERY BALL DESIGN ================= */
+        .ball {
             width: 55px;
             height: 55px;
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: 900; 
-            font-size: 26px; 
-            color: #fff; 
-            cursor: pointer; 
-            border: none;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.25), inset -3px -3px 8px rgba(0,0,0,0.3), inset 3px 3px 8px rgba(255,255,255,0.4);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            position: relative;
-            transition: transform 0.2s;
-        }
-
-        .n-ball:active {
-            transform: scale(0.95);
-        }
-
-        .n-ball::before {
-            content: '';
-            position: absolute;
-            top: 8px;
-            left: 12px;
-            width: 20px;
-            height: 20px;
-            background: rgba(255,255,255,0.4);
             border-radius: 50%;
-            filter: blur(4px);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 26px rgba(0,0,0,0.55);
+            transition: 0.25s;
+            overflow: hidden;
+            cursor: pointer;
+            border: none;
         }
+        .ball:hover { transform: scale(1.08); }
+        .ball:active { transform: scale(0.95); }
+
+        /* OUTER RING */
+        .ball-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
+            z-index: 1;
+        }
+        .ball-inner {
+            position: absolute;
+            width: 74%;
+            height: 74%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,1) 40%, rgba(255,255,255,0.7) 100%);
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.5);
+            z-index: 2;
+            backdrop-filter: blur(5px);
+            opacity: 0.9;
+        }
+
+        /* TOP SHINE */
+        .ball-shine-top {
+            position: absolute;
+            top: 5%;
+            left: 10%;
+            width: 75%;
+            height: 40%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, transparent 60%);
+            border-radius: 50%;
+            filter: blur(3px);
+            z-index: 3;
+        }
+
+        /* DOTS (4 Per Ball) */
+        .dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.80);
+            z-index: 4;
+            filter: blur(0.2px);
+        }
+        .dot.top { top: -10px; left: 50%; transform: translateX(-50%); }
+        .dot.bottom { bottom: -10px; left: 50%; transform: translateX(-50%); }
+        .dot.left { left: -10px; top: 50%; transform: translateY(-50%); }
+        .dot.right { right: -10px; top: 50%; transform: translateY(-50%); }
+
+        /* NUMBER */
+        .number {
+            position: relative;
+            z-index: 5;
+            font-size: 32px;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        /* COLORS */
+        .ball.red .ball-ring { background: radial-gradient(circle at 35% 35%, #ffb3b3, #ff4d4d, #b30000); }
+        .ball.red .number { color: #ff4040; }
+
+        .ball.green .ball-ring { background: radial-gradient(circle at 35% 35%, #b3f5d1, #22c55e, #149e45); }
+        .ball.green .number { color: #16a34a; }
+
+        .ball.split-0 .ball-ring { background: conic-gradient(from 135deg, #ff4d4d 180deg, #a855f7 180deg); }
+        .ball.split-0 .number { color: #9333ea; }
+
+        .ball.split-5 .ball-ring { background: conic-gradient(from 135deg, #22c55e 180deg, #a855f7 180deg 360deg); }
+        .ball.split-5 .number { color: #9333ea; }
 
         .multiplier-text {
-            font-size: 14px;
-            font-weight: 600;
-            color: #8b92a8;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        }
-
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff; /* टेक्स्ट कलर को सफेद या आकर्षक रंग दें */
+    background: rgba(0, 0, 0, 0.2); /* एक हल्का बैकग्राउंड दें ताकि यह स्पष्ट दिखे */
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 5px;
+}
+.color-row .c-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* बाकी पुरानी स्टाइल्स वैसी ही रहेंगी */
+}
         .random-btn {
             background: transparent;
             border: 2px solid #e53e3e;
@@ -312,99 +374,91 @@
         /* =========================================
            9. HISTORY TABS & TABLE - WITH WHITE BORDER
            ========================================= */
-/* इन स्टाइल को अपने पुराने CSS में बदल लें */
+        .history-tabs {
+            display: flex;
+            background: #0f1217;
+            padding: 10px 15px 0;
+            gap: 5px;
+        }
 
-/* 1. हिस्ट्री टैब्स को छोटा और फोटो जैसा करने के लिए */
-.history-tabs {
-    display: flex;
-    background: #0f1217;
-    padding: 10px 15px 0; /* साइड से गैप बढ़ाया */
-    gap: 5px;
-}
+        .hist-tab {
+            flex: 1;
+            padding: 13px 1px;
+            text-align: center;
+            background: #1a2744;
+            color: #8b92a8;
+            border: none;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            font-size: 12px;
+            cursor: pointer;
+        }
 
-.hist-tab {
-    flex: 1;
-    padding: 13px 1px; /* पैडिंग कम की */
-    text-align: center;
-    background: #1a2744; /* फोटो जैसा डार्क कलर */
-    color: #8b92a8;
-    border: none;
-    font-weight: 600;
-    border-radius: 8px 8px 0 0;
-    font-size: 12px; /* फॉन्ट छोटा किया */
-    cursor: pointer;
-}
+        .hist-tab.active {
+            background: linear-gradient(180deg, #5df9d3 0%, #31d7ab 100%) !important;
+            color: #000 !important;
+        }
 
-.hist-tab.active {
-    background: linear-gradient(180deg, #5df9d3 0%, #31d7ab 100%) !important;
-    color: #000 !important;
-}
+        .photo-history-card { 
+            background: #0a0e27; 
+            padding: 0 15px 20px 15px;
+        }
 
-/* 2. टेबल को फोटो की तरह स्लिम करने के लिए */
-.photo-history-card { 
-    background: #0a0e27; 
-    padding: 0 15px 20px 15px; /* साइड से खाली जगह छोड़ी ताकि टेबल ज्यादा चौड़ी न दिखे */
-}
+        .p-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+        }
 
-.p-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    border-radius: 10px 10px 0 0;
-    overflow: hidden;
-}
+        .p-table th { 
+            background: #2b3d63; 
+            color: #fff; 
+            padding: 12px 5px; 
+            font-size: 13px; 
+            font-weight: 500;
+            text-align: center;
+        }
 
-.p-table th { 
-    background: #2b3d63; 
-    color: #fff; 
-    padding: 12px 5px; 
-    font-size: 13px; 
-    font-weight: 500;
-    text-align: center;
-}
+        .p-table td { 
+            padding: 12px 5px; 
+            text-align: center; 
+            font-size: 13px; 
+            border-bottom: 1px solid #1a2744; 
+            color: #fff; 
+            background: #0a0e27;
+        }
 
-.p-table td { 
-    padding: 12px 5px; 
-    text-align: center; 
-    font-size: 13px; 
-    border-bottom: 1px solid #1a2744; 
-    color: #fff; 
-    background: #0a0e27;
-}
+        .p-period { 
+            color: #8b92a8 !important; 
+            font-size: 12px !important; 
+        }
 
-/* पीरियड नंबर को फोटो जैसा दिखाने के लिए */
-.p-period { 
-    color: #8b92a8 !important; 
-    font-size: 12px !important; 
-}
+        .res-number { 
+            font-weight: 600; 
+            font-size: 18px; 
+        }
 
-/* नंबर को बड़ा और साफ़ दिखाने के लिए */
-.res-number { 
-    font-weight: 600; 
-    font-size: 18px; 
-}
+        .pagination-bar {
+            background: #0a0e27;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
 
-/* 3. पेजिनेशन बटन को छोटा करने के लिए */
-.pagination-bar {
-    background: #0a0e27;
-    padding: 15px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-}
-
-.page-btn {
-    width: 35px; /* छोटा किया */
-    height: 35px;
-    border-radius: 6px;
-    border: none;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
+        .page-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 6px;
+            border: none;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
 
         .page-btn.prev {
             background: #1e293b !important;
@@ -681,13 +735,7 @@
             text-align: center;
         }
 
-        /* History table p-table shared */
-        .p-table { width: 100%; border-collapse: collapse; }
-        .p-table th { background: #2b3d63; color: #fff; padding: 10px 5px; font-size: 12px; font-weight: 700; }
-        .p-table td { padding: 10px 5px; text-align: center; font-size: 13px; border-bottom: 1px solid #1a2744; color: #ccc; }
-        .res-number { font-weight: 900; font-size: 18px; }
         .res-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin: 0 2px; }
-        .p-period { color: #6b7280; font-size: 11px; }
 
         .history-content { display: none; }
         .history-content.active { display: block; }
@@ -737,9 +785,20 @@
         </div>
 
         <div class="color-row">
-            <button onclick="openBet('Green')" class="c-btn green">Green</button>
-            <button onclick="openBet('Violet')" class="c-btn violet">Violet</button>
-            <button onclick="openBet('Red')" class="c-btn red">Red</button>
+            <button onclick="openBet('Green')" class="c-btn green">
+    <span>Green</span>
+    <span class="multiplier-text">2X</span>
+</button>
+            <button onclick="openBet('Violet')" class="c-btn violet">
+    <span>Violet</span>
+    <span class="multiplier-text">4.5X</span>
+</button>
+
+            <button onclick="openBet('Red')" class="c-btn red">
+    <span>Red</span>
+    <span class="multiplier-text">2X</span>
+</button>
+
         </div>
 
         <div class="num-grid-container">
@@ -923,6 +982,7 @@
 // ========================================
 let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
 let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
+let userBets = [];
 
 function getCurrentUserPhone() {
     currentUserPhone = sessionStorage.getItem('userPhone') || 'demo_user';
@@ -957,19 +1017,15 @@ function buildAdminNumGrid() {
     }
 }
 function syncAdminData() {
-    // 1. पहले पिछला रिजल्ट चेक करेगा
     fetch(`/api/history?mode=${currentMode}&limit=1`).then(r => r.json()).then(data => {
         const txt = document.getElementById('adminStatusTxt');
         let historyData = data.results || data.history || data.data || [];
         
-        // 2. फिर चेक करेगा कि एडमिन ने कोई नंबर फिक्स तो नहीं किया
         fetch(`/api/get-forced-status?mode=${currentMode}`).then(res => res.json()).then(forced => {
             if (forced.number !== undefined && forced.number !== null) {
-                // अगर एडमिन ने नंबर डाला है तो पीला दिखेगा
                 txt.innerText = '⚡ NEXT FORCED: ' + forced.number;
                 txt.style.color = '#ffff00';
             } else if (historyData.length > 0) {
-                // अगर नहीं डाला तो पिछला नंबर सफेद दिखेगा
                 txt.innerText = 'LAST RESULT: ' + historyData[0].number;
                 txt.style.color = '#fff';
             }
@@ -983,8 +1039,7 @@ function adminSaveForce() {
     if (val !== '' && val >= 0 && val <= 9) {
         console.log("Sending Data:", { number: val, mode: currentMode, period: period });
 
-        // YAHAN SE UPDATE KAREIN (Line 577 approx)
-        fetch('/api/add-result.js', {  // .js extension zaroori hai
+        fetch('/api/add-result.js', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -998,7 +1053,7 @@ function adminSaveForce() {
             const data = await res.json();
             if(data.success) { 
                 alert('✅ Success! Result set for ' + period); 
-                syncAdminData(); // Status update karne ke liye
+                syncAdminData();
             } else {
                 alert('❌ Backend Error: ' + data.message);
             }
@@ -1015,16 +1070,6 @@ function adminSaveForce() {
 // ========================================
 // USER AUTHENTICATION
 // ========================================
-function getCurrentUserPhone() {
-    currentUserPhone = sessionStorage.getItem('userPhone') || 
-                      getCookieValue('userPhone');
-    if (!currentUserPhone) {
-        console.warn('No user phone found - using demo mode');
-        currentUserPhone = 'demo_user';
-    }
-    return currentUserPhone;
-}
-
 function getCookieValue(name) {
     const cookies = document.cookie.split(';');
     for(let cookie of cookies) {
@@ -1273,9 +1318,7 @@ async function loadMyHistory() {
         document.getElementById('myHistoryEmpty').style.display = 'block';
     }
 }
-// ========================================
-// fetchFromDB - FINAL FIXED VERSION
-// ========================================
+
 async function fetchFromDB() {
     try {
         const now = new Date();
@@ -1285,7 +1328,6 @@ async function fetchFromDB() {
                        now.getDate().toString().padStart(2, '0');
         const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
         
-        // 1. रिजल्ट सेव करने की कोशिश करें
         try {
             await fetch('/api/save-result.js', {
                 method: 'POST',
@@ -1294,7 +1336,6 @@ async function fetchFromDB() {
             });
         } catch(e) { console.log("Save API Error (Normal if using local):", e); }
         
-        // 2. गेम हिस्ट्री फेच करें
         const res = await fetch(`/api/history.js?mode=${currentMode}&page=${currentPage}`);
         if(res.ok) { 
             const data = await res.json();
@@ -1302,23 +1343,19 @@ async function fetchFromDB() {
             renderHistory(historyData);
         }
 
-        // 3. बैलेंस भी अपडेट कर लें
         loadBalance(); 
     } catch (e) {
         console.error("Fetch DB Error:", e);
     }
 }
 
-
 function startTimer() {
     setInterval(() => {
         let now = new Date();
-        // Server time sync ke liye millisecond ka bhi hisab rakhna behtar hai
         let totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
         
         let rem = currentMode - (totalSeconds % currentMode);
         
-        // Timer display logic
         let m = Math.floor(rem / 60).toString().padStart(2, '0');
         let s = (rem % 60).toString().padStart(2, '0');
         
@@ -1327,22 +1364,16 @@ function startTimer() {
             `<span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span>` +
             `<span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
         
-        // Period Calculation
         let dateStr = now.getFullYear().toString() + 
                      (now.getMonth() + 1).toString().padStart(2, '0') + 
                      now.getDate().toString().padStart(2, '0');
         let p = dateStr + Math.floor(totalSeconds / currentMode).toString().padStart(4, '0');
         document.getElementById('periodDisplay').innerText = p;
 
-        // --- FAST REFRESH LOGIC ---
-        // Jab 1 second bacha ho tabhi API call shuru kar do taaki 0 par result dikh jaye
         if (rem === 1) {
-            // Hum 1 second pehle hi call bhej rahe hain taaki network delay cover ho jaye
             fetchFromDB();
-            checkBetResults(); 
         }
         
-        // Extra safety: Agar 0 par refresh nahi hua toh 0 par bhi ek baar call maar do
         if (rem === currentMode) {
             fetchFromDB();
         }
@@ -1358,8 +1389,9 @@ function switchM(s, el) {
     document.getElementById('pageInfo').innerText = currentPage + '/' + totalPages;
     fetchFromDB();
 }
+
 // ========================================
-// PHOTO STYLE NUMBER BALLS GENERATOR
+// NEW LOTTERY BALLS GENERATOR (0-9)
 // ========================================
 window.onload = () => {
     getCurrentUserPhone();
@@ -1368,65 +1400,46 @@ window.onload = () => {
     const grid = document.getElementById('mainGrid');
     grid.innerHTML = '';
     
-    // फोटो के हिसाब से रंगों का तालमेल
-    const ballStyles = {
-        0: { color: '#9b51e0', gradient: 'linear-gradient(135deg, #fb4e4e 50%, #9b51e0 50%)' }, // Red-Violet
-        1: { color: '#10b981', gradient: '#10b981' }, 
-        2: { color: '#fb4e4e', gradient: '#fb4e4e' },
-        3: { color: '#10b981', gradient: '#10b981' },
-        4: { color: '#fb4e4e', gradient: '#fb4e4e' },
-        5: { color: '#10b981', gradient: 'linear-gradient(135deg, #10b981 50%, #9b51e0 50%)' }, // Green-Violet
-        6: { color: '#fb4e4e', gradient: '#fb4e4e' },
-        7: { color: '#10b981', gradient: '#10b981' },
-        8: { color: '#fb4e4e', gradient: '#fb4e4e' },
-        9: { color: '#10b981', gradient: '#10b981' }
-    };
+    const ballData = [
+        { num: 0, class: 'split-0' },
+        { num: 1, class: 'green' },
+        { num: 2, class: 'red' },
+        { num: 3, class: 'green' },
+        { num: 4, class: 'red' },
+        { num: 5, class: 'split-5' },
+        { num: 6, class: 'red' },
+        { num: 7, class: 'green' },
+        { num: 8, class: 'red' },
+        { num: 9, class: 'green' }
+    ];
 
-    for(let i=0; i<=9; i++) {
+    ballData.forEach(item => {
         let wrapper = document.createElement('div');
         wrapper.className = 'ball-wrapper';
         
         let ball = document.createElement('button');
-        ball.className = 'n-ball';
+        ball.className = `ball ${item.class}`;
+        ball.onclick = () => openBet(item.num);
         
-        // फोटो वाला डिजाईन बनाने के लिए CSS Styles
-        ball.style.background = ballStyles[i].gradient;
-        ball.style.position = 'relative';
-        ball.style.overflow = 'hidden';
-        ball.style.border = 'none';
-        ball.style.width = '55px';
-        ball.style.height = '55px';
-        ball.style.borderRadius = '50%';
-        ball.style.display = 'flex';
-        ball.style.alignItems = 'center';
-        ball.style.justifyContent = 'center';
-        ball.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
-        
-        // सफ़ेद कर्व्स (The White Pattern in Photo)
         ball.innerHTML = `
-            <div style="position:absolute; width:100%; height:100%; top:0; left:0; 
-                background-image: radial-gradient(circle at 50% 120%, rgba(255,255,255,0.4) 0%, transparent 60%),
-                                 radial-gradient(circle at 50% -20%, rgba(255,255,255,0.4) 0%, transparent 60%);">
-            </div>
-            <div style="position:absolute; width:120%; height:120%; border: 4px solid rgba(255,255,255,0.2); 
-                border-radius: 50%; top: -10%; left: -10%;"></div>
-            <span style="position:relative; z-index:2; color:white; font-size:24px; font-weight:900; 
-                text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">${i}</span>
+            <div class="ball-ring"></div>
+            <div class="ball-inner"></div>
+            <div class="ball-shine-top"></div>
+            <div class="dot top"></div>
+            <div class="dot bottom"></div>
+            <div class="dot left"></div>
+            <div class="dot right"></div>
+            <div class="number">${item.num}</div>
         `;
-        
-        ball.onclick = () => openBet(i);
         
         let mult = document.createElement('span');
         mult.className = 'multiplier-text';
         mult.innerText = '9X';
-        mult.style.marginTop = '5px';
-        mult.style.color = '#8b92a8';
-        mult.style.fontSize = '12px';
         
         wrapper.appendChild(ball);
         wrapper.appendChild(mult);
         grid.appendChild(wrapper);
-    }
+    });
     
     fetchFromDB();
     startTimer();
