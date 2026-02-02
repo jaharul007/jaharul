@@ -1356,6 +1356,7 @@ function startTimer() {
         
         let rem = currentMode - (totalSeconds % currentMode);
         
+        // समय दिखाने का लॉजिक
         let m = Math.floor(rem / 60).toString().padStart(2, '0');
         let s = (rem % 60).toString().padStart(2, '0');
         
@@ -1370,16 +1371,22 @@ function startTimer() {
         let p = dateStr + Math.floor(totalSeconds / currentMode).toString().padStart(4, '0');
         document.getElementById('periodDisplay').innerText = p;
 
-        if (rem === 1) {
-            fetchFromDB();
+        // --- यहाँ बदलाव है ---
+        // जब 1 सेकंड बचा हो, तभी बैकएंड को रिजल्ट बनाने बोल दो (Pre-fetch)
+        if (rem === 2) {
+            fetch('/api/save-result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ period: p, mode: currentMode })
+            });
         }
         
+        // जैसे ही 0 हुआ (यानी अगला मोड शुरू हुआ), तुरंत डेटा डिस्प्ले करो
         if (rem === currentMode) {
-            fetchFromDB();
+            fetchFromDB(); // यह अब बिना देरी के डेटा ले आएगा
         }
     }, 1000);
 }
-
 function switchM(s, el) {
     currentMode = s;
     document.querySelectorAll('.g-tab').forEach(t => t.classList.remove('active'));
