@@ -1,52 +1,43 @@
-import { MongoClient } from 'mongodb';
-
-const uri = process.env.MONGODB_URI; // अपनी MongoDB स्ट्रिंग यहाँ डालें
-const client = new MongoClient(uri);
+import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ message: 'Method not allowed' });
-    }
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
+
+  try {
     const { phone, password, inviteCode } = req.body;
+    const client = await clientPromise;
+    const db = client.db('wingo_game');
 
-    try {
-        await client.connect();
-        const db = client.db('jaharul_game');
-        const users = db.collection('users');
-
-        // 1. चेक करें कि यूजर पहले से तो नहीं है
-        const existingUser = await users.findOne({ phone });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: 'User already exists!' });
-        }
-
-        // 2. बोनस लॉजिक: अगर कोड 1234 है तो ₹100, वरना ₹0
-        let startingBalance = 0;
-        if (inviteCode === "1234") {
-            startingBalance = 100;
-        }
-
-        // 3. नया यूजर डेटाबेस में सेव करें
-        const newUser = {
-            phone,
-            password, // ध्यान दें: असली ऐप में पासवर्ड को हैश (Encrypt) करना चाहिए
-            inviteCode,
-            balance: startingBalance,
-            createdAt: new Date()
-        };
-
-        await users.insertOne(newUser);
-
-        return res.status(200).json({ 
-            success: true, 
-            message: 'Registered successfully!',
-            bonus: startingBalance 
-        });
-
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    } finally {
-        await client.close();
+    // चेक करें कि यूजर पहले से तो नहीं है
+    const existingUser = await db.collection('users').findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'User already registered!' });
     }
+
+    // बोनस लॉजिक
+    let bonus = (inviteCode === "1234") ? 100 : 0;
+
+    const newUser = {
+      phone,
+      password, // सुरक्षा के लिए इसे हैश करना बेहतर है
+      balance: bonus,
+      totalBets: 0,
+      totalWins: 0,
+      totalLosses: 0,
+      createdAt: new Date()
+    };
+
+    await db.collection('users').insertOne(newUser);
+
+    return res.status(200).json({ success: true, message: 'Registered!', bonus });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
 }
