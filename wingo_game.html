@@ -1344,6 +1344,29 @@
 </div>
 
 <script>
+    // Naya function: Pichle bet ka result check karne ke liye
+async function checkPendingBets(period) {
+    const phone = getCurrentUserPhone();
+    
+    // Timer 00 hone ke 3-5 second baad check karein taaki backend result declare kar chuka ho
+    setTimeout(async () => {
+        try {
+            console.log("Checking result for period:", period);
+            const res = await fetch(`/api/check-bet-result.js?phone=${phone}&period=${period}`);
+            const data = await res.json();
+            
+            if (data.status === 'won') {
+                showResultPopup('win', data.winAmount, period, data.resultNumber);
+                loadBalance(); // Paisa milne ke baad balance refresh karein
+            } else if (data.status === 'lost') {
+                showResultPopup('lose', 0, period, data.resultNumber);
+            }
+        } catch (e) {
+            console.error("Error checking bet result:", e);
+        }
+    }, 4000); // 4 seconds delay
+}
+
 // ========================================
 // GLOBAL SETTINGS & AUTH
 // ========================================
@@ -1353,10 +1376,10 @@ let userBets = [];
 let activeBetChecks = {}; // Track active bet result checks
 
 function getCurrentUserPhone() {
-    // टेस्ट के लिए हमेशा '1234567890' भेजें
+    // Ye function sirf ye batayega ki server ko kiska data nikalna hai.
+    // Aap yaha hardcoded phone number rakh sakte hain testing ke liye:
     return '1234567890'; 
 }
-
 
 // ========================================
 // ADMIN SYSTEM (TRIPLE CLICK NAV TO OPEN)
@@ -1445,7 +1468,8 @@ async function loadBalance() {
     const phone = getCurrentUserPhone();
     if (!phone) return;
     try {
-        const res = await fetch(`/api/user.js?phone=${phone}`);
+        // Is line ko badlein:
+const res = await fetch(`/api/user?phone=${phone}`); // '.js' hata diya
         const data = await res.json();
         if (data.success) {
             currentBalance = parseFloat(data.balance);
@@ -1699,11 +1723,13 @@ async function confirmBet() {
 
 // इसे बदलें (Vercel के लिए):
 // इसे बदलें (Vercel के लिए):
-        const betRes = await fetch('/api/bet.js', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(betData)
-        });
+        // Is line ko dhundhein aur badlein:
+const betRes = await fetch('/api/bet', { // '.js' hata diya
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(betData)
+});
+
 
 
         const betResult = await betRes.json();
@@ -1850,40 +1876,34 @@ async function fetchFromDB() {
     }
 }
 
+// Timer and Period Logic
 function startTimer() {
     setInterval(() => {
         let now = new Date();
         let totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-        
         let rem = currentMode - (totalSeconds % currentMode);
         
+        // Display Logic
         let m = Math.floor(rem / 60).toString().padStart(2, '0');
         let s = (rem % 60).toString().padStart(2, '0');
+        document.getElementById('timerDigits').innerHTML = `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span><span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span><span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
         
-        document.getElementById('timerDigits').innerHTML = 
-            `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>` +
-            `<span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span>` +
-            `<span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
+        let dateStr = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0');
+        let currentP = dateStr + Math.floor(totalSeconds / currentMode).toString().padStart(4, '0');
         
-        let dateStr = now.getFullYear().toString() + 
-                     (now.getMonth() + 1).toString().padStart(2, '0') + 
-                     now.getDate().toString().padStart(2, '0');
-        let p = dateStr + Math.floor(totalSeconds / currentMode).toString().padStart(4, '0');
-        document.getElementById('periodDisplay').innerText = p;
+        let displayEl = document.getElementById('periodDisplay');
+        let oldP = displayEl.innerText;
+        displayEl.innerText = currentP;
 
-        if (rem === 5) {
-            fetch('/api/save-result', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ period: p, mode: currentMode })
-            });
-        }
-        
-        if (rem === currentMode) {
-            fetchFromDB();
+        // Jab period change ho (Timer restarts)
+        if (oldP !== "" && oldP !== currentP) {
+            console.log("Period Changed! Checking result for:", oldP);
+            fetchFromDB(); // Refresh history
+            setTimeout(() => { checkPendingBets(oldP); }, 3000); // Check user win/loss
         }
     }, 1000);
 }
+
 
 function switchM(s, el) {
     currentMode = s;
