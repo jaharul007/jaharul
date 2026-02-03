@@ -83,56 +83,63 @@
             </div>
 
             <div class="button-group">
-                <button class="main-reg-btn" id="regBtn">Register</button>
+                <button class="main-reg-btn" id="regBtn" onclick="startRegistration()">Register</button>
                 <button class="back-login-btn" onclick="window.location.href='login.html'">I have an account <b>Login</b></button>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('regBtn').addEventListener('click', async function() {
+        async function startRegistration() {
+            const btn = document.querySelector('.main-reg-btn');
             const phone = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPass').value.trim();
             const confirm = document.getElementById('regConfirm').value.trim();
             const inviteCode = document.getElementById('regInvite').value.trim();
 
-            // 1. Basic Validation
+            // 1. Khali fields check karein
             if(!phone || !password || !confirm) {
                 alert("Please fill all fields!");
                 return;
             }
+
+            // 2. Passwords match ho rahe hain ya nahi
             if(password !== confirm) {
                 alert("Passwords do not match!");
                 return;
             }
 
-            // 2. Local Storage update (for UI)
-            localStorage.setItem('userPhone', phone);
+            // Button ko disable karein taaki user baar-baar click na kare
+            btn.innerText = "Registering...";
+            btn.disabled = true;
 
-            // 3. API Call aur Redirect Logic
             try {
-                const response = await fetch('/api/user', {
+                // Backend API call
+                const response = await fetch('/api/register', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone, password, inviteCode })
                 });
 
-                // Vercel/Server Response check
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    window.location.href = 'wingo_game.html';
+                    alert("Registration Successful!");
+                    localStorage.setItem('userPhone', phone); 
+                    window.location.href = 'wingo_game.html'; 
                 } else {
-                    // Agar server error de, tab bhi redirect karwana hai toh niche wali line enable rakhein
-                    alert(data.message || "Error saving to DB");
-                    window.location.href = 'wingo_game.html';
+                    alert(data.message || "Registration Failed.");
+                    btn.innerText = "Register";
+                    btn.disabled = false;
                 }
             } catch (error) {
-                // AGAR SERVER CONNECT NAHI HUA (VERCEL ERROR), TOH BHI GAME OPEN HOGA
-                console.log("Saving locally as backup...");
-                window.location.href = 'wingo_game.html';
+                // Agar server connected nahi hai (Vercel setup pending hai)
+                // Toh bhi testing ke liye user ko game page par bhej dega
+                console.error("Fetch Error:", error);
+                localStorage.setItem('userPhone', phone);
+                window.location.href = 'wingo_game.html'; 
             }
-        });
+        }
     </script>
 </body>
 </html>
