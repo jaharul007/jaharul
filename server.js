@@ -8,9 +8,8 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); // यह आपकी HTML फाइलों को सर्व करेगा
 
-// MongoDB Connection (Vercel Environment Variables से)
+// MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
 
 mongoose.connect(MONGODB_URI)
@@ -31,20 +30,35 @@ const User = mongoose.model('User', userSchema);
 app.post('/api/register', async (req, res) => {
     try {
         const { phone, password, inviteCode } = req.body;
-        if (inviteCode !== '1234') return res.status(400).json({ message: 'Invalid invite code' });
+        
+        // Validation
+        if (inviteCode !== '1234') {
+            return res.status(400).json({ message: 'Invalid invite code' });
+        }
 
         const existingUser = await User.findOne({ phone });
-        if (existingUser) return res.status(400).json({ message: 'Phone number already registered' });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Phone number already registered' });
+        }
 
+        // Hashing Password
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ phone, password: hashedPassword, inviteCode, balance: 100 });
+        
+        const newUser = new User({ 
+            phone, 
+            password: hashedPassword, 
+            inviteCode, 
+            balance: 100 
+        });
+        
         await newUser.save();
 
         res.status(201).json({ message: 'Registration successful', balance: 100 });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Server error: ' + error.message });
     }
 });
 
-// Vercel के लिए ज़रुरी: एक्सपोर्ट करना
+// Vercel के लिए ज़रुरी
 module.exports = app;
