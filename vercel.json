@@ -1,7 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/register", "destination": "/api/register.js" },
-    { "source": "/(.*)", "destination": "/$1" }
+    { "source": "/api/register", "destination": "/api/register.js" }
   ]
 }
