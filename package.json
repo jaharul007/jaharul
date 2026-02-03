@@ -1,8 +1,8 @@
 {
-  "name": "bdg-game-backend",
+  "name": "bdg-game",
   "version": "1.0.0",
-  "description": "BDG Game Serverless API on Vercel",
-  "main": "server.js",
+  "description": "Serverless BDG Game",
+  "main": "api/register.js",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -10,7 +10,7 @@
     "mongodb": "^6.3.0",
     "mongoose": "^8.0.0"
   },
-  "scripts": {
-    "start": "node server.js"
+  "engines": {
+    "node": "24.x"
   }
 }
