@@ -1,17 +1,16 @@
 {
-  "name": "bdg-game-vercel",
+  "name": "bdg-game-backend",
   "version": "1.0.0",
-  "description": "BDG Game Registration System deployed on Vercel",
-  "type": "module",
-  "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel --prod"
-  },
+  "description": "BDG Game Serverless API on Vercel",
+  "main": "server.js",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "mongodb": "^6.3.0",
-    "bcryptjs": "^2.4.3"
+    "mongoose": "^8.0.0"
   },
-  "devDependencies": {
-    "vercel": "^33.0.0"
+  "scripts": {
+    "start": "node server.js"
   }
 }
