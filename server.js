@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Registration Route
+// 1. Registration Route
 app.post('/register', async (req, res) => {
     try {
         const { phone, password, inviteCode } = req.body;
@@ -43,6 +43,22 @@ app.post('/register', async (req, res) => {
         const newUser = new User({ phone, password: hashedPassword, inviteCode, balance: 100 });
         await newUser.save();
         res.status(201).json({ message: 'Registration successful', user: { phone: newUser.phone, balance: newUser.balance } });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// 2. Login Route (यह ज़रूरी है वरना रजिस्टर के बाद लॉगिन नहीं होगा)
+app.post('/login', async (req, res) => {
+    try {
+        const { phone, password } = req.body;
+        const user = await User.findOne({ phone });
+        if (!user) return res.status(400).json({ message: 'User not found' });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
+
+        res.json({ message: 'Login successful', user: { phone: user.phone, balance: user.balance } });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
