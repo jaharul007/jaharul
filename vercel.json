@@ -8,19 +8,19 @@
   ],
   "rewrites": [
     {
-      "src": "/api/register",
+      "source": "/api/register",
       "destination": "/api/register.js"
     },
     {
-      "src": "/api/login",
+      "source": "/api/login",
       "destination": "/api/login.js"
     },
     {
-      "src": "/api/user",
+      "source": "/api/user",
       "destination": "/api/user.js"
     },
     {
-      "src": "/(.*)",
+      "source": "/(.*)",
       "destination": "/$1"
     }
   ]
