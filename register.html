@@ -77,8 +77,7 @@
             </div>
         </div>
     </div>
-
-    <script>
+<script>
         async function startRegistration() {
             const btn = document.getElementById('regBtn');
             const phone = document.getElementById('regPhone').value.trim();
@@ -94,7 +93,7 @@
             btn.disabled = true;
 
             try {
-                // Seedhe register.js ko data bhej rahe hain
+                // ध्यान दें: URL बिल्कुल सही होना चाहिए /api/register
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -103,20 +102,24 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    alert(data.bonus > 0 ? "🎁 Got ₹100 Bonus!" : "✅ Success!");
+                if (response.ok && data.success) {
+                    alert(data.bonus > 0 ? `🎁 Success! Got ₹${data.bonus} Bonus.` : "✅ Registered!");
                     localStorage.setItem('userPhone', phone);
                     window.location.href = 'index.html'; 
                 } else {
-                    alert(data.message);
+                    // अगर 401 या 404 आता है तो यहाँ मैसेज दिखेगा
+                    alert("Error: " + (data.message || "Server issue (401/404)"));
                 }
             } catch (error) {
-                alert("Server Connection Error!");
+                console.error("Fetch error:", error);
+                alert("Network Error: Could not connect to API.");
             } finally {
                 btn.innerText = "Register";
                 btn.disabled = false;
             }
         }
     </script>
+
+
 </body>
 </html>
