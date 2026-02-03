@@ -2,10 +2,10 @@
   "version": 2,
   "builds": [
     { "src": "api/**/*.js", "use": "@vercel/node" },
-    { "src": "wingo_game.html", "use": "@vercel/static" }
+    { "src": "register.html", "use": "@vercel/static" }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/wingo_game.html" }
+    { "source": "/(.*)", "destination": "/register.html" }
   ]
 }
