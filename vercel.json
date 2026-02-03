@@ -1,6 +1,27 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
+    }
+  ],
   "rewrites": [
-    { "source": "/api/register", "destination": "/api/register.js" }
+    {
+      "src": "/api/register",
+      "destination": "/api/register.js"
+    },
+    {
+      "src": "/api/login",
+      "destination": "/api/login.js"
+    },
+    {
+      "src": "/api/user",
+      "destination": "/api/user.js"
+    },
+    {
+      "src": "/(.*)",
+      "destination": "/$1"
+    }
   ]
 }
