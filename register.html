@@ -115,11 +115,11 @@
                 return;
             }
 
-            // Bonus logic: Agar invite code 1234 hai toh 50 balance, varna 0
+            // Bonus logic
             let initialBalance = (inviteCode === "1234") ? 50 : 0;
 
             try {
-                // Seedha Database API par request bhej rahe hain
+                // Database API call
                 const response = await fetch('/api/user', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -134,18 +134,19 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    const msg = initialBalance > 0 ? "Registration Successful! ₹50 Bonus Added." : "Registration Successful!";
-                    alert(msg);
+                    if(initialBalance > 0) alert("Registration Successful! ₹50 Bonus Added.");
                     
-                    // User ko session mein rakhne ke liye phone number pass kar rahe hain (par balance database se hi aayega)
                     localStorage.setItem('userPhone', phone); 
-                    window.location.href = 'index.html'; 
+                    // Redirect to Wingo Game
+                    window.location.href = 'wingo_game.html'; 
                 } else {
-                    alert(data.message || "Registration Failed. Check if number already exists.");
+                    alert(data.message || "Registration Failed.");
                 }
             } catch (error) {
+                // Agar backend available nahi hai toh seedha redirect kar dega (Testing purposes)
                 console.error("Database Connection Error:", error);
-                alert("Could not connect to the database server.");
+                localStorage.setItem('userPhone', phone);
+                window.location.href = 'wingo_game.html'; 
             }
         }
     </script>
