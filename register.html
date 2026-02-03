@@ -74,7 +74,7 @@
 
             <div class="input-item">
                 <div class="input-label-gold">📂 Invite code</div>
-                <input type="text" id="regInvite" class="form-input" placeholder="Enter invitation code">
+                <input type="text" id="regInvite" class="form-input" placeholder="Enter code (e.g. 1234)">
             </div>
 
             <div class="policy-row">
@@ -111,26 +111,27 @@
             btn.disabled = true;
 
             try {
-                // Seedhe Backend API (register.js) ko call kar rahe hain
-                const response = await fetch('/api/register', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, password, inviteCode })
-                });
-
+                // Aapke user.js API ko call kar rahe hain inviteCode ke sath
+                const response = await fetch(`/api/user?phone=${phone}&inviteCode=${inviteCode}`);
                 const data = await response.json();
 
                 if (data.success) {
-                    alert("Registration Successful!");
-                    // Login page par bhej rahe hain taaki user login kare
-                    window.location.href = 'login.html'; 
+                    if(data.balance > 0) {
+                        alert(`🎁 Registration Successful! You got ₹${data.balance} Bonus.`);
+                    } else {
+                        alert("✅ Registration Successful!");
+                    }
+                    
+                    // Phone ko save kar rahe hain taaki game page pe data load ho sake
+                    localStorage.setItem('userPhone', phone); 
+                    window.location.href = 'index.html'; 
                 } else {
                     alert(data.message || "Registration Failed.");
                     btn.innerText = "Register";
                     btn.disabled = false;
                 }
             } catch (error) {
-                console.error("Fetch Error:", error);
+                console.error("Error:", error);
                 alert("Server Connection Error!");
                 btn.innerText = "Register";
                 btn.disabled = false;
