@@ -1,60 +1,52 @@
-import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb';
 
-// 1. User Schema (Data kaise dikhega)
-const userSchema = new mongoose.Schema({
-    phone: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    inviteCode: { type: String },
-    balance: { type: Number, default: 0 },
-    createdAt: { type: Date, default: Date.now }
-});
+const uri = process.env.MONGODB_URI; // अपनी MongoDB स्ट्रिंग यहाँ डालें
+const client = new MongoClient(uri);
 
-// Model loading fix for Vercel (Hot Reloading)
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-
-// 2. Database Connection Logic
-const connectDB = async () => {
-    if (mongoose.connections[0].readyState) return;
-    try {
-        // Vercel dashboard mein MONGODB_URI set karna mat bhulna
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log("MongoDB Connected");
-    } catch (err) {
-        console.error("Connection Error:", err);
-    }
-};
-
-// 3. Main Handler Function
 export default async function handler(req, res) {
-    // Sirf POST request allow karein
     if (req.method !== 'POST') {
-        return res.status(405).json({ message: 'Method Not Allowed' });
+        return res.status(405).json({ message: 'Method not allowed' });
     }
 
-    try {
-        await connectDB();
-        const { phone, password, inviteCode } = req.body;
+    const { phone, password, inviteCode } = req.body;
 
-        // Check karein user pehle se toh nahi hai
-        const userExists = await User.findOne({ phone });
-        if (userExists) {
-            return res.status(400).json({ success: false, message: 'Phone number already registered!' });
+    try {
+        await client.connect();
+        const db = client.db('jaharul_game');
+        const users = db.collection('users');
+
+        // 1. चेक करें कि यूजर पहले से तो नहीं है
+        const existingUser = await users.findOne({ phone });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'User already exists!' });
         }
 
-        // Naya User banayein
-        const newUser = new User({
+        // 2. बोनस लॉजिक: अगर कोड 1234 है तो ₹100, वरना ₹0
+        let startingBalance = 0;
+        if (inviteCode === "1234") {
+            startingBalance = 100;
+        }
+
+        // 3. नया यूजर डेटाबेस में सेव करें
+        const newUser = {
             phone,
-            password,
+            password, // ध्यान दें: असली ऐप में पासवर्ड को हैश (Encrypt) करना चाहिए
             inviteCode,
-            balance: 0 // Naye user ko 0 balance de rahe hain
+            balance: startingBalance,
+            createdAt: new Date()
+        };
+
+        await users.insertOne(newUser);
+
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Registered successfully!',
+            bonus: startingBalance 
         });
 
-        await newUser.save();
-
-        return res.status(200).json({ success: true, message: 'Registration Successful' });
-
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: 'Server Error: ' + error.message });
+        return res.status(500).json({ success: false, message: error.message });
+    } finally {
+        await client.close();
     }
 }
