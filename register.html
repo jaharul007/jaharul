@@ -339,8 +339,8 @@
     </div>
 
     <script>
-        // IMPORTANT: Apna Vercel API URL yahan dalen
-        const API_URL = 'https://your-vercel-api.vercel.app/api';  // ⚠️ Isko apne API URL se replace karein
+        // Auto-detect API URL (works with Vercel automatically)
+        const API_URL = window.location.origin + '/api';
 
         function togglePassword(fieldId) {
             const field = document.getElementById(fieldId);
@@ -418,13 +418,13 @@
                     alert('Registration successful! You have received ₹100 bonus!');
                     window.location.href = 'index.html';
                 } else {
-                    alert(data.message || 'Registration failed');
+                    alert(data.message || 'Registration failed. Please try again.');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('submitBtn').disabled = false;
-                alert('Registration failed. Please check your connection and try again.');
+                alert('Connection error. Please check:\n\n1. Internet connection\n2. API is deployed on Vercel\n3. MongoDB URI is set in Environment Variables\n\nError: ' + error.message);
             }
         });
     </script>
