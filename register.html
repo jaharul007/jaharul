@@ -26,14 +26,11 @@
         .form-input:focus { border-color: #d4af37; }
         .policy-row { display: flex; align-items: center; gap: 12px; margin-top: 25px; }
         .check-box-custom { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #555; display: flex; align-items: center; justify-content: center; background: white; color: #333; font-weight: bold; }
-        .policy-text { font-size: 13px; color: #999; }
         .button-group { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; }
         .main-reg-btn { width: 100%; padding: 18px; background: linear-gradient(180deg, #f3d078 0%, #d4af37 100%); border: none; border-radius: 45px; color: #3d2a00; font-weight: bold; font-size: 18px; cursor: pointer; }
-        .back-login-btn { width: 100%; padding: 15px; background: transparent; border: 1px solid #d4af37; border-radius: 45px; color: #999; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 40px; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="top-bar">
             <span class="back-arrow" onclick="history.back()">‹</span>
@@ -43,7 +40,7 @@
 
         <div class="title-sec">
             <div class="big-text">Register</div>
-            <div class="small-text">Please register by phone number or email</div>
+            <div class="small-text">Please register by phone number</div>
         </div>
 
         <div class="register-tab">
@@ -55,10 +52,8 @@
             <div class="input-item">
                 <div class="input-label-gold">🗄️ Phone number</div>
                 <div class="row-flex">
-                    <div class="country-flag">+91 ⌄</div>
-                    <div class="box-input-wrapper" style="flex: 1;">
-                        <input type="tel" id="regPhone" class="form-input" placeholder="Please enter the phone number">
-                    </div>
+                    <div class="country-flag">+91</div>
+                    <input type="tel" id="regPhone" class="form-input" placeholder="Phone number">
                 </div>
             </div>
 
@@ -68,23 +63,17 @@
             </div>
 
             <div class="input-item">
-                <div class="input-label-gold">🔒 Confirm password</div>
-                <input type="password" id="regConfirm" class="form-input" placeholder="Confirm password">
-            </div>
-
-            <div class="input-item">
                 <div class="input-label-gold">📂 Invite code</div>
-                <input type="text" id="regInvite" class="form-input" placeholder="Enter code (e.g. 1234)">
+                <input type="text" id="regInvite" class="form-input" placeholder="1234 for bonus">
             </div>
 
             <div class="policy-row">
                 <div class="check-box-custom">✓</div>
-                <div class="policy-text">I have read and agree <span>【Privacy Agreement】</span></div>
+                <div class="policy-text">I agree to <span>Privacy Policy</span></div>
             </div>
 
             <div class="button-group">
                 <button class="main-reg-btn" id="regBtn" onclick="startRegistration()">Register</button>
-                <button class="back-login-btn" onclick="window.location.href='login.html'">I have an account <b>Login</b></button>
             </div>
         </div>
     </div>
@@ -94,16 +83,10 @@
             const btn = document.getElementById('regBtn');
             const phone = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPass').value.trim();
-            const confirm = document.getElementById('regConfirm').value.trim();
             const inviteCode = document.getElementById('regInvite').value.trim();
 
-            if(!phone || !password || !confirm) {
-                alert("Please fill all fields!");
-                return;
-            }
-
-            if(password !== confirm) {
-                alert("Passwords do not match!");
+            if(!phone || !password) {
+                alert("Please enter phone and password!");
                 return;
             }
 
@@ -111,28 +94,25 @@
             btn.disabled = true;
 
             try {
-                // Aapke user.js API ko call kar rahe hain inviteCode ke sath
-                const response = await fetch(`/api/user?phone=${phone}&inviteCode=${inviteCode}`);
+                // Seedhe register.js ko data bhej rahe hain
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password, inviteCode })
+                });
+
                 const data = await response.json();
 
                 if (data.success) {
-                    if(data.balance > 0) {
-                        alert(`🎁 Registration Successful! You got ₹${data.balance} Bonus.`);
-                    } else {
-                        alert("✅ Registration Successful!");
-                    }
-                    
-                    // Phone ko save kar rahe hain taaki game page pe data load ho sake
-                    localStorage.setItem('userPhone', phone); 
+                    alert(data.bonus > 0 ? "🎁 Got ₹100 Bonus!" : "✅ Success!");
+                    localStorage.setItem('userPhone', phone);
                     window.location.href = 'index.html'; 
                 } else {
-                    alert(data.message || "Registration Failed.");
-                    btn.innerText = "Register";
-                    btn.disabled = false;
+                    alert(data.message);
                 }
             } catch (error) {
-                console.error("Error:", error);
                 alert("Server Connection Error!");
+            } finally {
                 btn.innerText = "Register";
                 btn.disabled = false;
             }
