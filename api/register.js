@@ -1,44 +1,48 @@
-// register.js - Frontend Logic
-async function startRegistration() {
-    const phone = document.getElementById('regPhone').value.trim();
-    const password = document.getElementById('regPass').value.trim();
-    const confirm = document.getElementById('regConfirm').value.trim();
-    const inviteCode = document.getElementById('regInvite').value.trim();
+const mongoose = require('mongoose');
+const User = require('../models/User');
 
-    // Validation
-    if(!phone || !password || !confirm) {
-        alert("Please fill all fields!");
-        return;
-    }
-    if(password !== confirm) {
-        alert("Passwords do not match!");
-        return;
+// MongoDB Connection Logic
+const connectDB = async () => {
+    if (mongoose.connections[0].readyState) return;
+    await mongoose.connect(process.env.MONGODB_URI); // Vercel Dashboard mein MONGODB_URI set karein
+};
+
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ message: 'Method not allowed' });
     }
 
     try {
-        // Aapke backend server ki API ko call karna
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                phone, 
-                password, 
-                inviteCode 
-            })
+        await connectDB();
+        const { phone, password, inviteCode } = req.body;
+
+        // Check if user exists
+        const existingUser = await User.findOne({ phone });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: "User already exists!" });
+        }
+
+        // Bonus logic
+        const initialBalance = (inviteCode === "1234") ? 50 : 0;
+
+        // Save to MongoDB
+        const newUser = new User({
+            phone,
+            password,
+            inviteCode,
+            balance: initialBalance,
+            createdAt: new Date()
         });
 
-        const data = await response.json();
+        await newUser.save();
 
-        if (data.success) {
-            alert(data.message); // "Registration Successful" ya "Bonus Added"
-            localStorage.setItem('token', data.token); // Security ke liye token
-            localStorage.setItem('userPhone', phone); 
-            window.location.href = 'wingo_game.html'; 
-        } else {
-            alert(data.message || "Registration Failed.");
-        }
+        return res.status(200).json({ 
+            success: true, 
+            message: "Registration Successful!",
+            initialBalance 
+        });
+
     } catch (error) {
-        console.error("Server Error:", error);
-        alert("Server se connection nahi ho pa raha hai.");
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
