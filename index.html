@@ -107,11 +107,20 @@
   <script>
     async function fetchUserBalance() {
       try {
-        // अपने असली MongoDB API URL का उपयोग करें
-        const response = await fetch('/api/user/balance'); 
+        // URL se phone number nikalna (Jo register page ne bheja tha)
+        const params = new URLSearchParams(window.location.search);
+        const phone = params.get('phone');
+
+        if (!phone) {
+          console.error("Phone number missing in URL");
+          return;
+        }
+
+        // MongoDB API ko call karna phone number ke saath
+        const response = await fetch(`/api/user/balance?phone=${phone}`); 
         const data = await response.json();
 
-        if (data && data.balance !== undefined) {
+        if (data && data.success) {
           document.getElementById('user-balance').innerText = data.balance.toFixed(2);
         }
       } catch (error) {
@@ -121,13 +130,17 @@
 
     window.onload = () => {
       fetchUserBalance();
+      // Har 5 second mein balance update hoga (Real-time feel ke liye)
       setInterval(fetchUserBalance, 5000); 
     };
 
     function goTo(page) {
-      window.location.href = page;
+      const params = new URLSearchParams(window.location.search);
+      const phone = params.get('phone');
+      // Har page par phone number sath jayega taaki balance dikhta rahe
+      window.location.href = page + (phone ? `?phone=${phone}` : "");
     }
-  </script>
+</script>
 
 </body>
 </html>
