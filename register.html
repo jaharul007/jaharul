@@ -47,6 +47,7 @@
         .login-link {
             width: 100%; background: transparent; border: 1px solid #d4a745;
             border-radius: 50px; padding: 18px; color: #d4a745; cursor: pointer; margin-top: 15px;
+            text-align: center; display: block; text-decoration: none;
         }
         .error { color: #ff4444; font-size: 14px; margin-top: 5px; display: none; }
         .loading { display: none; text-align: center; color: #f4c430; margin-top: 10px; }
@@ -82,7 +83,7 @@
                     <input type="password" id="password" placeholder="Min 6 characters">
                     <button type="button" class="toggle-password" onclick="togglePassword('password')">👁</button>
                 </div>
-                <div class="error" id="passwordError">Password is too short</div>
+                <div class="error" id="passwordError">Password must be at least 6 characters</div>
             </div>
 
             <div class="form-group">
@@ -99,13 +100,13 @@
             <button type="submit" class="register-btn" id="submitBtn">Register</button>
         </form>
 
-        <button class="login-link" onclick="window.location.href='login.html'">
+        <a href="login.html" class="login-link">
             I have an account <span style="color: #f4c430;">Login</span>
-        </button>
+        </a>
     </div>
 
     <script>
-        // Vercel Serverless Function Path
+        // Use relative path for Vercel
         const API_URL = '/api/register';
 
         function togglePassword(id) {
@@ -116,23 +117,29 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Reset errors
+            document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+
             const phone = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
             const inviteCode = document.getElementById('inviteCode').value.trim();
             
-            // Basic Validation
+            let hasError = false;
+
             if (phone.length !== 10) {
                 document.getElementById('phoneError').style.display = 'block';
-                return;
+                hasError = true;
             }
             if (password.length < 6) {
                 document.getElementById('passwordError').style.display = 'block';
-                return;
+                hasError = true;
             }
             if (inviteCode !== '1234') {
                 document.getElementById('inviteCodeError').style.display = 'block';
-                return;
+                hasError = true;
             }
+
+            if (hasError) return;
 
             document.getElementById('loading').style.display = 'block';
             document.getElementById('submitBtn').disabled = true;
@@ -142,26 +149,25 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        phone: '+91' + phone, 
+                        phone: phone, // Code is simplified, +91 can be added here or in backend
                         password, 
                         inviteCode 
                     })
                 });
 
                 const data = await response.json();
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('submitBtn').disabled = false;
 
                 if (response.ok) {
-                    alert('Registration Successful! Redirecting to login...');
+                    alert('Registration Successful!');
                     window.location.href = 'login.html';
                 } else {
                     alert(data.message || 'Registration failed');
                 }
             } catch (err) {
+                alert('Network Error: Please check your internet or Vercel logs.');
+            } finally {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('submitBtn').disabled = false;
-                alert('Connection Error: Check your MONGODB_URI in Vercel settings.');
             }
         });
     </script>
