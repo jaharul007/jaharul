@@ -29,7 +29,7 @@
         .phone-input-group { display: flex; gap: 10px; }
         .country-code {
             background: #3a3a3a; border: none; color: #fff;
-            padding: 15px; border-radius: 8px; width: 120px;
+            padding: 15px; border-radius: 8px; width: 80px;
         }
         input {
             width: 100%; background: #3a3a3a; border: none;
@@ -41,7 +41,7 @@
             transform: translateY(-50%); background: none;
             border: none; color: #999; cursor: pointer;
         }
-        .checkbox-group { display: flex; gap: 10px; margin: 30px 0; }
+        .checkbox-group { display: flex; gap: 10px; margin: 30px 0; align-items: center; }
         .register-btn {
             width: 100%; background: linear-gradient(90deg, #f4c542, #e0a830);
             border: none; color: #2d2d2d; padding: 18px;
@@ -52,9 +52,9 @@
             width: 100%; background: transparent; border: 2px solid #f4c542;
             color: #f4c542; padding: 16px; border-radius: 30px; margin-top: 15px; cursor: pointer;
         }
-        .error-message { background: #ff4444; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; }
-        .success-message { background: #44ff44; color: #000; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; }
-        .loading { display: none; text-align: center; color: #f4c542; margin-bottom: 10px; }
+        .error-message { background: #ff4444; color: white; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; text-align: center; }
+        .success-message { background: #44ff44; color: #000; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .loading { display: none; text-align: center; color: #f4c542; margin-bottom: 10px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -66,11 +66,11 @@
 </div>
 
 <div class="container">
-    <h1>Register your phone</h1>
+    <h1>Register</h1>
 
     <div class="error-message" id="errorMessage"></div>
     <div class="success-message" id="successMessage"></div>
-    <div class="loading" id="loading">Processing... Please wait.</div>
+    <div class="loading" id="loading">Connecting to server...</div>
 
     <form id="registerForm">
         <div class="form-group">
@@ -79,87 +79,80 @@
                 <select class="country-code" id="countryCode">
                     <option value="+91">+91</option>
                     <option value="+1">+1</option>
-                    <option value="+44">+44</option>
                 </select>
                 <input type="tel" id="phoneNumber" placeholder="Enter phone number" required>
             </div>
         </div>
 
         <div class="form-group">
-            <div class="form-label">Set password</div>
+            <div class="form-label">Password</div>
             <div class="password-field">
-                <input type="password" id="password" placeholder="Enter password" required>
-                <button type="button" class="toggle-password" onclick="togglePassword('password')">👁️</button>
+                <input type="password" id="password" placeholder="Set password" required>
+                <button type="button" class="toggle-password" onclick="togglePass('password')">👁️</button>
             </div>
         </div>
 
         <div class="form-group">
-            <div class="form-label">Confirm password</div>
+            <div class="form-label">Confirm Password</div>
             <div class="password-field">
                 <input type="password" id="confirmPassword" placeholder="Confirm password" required>
-                <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">👁️</button>
+                <button type="button" class="toggle-password" onclick="togglePass('confirmPassword')">👁️</button>
             </div>
         </div>
 
         <div class="form-group">
-            <div class="form-label">Invite code</div>
+            <div class="form-label">Invite Code (Optional)</div>
             <input type="text" id="inviteCode" placeholder="Enter invite code">
         </div>
 
         <div class="checkbox-group">
-            <input type="checkbox" id="agreeTerms" required>
-            <label>I agree privacy policy</label>
+            <input type="checkbox" id="agreeTerms" checked required>
+            <label for="agreeTerms">I agree to the Privacy Policy</label>
         </div>
 
         <button type="submit" class="register-btn" id="registerBtn">Register</button>
     </form>
 
-    <button class="login-btn" onclick="window.location.href='login.html'">Login</button>
+    <button class="login-btn" onclick="window.location.href='login.html'">Already have an account? Login</button>
 </div>
 
 <script>
-    function togglePassword(id) {
-        const f = document.getElementById(id);
-        f.type = f.type === 'password' ? 'text' : 'password';
+    // पासवर्ड दिखाने/छुपाने के लिए
+    function togglePass(id) {
+        const x = document.getElementById(id);
+        x.type = x.type === "password" ? "text" : "password";
     }
 
-    function showError(msg) {
-        const el = document.getElementById('errorMessage');
-        el.innerText = msg;
-        el.style.display = 'block';
-        document.getElementById('successMessage').style.display = 'none';
-    }
-
-    function showSuccess(msg) {
-        const el = document.getElementById('successMessage');
-        el.innerText = msg;
-        el.style.display = 'block';
-        document.getElementById('errorMessage').style.display = 'none';
-    }
+    const errorBox = document.getElementById('errorMessage');
+    const successBox = document.getElementById('successMessage');
+    const loadingBox = document.getElementById('loading');
+    const registerBtn = document.getElementById('registerBtn');
 
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        // मैसेज रीसेट करें
-        document.getElementById('errorMessage').style.display = 'none';
-        document.getElementById('successMessage').style.display = 'none';
-
+        // मैसेज रिसेट करें
+        errorBox.style.display = 'none';
+        successBox.style.display = 'none';
+        
         const phone = document.getElementById("countryCode").value + document.getElementById("phoneNumber").value;
         const password = document.getElementById("password").value;
         const confirm = document.getElementById("confirmPassword").value;
         const invite = document.getElementById("inviteCode").value;
 
+        // पासवर्ड मैच चेक
         if (password !== confirm) {
-            showError("Password does not match");
+            errorBox.innerText = "Passwords do not match!";
+            errorBox.style.display = 'block';
             return;
         }
 
-        // लोडिंग शुरू करें और बटन डिसेबल करें
-        document.getElementById("loading").style.display = "block";
-        document.getElementById("registerBtn").disabled = true;
+        // लोडिंग दिखाएं
+        loadingBox.style.display = "block";
+        registerBtn.disabled = true;
 
         try {
-            const res = await fetch("/api/register", {
+            const response = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -169,26 +162,32 @@
                 })
             });
 
-            const data = await res.json();
+            const result = await response.json();
 
-            // Vercel/Backend रिस्पॉन्स चेक करें
-            if (res.ok) {
-                showSuccess(data.message || "Registration Successful!");
+            if (response.ok && result.success) {
+                // सफलता!
+                successBox.innerText = "Registration Successful! Redirecting...";
+                successBox.style.display = 'block';
+                
+                // 1.5 सेकंड बाद गेम पेज पर भेजें
                 setTimeout(() => {
-                    window.location.href = "wingo_game.html";
+                    window.location.replace("wingo_game.html");
                 }, 1500);
+
             } else {
-                // बैकएंड से आए एरर (जैसे User already exists) को दिखाएं
-                showError(data.error || data.message || "Registration Failed");
-                document.getElementById("registerBtn").disabled = false;
+                // बैकएंड से एरर आया
+                errorBox.innerText = result.message || "Registration failed. Try again.";
+                errorBox.style.display = 'block';
+                registerBtn.disabled = false;
             }
 
         } catch (err) {
-            console.error("Fetch Error:", err);
-            showError("Server Error: Please try again later.");
-            document.getElementById("registerBtn").disabled = false;
+            console.error("Fetch error:", err);
+            errorBox.innerText = "Connection Error. Check your internet.";
+            errorBox.style.display = 'block';
+            registerBtn.disabled = false;
         } finally {
-            document.getElementById("loading").style.display = "none";
+            loadingBox.style.display = "none";
         }
     });
 </script>
