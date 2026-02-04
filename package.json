@@ -1,12 +1,10 @@
-{ 
-  "name": "bdg-registration-api",
+{
+  "name": "bdg-game-clone",
   "version": "1.0.0",
-  "description": "Vercel Serverless Function for MongoDB registration",
-  "main": "api/register.js",
+  "description": "BDG Game Registration",
+  "main": "index.html",
   "scripts": {
-    "start": "vercel dev"
+    "start": "serve ."
   },
-  "dependencies": {
-    "mongodb": "^4.0.0" 
-    }
+  "dependencies": {}
 }
