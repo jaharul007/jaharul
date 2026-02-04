@@ -1,9 +1,9 @@
-+{ 
+{
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/register",
-      "destination": "/api/register.js"
+      "source": "/(.*)",
+      "destination": "/register.html"
     }
   ]
 }
