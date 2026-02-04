@@ -9,5 +9,15 @@
       "src": "api/register.js",
       "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/wingo_game",
+      "dest": "/wingo_game.html"
+    }
   ]
 }
