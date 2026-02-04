@@ -3,61 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>BDG GAME - Account</title>
+    <title>Account - BDG GAME</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #1a1a1a; color: white; font-family: Arial, sans-serif; overflow-x: hidden; }
-        .container { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; padding-bottom: 100px; position: relative; }
+    /* History Icons Base Style */
+.hist-icon-box {
+    width: 32px;
+    height: 38px;
+    border-radius: 6px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 1. Game History Icon (Blue) */
+.gh-icon { background: #4a90e2; }
+.gh-icon::after {
+    content: '$';
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: #2a6bb8;
+    color: #fff;
+    font-size: 10px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #1a1a1a;
+}
+
+/* 2. Transaction Icon (Yellow) */
+.tr-icon { background: #f3d078; }
+
+/* 3. Deposit History Icon (Red) */
+.dh-icon { background: #ff5e5e; }
+
+/* 4. Withdraw History Icon (Orange) */
+.wh-icon { background: #ff9933; }
+
+/* Lines inside icons */
+.icon-line {
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 1px;
+}
+.line-1 { top: 10px; }
+.line-2 { top: 16px; }
+.line-3 { top: 22px; width: 12px; left: 7px; }
+
+/* Small Tick/Circle for Withdraw */
+.wh-tick {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    width: 8px;
+    height: 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 50%;
+}
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #000; color: white; font-family: Arial, sans-serif; overflow-x: hidden; }
+        .container { width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 110px; position: relative; }
 
         /* Golden Header */
         .profile-header { 
             background: linear-gradient(180deg, #f3d078 0%, #d4af37 100%); 
-            padding: 45px 20px 65px; 
+            padding: 40px 20px 80px; 
             border-bottom-left-radius: 40px; 
             border-bottom-right-radius: 40px; 
             color: #3d2a00; 
         }
         .user-info-flex { display: flex; align-items: center; gap: 15px; }
-        .avatar { width: 75px; height: 75px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; }
+        .avatar { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
         .user-details h2 { margin: 0; font-size: 18px; font-weight: bold; }
-        .uid-box { background: rgba(0,0,0,0.1); padding: 4px 10px; border-radius: 15px; font-size: 12px; margin-top: 5px; display: inline-block; }
+        .uid-box { background: rgba(0,0,0,0.1); padding: 4px 12px; border-radius: 15px; font-size: 12px; margin-top: 5px; display: inline-block; }
 
-        /* Total Balance Card */
-        .wallet-card { background: #333; margin: -45px 15px 15px; border-radius: 20px; padding: 25px 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .bal-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        /* Wallet Card */
+        .wallet-card { background: #333; margin: -60px 15px 15px; border-radius: 20px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .bal-title { color: #aaa; font-size: 14px; margin-bottom: 5px; }
+        .bal-row { display: flex; justify-content: space-between; align-items: center; }
+        .balance-val { font-size: 24px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         .enter-wallet { background: #d4af37; color: #3d2a00; padding: 8px 18px; border-radius: 25px; font-size: 13px; font-weight: bold; cursor: pointer; }
         
-        .wallet-sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
-        .sub-icon { width: 40px; margin-bottom: 5px; }
+        /* Wallet Icons Grid - EXACT MATCH */
+        .wallet-sub-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; 
+            text-align: center; 
+            margin-top: 25px; 
+        }
+        
+        .sub-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 10px; 
+            font-size: 13px; 
+            color: #fff; 
+            margin-top: -10px;
+            cursor: pointer; 
+            text-decoration: none; 
+            transition: transform 0.3s ease;
+        }
+        
+        .sub-item:hover {
+            transform: translateY(-3px);
+        }/* 1. सबसे पहले icon-box की विड्थ/हाइट सेट करो */
+.icon-box { 
+    width: 65px; 
+    height: 55px; 
+    border-radius: 15px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    position: relative;
+    /* नीचे वाली लाइन जादू है: इसे छोटा करने के लिए 0.7 या 0.6 कर दो */
+    transform: scale(0.6); 
+    transform-origin: center; /* ताकि छोटा होने पर सेंटर में रहे */
+}
+          
+        .wallet-icon {
+            background: linear-gradient(135deg, #e57373 0%, #d45c5c 100%);
+        }
 
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 15px; margin-top: 20px; }
-        .action-card { background: #2a2a2a; padding: 20px; border-radius: 10px; text-align: center; border: 1px solid #333; cursor: pointer; }
-        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
-        .history-card { background: #2a2a2a; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; border: 1px solid #333; font-size: 12px; cursor: pointer; }
+        /* Main wallet body */
+        .wallet-body {
+            position: absolute;
+            width: 36px;
+            height: 26px;
+            background: rgba(139, 69, 69, 0.6);
+            border-radius: 6px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
 
-        .menu-list { background: #222; margin: 10px 15px; border-radius: 15px; overflow: hidden; }
-        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 15px; border-bottom: 1px solid #2a2a2a; color: #aaa; }
+        /* Wallet flap on top */
+        .wallet-flap {
+            position: absolute;
+            width: 36px;
+            height: 8px;
+            background: rgba(229, 115, 115, 0.8);
+            border-radius: 6px 6px 0 0;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Minus line */
+        .wallet-minus {
+            position: absolute;
+            width: 14px;
+            height: 2.5px;
+            background: rgba(255, 255, 255, 0.35);
+            border-radius: 2px;
+            top: 42%;
+            left: 30%;
+        }
+
+        /* Small dot */
+        .wallet-dot {
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            background: rgba(255, 182, 193, 0.5);
+            border-radius: 50%;
+            bottom: 30%;
+            right: 26%;
+        }
+
+        /* 2. Deposit Icon - Brown Basket */
+        .deposit-icon {
+            background: linear-gradient(135deg, #a67c52 0%, #8b6239 100%);
+            border-radius: 15px 15px 18px 18px;
+            position: relative;
+        }
+
+        /* Orange lid on top */
+        .deposit-lid {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 34px;
+            height: 18px;
+            background: linear-gradient(135deg, #ff9966 0%, #ff7733 100%);
+            border-radius: 50% 50% 0 0;
+        }
+
+        /* 3. Withdraw Icon - Blue Card */
+        .withdraw-icon {
+            background: linear-gradient(135deg, #64b5f6 0%, #5a9fd4 100%);
+        }
+
+        /* Card top bar (darker blue) */
+        .card-top {
+            position: absolute;
+            width: 100%;
+            height: 16px;
+            background: linear-gradient(135deg, #5a9fd4 0%, #4a8bc2 100%);
+            border-radius: 15px 15px 0 0;
+            top: 0;
+            left: 0;
+        }
+
+        /* Two horizontal lines on card */
+        .card-line-1 {
+            position: absolute;
+            width: 28px;
+            height: 2.5px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 2px;
+            top: 40%;
+            left: 22%;
+        }
+
+        .card-line-2 {
+            position: absolute;
+            width: 6px;
+            height: 2.5px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 2px;
+            top: 40%;
+            right: 22%;
+        }
+
+        /* 4. VIP Icon - Green Shield/Pentagon */
+        .vip-icon {
+            background: linear-gradient(135deg, #4db6ac 0%, #3a9188 100%);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        }
+
+        .vip-text {
+            position: absolute;
+            color: rgba(174, 255, 216, 0.85);
+            font-size: 28px;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* History Buttons */
+        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px 15px; }
+        .history-card { background: #1a1a1a; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid #2a2a2a; }
+        .card-icon { font-size: 24px; }
+        .card-info b { font-size: 14px; display: block; color: #eee; }
+        .card-info span { font-size: 10px; color: #666; }
+
+        /* Menu List */
+        .menu-list { background: #1a1a1a; margin: 15px; border-radius: 15px; overflow: hidden; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 15px; border-bottom: 1px solid #262626; color: #aaa; cursor: pointer; }
         .menu-left { display: flex; align-items: center; gap: 12px; }
         .badge-red { background: #ff4d4d; color: white; border-radius: 50px; padding: 2px 8px; font-size: 10px; }
 
-        /* Logout Button - Photo Style */
-        .logout-btn-container { padding: 0 15px; margin-top: 25px; }
-        .logout-btn { 
-            width: 100%; background: transparent; border: 1px solid #5a4a2a; 
-            padding: 14px; border-radius: 50px; color: #d4af37; 
-            display: flex; align-items: center; justify-content: center; 
-            gap: 12px; font-size: 18px; cursor: pointer;
-        }
+        /* Logout */
+        .logout-btn-container { padding: 0 15px; margin-top: 20px; }
+        .logout-btn { width: 100%; background: transparent; border: 1px solid #444; padding: 12px; border-radius: 50px; color: #d4af37; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; cursor: pointer; }
 
-        /* Bottom Nav - Photo Style */
-        .bottom-nav { 
-            position: fixed; bottom: 0; width: 100%; max-width: 500px; 
-            background: #222222; display: flex; justify-content: space-around; 
-            padding: 12px 0; border-top: 1px solid #333; 
-        }
-        .nav-item { text-align: center; color: #888; text-decoration: none; flex: 1; }
-        .nav-item.active { color: #d4af37; }
-        .nav-icon { font-size: 22px; display: block; margin-bottom: 4px; }
-        .nav-label { font-size: 12px; display: block; }
+        /* Bottom Navigation */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 22, 40, 0.95); display: flex; justify-content: space-around; padding: 7px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #8b92a8; flex: 1; text-decoration: none; }
+        .nav-item.active { color: #ffd700; }
+        .nav-icon { font-size: 21px; }
+        .nav-text { font-size: 12px; }
+        .get-bonus { position: relative; }
+        .bonus-badge { position: absolute; top: -25px; background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; border: 3px solid #0a1628; }
     </style>
 </head>
 <body>
@@ -65,59 +284,115 @@
     <div class="container">
         <div class="profile-header">
             <div class="user-info-flex">
-                <img src="https://via.placeholder.com/100" class="avatar" alt="User">
+                <img src="https://via.placeholder.com/150" class="avatar" alt="User">
                 <div class="user-details">
-                    <h2>MEMBERNNGODMCU <span style="background:#333; color:#f3d078; padding:2px 8px; border-radius:10px; font-size:10px;">⭐ VIP2</span></h2>
+                    <h2>MEMBERNNGODMCU <span style="background:#333; color:#f3d078; padding:2px 6px; border-radius:8px; font-size:10px;">⭐ VIP2</span></h2>
                     <div class="uid-box">UID | <span id="acc_uid">18594327</span> 📋</div>
-                    <div style="font-size:11px; margin-top:5px; opacity:0.9;">Last login: 2026-01-21 17:08:51</div>
+                    <div style="font-size:11px; margin-top:5px; opacity:0.8;">Last login: 2026-02-04 22:31:15</div>
                 </div>
             </div>
         </div>
 
         <div class="wallet-card">
+            <div class="bal-title">Total balance</div>
             <div class="bal-row">
-                <div>
-                    <div style="font-size:13px; color:#aaa;">Total balance</div>
-                    <div style="font-size:24px; font-weight:bold;">₹<span id="acc_bal">0.00</span> <span style="cursor:pointer;" onclick="syncBalance()">🔄</span></div>
-                </div>
-                <div class="enter-wallet">Enter wallet</div>
+                <div class="balance-val">₹<span id="acc_bal">0.00</span> <span style="cursor:pointer; font-size:18px;" onclick="location.reload()">🔄</span></div>
+                <div class="enter-wallet" onclick="window.location.href='wallet.html'">Enter wallet</div>
             </div>
+            
             <div class="wallet-sub-grid">
-                <div>
-                    <img src="https://cdn-icons-png.flaticon.com/512/10384/10384160.png" class="sub-icon" alt="wallet">
-                    <div style="font-size:14px; color:#888;">ARWallet</div>
+                <!-- ARWallet -->
+                <div class="sub-item" onclick="window.location.href='arwallet.html'">
+                    <div class="icon-box wallet-icon">
+                        <div class="wallet-flap"></div>
+                        <div class="wallet-body"></div>
+                        <div class="wallet-minus"></div>
+                        <div class="wallet-dot"></div>
+                    </div>
+                    ARWallet
                 </div>
-                <div>
-                    <img src="https://cdn-icons-png.flaticon.com/512/1041/1041888.png" class="sub-icon" alt="vip">
-                    <div style="font-size:14px; color:#888;">VIP</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="action-grid">
-            <div class="action-card" onclick="window.location.href='deposit.html'">
-                <img src="https://cdn-icons-png.flaticon.com/512/2489/2489756.png" width="35" alt="dep">
-                <div style="margin-top:8px; color:#aaa;">Deposit</div>
-            </div>
-            <div class="action-card" onclick="window.location.href='withdraw.html'">
-                <img src="https://cdn-icons-png.flaticon.com/512/9361/9361198.png" width="35" alt="with">
-                <div style="margin-top:8px; color:#aaa;">Withdraw</div>
+                <!-- Deposit -->
+                <div class="sub-item" onclick="window.location.href='deposit.html'">
+                    <div class="icon-box deposit-icon">
+                        <div class="deposit-lid"></div>
+                    </div>
+                    Deposit
+                </div>
+
+                <!-- Withdraw -->
+                <div class="sub-item" onclick="window.location.href='withdraw.html'">
+                    <div class="icon-box withdraw-icon">
+                        <div class="card-top"></div>
+                        <div class="card-line-1"></div>
+                        <div class="card-line-2"></div>
+                    </div>
+                    Withdraw
+                </div>
+
+                <!-- VIP -->
+                <div class="sub-item" onclick="window.location.href='vip.html'">
+                    <div class="icon-box vip-icon">
+                        <div class="vip-text">V</div>
+                    </div>
+                    VIP
+                </div>
             </div>
         </div>
 
         <div class="history-grid">
-            <div class="history-card" onclick="window.location.href='deposit-history.html'">
-                <span style="font-size:24px;">📕</span>
-                <div>Deposit<br><span style="color:#666; font-size:10px;">My deposit history</span></div>
-            </div>
-            <div class="history-card" onclick="window.location.href='withdraw-history.html'">
-                <span style="font-size:24px;">📙</span>
-                <div>Withdraw<br><span style="color:#666; font-size:10px;">My withdraw history</span></div>
-            </div>
+    <div class="history-card" onclick="window.location.href='game-history.html'">
+        <div class="hist-icon-box gh-icon">
+            <div class="icon-line line-1"></div>
+            <div class="icon-line line-2"></div>
+            <div class="icon-line line-3"></div>
         </div>
+        <div class="card-info">
+            <b>Game History</b>
+            <span>My game history</span>
+        </div>
+    </div>
 
+    <div class="history-card" onclick="window.location.href='transaction.html'">
+        <div class="hist-icon-box tr-icon">
+            <div class="icon-line line-1"></div>
+            <div class="icon-line line-2"></div>
+            <div class="icon-line line-3"></div>
+        </div>
+        <div class="card-info">
+            <b>Transaction</b>
+            <span>My transaction records</span>
+        </div>
+    </div>
+
+    <div class="history-card" onclick="window.location.href='deposit-history.html'">
+        <div class="hist-icon-box dh-icon">
+            <div class="icon-line line-1" style="width:12px; top:8px; height:8px; border-radius:2px;"></div>
+            <div class="icon-line line-2" style="top:20px;"></div>
+            <div class="icon-line line-3" style="top:26px;"></div>
+        </div>
+        <div class="card-info">
+            <b>Deposit</b>
+            <span>My deposit history</span>
+        </div>
+    </div>
+
+    <div class="history-card" onclick="window.location.href='withdraw-history.html'">
+        <div class="hist-icon-box wh-icon">
+            <div class="wh-tick"></div>
+            <div class="icon-line line-1" style="top:18px;"></div>
+            <div class="icon-line line-2" style="top:24px;"></div>
+        </div>
+        <div class="card-info">
+            <b>Withdraw</b>
+            <span>My withdraw history</span>
+        </div>
+    </div>
+</div>
+
+        
         <div class="menu-list">
-            <div class="menu-item"><div class="menu-left"><span>✉️</span> Notification</div><div><span class="badge-red">28</span> ❯</div></div>
+            <div class="menu-item"><div class="menu-left"><span>✉️</span> Notification</div><div><span class="badge-red">73</span> ❯</div></div>
             <div class="menu-item"><div class="menu-left"><span>🎁</span> Gifts</div><span>❯</span></div>
             <div class="menu-item"><div class="menu-left"><span>📊</span> Game statistics</div><span>❯</span></div>
             <div class="menu-item"><div class="menu-left"><span>🌐</span> Language</div><div style="font-size:13px;">English ❯</div></div>
@@ -125,72 +400,43 @@
 
         <div class="logout-btn-container">
             <button class="logout-btn" onclick="logoutUser()">
-                <span style="font-size: 22px;">⏻</span> Log out
+                <span style="font-size: 18px;">⏻</span> Log out
             </button>
-        </div>
-
-        <div class="bottom-nav">
-            <a href="index.html" class="nav-item">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">Home</span>
-            </a>
-            <a href="activity.html" class="nav-item">
-                <span class="nav-icon">👜</span>
-                <span class="nav-label">Activity</span>
-            </a>
-            <a href="promotion.html" class="nav-item">
-                <span class="nav-icon">💰</span>
-                <span class="nav-label">Promotion</span>
-            </a>
-            <a href="account.html" class="nav-item active">
-                <span class="nav-icon">👤</span>
-                <span class="nav-label">Account</span>
-            </a>
         </div>
     </div>
 
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-text">Home</div>
+        </a>
+        <a href="activity.html" class="nav-item">
+            <div class="nav-icon">📋</div>
+            <div class="nav-text">Activity</div>
+        </a>
+        <a href="bonus.html" class="nav-item get-bonus">
+            <div class="bonus-badge">100</div>
+            <div class="nav-icon">💰</div>
+            <div class="nav-text">Get 500</div>
+        </a>
+        <a href="promotion.html" class="nav-item">
+            <div class="nav-icon">🎁</div>
+            <div class="nav-text">Promotion</div>
+        </a>
+        <a href="account.html" class="nav-item active">
+            <div class="nav-icon">👤</div>
+            <div class="nav-text">Account</div>
+        </a>
+    </div>
+
     <script>
-        // --- REAL-TIME DATABASE SYNC ---
-        async function syncOriginalBalance() {
-            const userPhone = localStorage.getItem('userPhone');
-            if (!userPhone) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            try {
-                // Update UID visually
-                document.getElementById('acc_uid').innerText = userPhone;
-
-                // Fetch fresh balance from api/user.js
-                const response = await fetch(`/api/user?phone=${userPhone}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('acc_bal').innerText = data.balance.toFixed(2);
-                }
-            } catch (err) {
-                console.error("Database sync error:", err);
-            }
-        }
-
-        // Manual refresh icon click
-        function syncBalance() {
-            syncOriginalBalance();
-        }
-
         function logoutUser() {
             if(confirm("Do you want to logout?")) {
                 localStorage.clear();
                 window.location.href = 'login.html';
             }
         }
-
-        window.onload = () => {
-            syncOriginalBalance();
-            // Auto-refresh balance every 10 seconds
-            setInterval(syncOriginalBalance, 10000);
-        };
     </script>
 </body>
 </html>
+Mujhe is court ke Jo I can Hai vah double sab Chhota karna hai Charon
