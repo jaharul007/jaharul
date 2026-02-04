@@ -24,7 +24,7 @@
 {
   "routes": [
     {
-      "src": "api/register",
+      "src": "/api/register",
     }
   ]
 }
