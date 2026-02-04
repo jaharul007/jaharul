@@ -1,101 +1,65 @@
-const { MongoClient } = require('mongodb');
-const bcrypt = require('bcryptjs');
+import { MongoClient } from "mongodb";
+import bcrypt from "bcryptjs";
 
 let cachedClient = null;
-let cachedDb = null;
 
-async function connectToDatabase() {
-    if (cachedClient && cachedDb) {
-        return { client: cachedClient, db: cachedDb };
-    }
+async function connectDB() {
 
-    const client = await MongoClient.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    });
+    if (cachedClient) return cachedClient;
 
-    const db = client.db(process.env.MONGODB_DB_NAME || 'bdg_game');
+    const client = new MongoClient(process.env.MONGODB_URI);
+
+    await client.connect();
 
     cachedClient = client;
-    cachedDb = db;
 
-    return { client, db };
+    return client;
 }
 
-module.exports = async (req, res) => {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-    );
+export default async function handler(req, res) {
 
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method not allowed" });
     }
 
     try {
+
         const { phoneNumber, password, inviteCode } = req.body;
 
-        // Validation
         if (!phoneNumber || !password) {
-            return res.status(400).json({ error: 'Phone number and password are required' });
+            return res.status(400).json({ error: "Missing fields" });
         }
 
-        if (password.length < 6) {
-            return res.status(400).json({ error: 'Password must be at least 6 characters' });
-        }
+        const client = await connectDB();
 
-        // Connect to MongoDB
-        const { db } = await connectToDatabase();
-        const usersCollection = db.collection('users');
+        const db = client.db("bdg_game");
 
-        // Check if user already exists
-        const existingUser = await usersCollection.findOne({ phoneNumber });
+        const users = db.collection("users");
+
+        // 🔍 Check duplicate user
+        const existingUser = await users.findOne({ phoneNumber });
+
         if (existingUser) {
-            return res.status(400).json({ error: 'Phone number already registered' });
+            return res.status(400).json({ error: "User already exists" });
         }
 
-        // Hash password
+        // 🔐 Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user object
-        const newUser = {
+        // 💾 Save user
+        await users.insertOne({
             phoneNumber,
             password: hashedPassword,
             inviteCode: inviteCode || null,
-            createdAt: new Date(),
-            lastLogin: null,
-            balance: 0,
-            status: 'active'
-        };
-
-        // Insert user into database
-        const result = await usersCollection.insertOne(newUser);
-
-        // Return success response (without sending password)
-        const userResponse = {
-            id: result.insertedId,
-            phoneNumber: newUser.phoneNumber,
-            createdAt: newUser.createdAt,
-            balance: newUser.balance
-        };
-
-        return res.status(201).json({
-            success: true,
-            message: 'User registered successfully',
-            user: userResponse
+            createdAt: new Date()
         });
 
+        return res.status(200).json({ message: "User registered successfully" });
+
     } catch (error) {
-        console.error('Registration error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+
+        console.log(error);
+
+        return res.status(500).json({ error: "Server error" });
     }
-};
+}
