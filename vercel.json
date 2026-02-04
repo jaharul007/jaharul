@@ -21,3 +21,11 @@
     }
   ]
 }
+{
+  "routes": [
+    {
+      "src": "/api/register",
+      "dest": "/api/register.js"
+    }
+  ]
+}
