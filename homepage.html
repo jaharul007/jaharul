@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(180deg, #0a1628 0%, #1a2a4a 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 10px 12px 0px 12px;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 13px;
+        }
+
+        .wallet {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wallet-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border-radius: 50%;
+        }
+
+        .wallet-text {
+            color: #8b92a8;
+            font-size: 14px;
+        }
+
+        .balance {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-icon {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 9px 7px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-withdraw {
+            background: linear-gradient(135deg, #ffb347 0%, #ffcc70 100%);
+            color: white;
+        }
+
+        .btn-deposit {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .game-card {
+            background: linear-gradient(135deg, rgba(26, 42, 74, 0.6) 0%, rgba(15, 25, 45, 0.8) 100%);
+            border-radius: 15px;
+            padding: 10px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .game-icon {
+            width: 10px;
+            height: 10px;
+            margin: 0 auto 10px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-name {
+            font-size: 11px;
+            color: #8fa1c4;
+        }
+
+        .featured-games {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+           .featured-card {
+
+border-radius: 15px; /* Jyada bade
+
+corners hataye */
+
+padding: 12px 10px; /* Padding kam karke slim banaya */
+
+text-align: center;
+
+cursor: pointer;
+
+position: relative;
+
+display: flex;
+
+flex-direction: column;
+
+align-items: center;
+
+justify-content: center;
+
+height: 100px; /* Height fix kar
+
+di
+
+taaki chota dikhe */
+
+}
+        
+        .featured-card.wingo {
+            background: linear-gradient(135deg, #f95ad2 0%, #4a3af5 100%);
+        }
+
+        .featured-card.trx {
+            background: linear-gradient(135deg, #f95ad2 0%, #d93ac1 100%);
+        }
+
+        .featured-title {
+            font-size: 25px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .featured-icon {
+            font-size: 50px;
+            margin-bottom: 0px;
+        }
+
+        .main-games {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 9px;
+            margin-bottom: 20px;
+        }
+
+        .main-game-card {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b1428 100%);
+            border-radius: 18px;
+            padding: 4px;
+            text-align: center;
+            cursor: pointer;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .main-game-card.aviator {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b1428 100%);
+        }
+
+        .main-game-card.dragon {
+            background: linear-gradient(135deg, #7b3ff2 0%, #5c2db8 100%);
+        }
+
+        .main-game-card.chicken {
+            background: linear-gradient(135deg, #ff1744 0%, #c2185b 100%);
+        }
+
+        .main-game-card.vortex {
+            background: linear-gradient(135deg, #1a237e 0%, #0d1b5e 100%);
+        }
+
+        .main-game-card.mines {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+        }
+
+        .main-game-card.fortune {
+            background: linear-gradient(135deg, #ff9800 0%, #e65100 100%);
+        }
+
+        .main-game-card.teenpatti {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f1d3a 100%);
+        }
+
+        .main-game-card.money {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        }
+
+        .main-game-card.andar {
+            background: linear-gradient(135deg, #5e35b1 0%, #4527a0 100%);
+        }
+
+        .hot-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+            padding: 2px 6px;
+            border-radius: 9px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .main-game-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 22, 40, 0.95);
+            display: flex;
+            justify-content: space-around;
+            padding: 7px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0px;
+            cursor: pointer;
+            color: #8b92a8;
+        }
+
+        .nav-item.active {
+            color: #ffd700;
+        }
+
+        .nav-icon {
+            font-size: 21px;
+        }
+
+        .nav-text {
+            font-size: 12px;
+        }
+
+        .get-bonus {
+            position: relative;
+        }
+
+        .bonus-badge {
+            position: absolute;
+            top: -9px;
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+            border-radius: 50%;
+            width: 45px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="wallet">
+                <div class="wallet-icon"></div>
+                <div>
+                    <div class="wallet-text">Wallet balance</div>
+                    <div class="balance">
+                        ₹0.00
+                        <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-withdraw">
+                    <span>↑</span> Withdraw
+                </button>
+                <button class="btn btn-deposit">
+                    <span>↓</span> Deposit
+                </button>
+            </div>
+        </div>
+
+        <!-- Top Games Grid -->
+        <div class="games-grid">
+            <div class="game-card">
+                <div class="game-icon">🎱</div>
+                <div class="game-name">Lottery</div>
+            </div>
+            <div class="game-card">
+                <div class="game-icon">🎮</div>
+                <div class="game-name">Mini games</div>
+            </div>
+            <div class="game-card">
+                <div class="game-icon">💙</div>
+                <div class="game-name">Hot Slots</div>
+            </div>
+            <div class="game-card">
+                <div class="game-icon">🎰</div>
+                <div class="game-name">Slots</div>
+            </div>
+            <div class="game-card">
+                <div class="game-icon">🐠</div>
+                <div class="game-name">Fishing</div>
+            </div>
+            <div class="game-card">
+                <div class="game-icon">🎲</div>
+                <div class="game-name">PVC</div>
+            </div>
+            <div class="game-card">
+                <div class="game-icon">🎯</div>
+                <div class="game-name">Casino</div>
+            </div>
+            <div class="game-card">
+                <div class="game-icon">🏏</div>
+                <div class="game-name">Sports</div>
+            </div>
+        </div>
+
+        <!-- Featured Games -->
+        <div class="featured-games"> 
+    <div class="featured-card wingo">
+        <div class="featured-icon">🎱</div>
+        <div class="featured-title" style="font-size: 26px;">WINGO</div> </div>
+    <div class="featured-card trx">
+        <div class="featured-icon">💜</div>
+        <div class="featured-title" style="font-size: 25px;">TRX WINGO</div> </div>
+</div>
+        <!-- Main Games -->
+        <div class="main-games">
+            <div class="main-game-card aviator">
+                <div class="main-game-title">AVIATOR</div>
+                <div style="font-size: 40px; margin-top: 15px;">✈️</div>
+            </div>
+            <div class="main-game-card dragon">
+                <div class="hot-badge">Hot</div>
+                <div style="font-size: 50px;">🐉</div>
+                <div class="main-game-title">DRAGON VSTIGER</div>
+            </div>
+            <div class="main-game-card chicken">
+                <div class="hot-badge">Hot</div>
+                <div style="font-size: 50px;">🐔</div>
+                <div class="main-game-title">CHICKEN ROAD</div>
+            </div>
+            <div class="main-game-card vortex">
+                <div style="font-size: 50px;">🌀</div>
+                <div class="main-game-title">VORTEX</div>
+            </div>
+            <div class="main-game-card mines">
+                <div class="hot-badge">Hot</div>
+                <div style="font-size: 50px;">💣</div>
+                <div class="main-game-title">MINES</div>
+            </div>
+            <div class="main-game-card fortune">
+                <div class="hot-badge">Hot</div>
+                <div style="font-size: 50px;">💰</div>
+                <div class="main-game-title">FORTUNE GEMS</div>
+            </div>
+            <div class="main-game-card teenpatti">
+                <div style="font-size: 50px;">🃏</div>
+                <div class="main-game-title">TEEN PATTI</div>
+            </div>
+            <div class="main-game-card money">
+                <div style="font-size: 50px;">💵</div>
+                <div class="main-game-title">MONEY COMING</div>
+            </div>
+            <div class="main-game-card andar">
+                <div style="font-size: 50px;">🎰</div>
+                <div class="main-game-title">ANDAR BAHAR</div>
+            </div>
+        </div>
+
+        <div style="height: 80px;"></div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-text">Home</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">📋</div>
+            <div class="nav-text">Activity</div>
+        </div>
+        <div class="nav-item get-bonus">
+            <div class="bonus-badge">100</div>
+            <div class="nav-icon">💰</div>
+            <div class="nav-text">Get 500</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">🎁</div>
+            <div class="nav-text">Promotion</div>
+        </div>
+        <div class="nav-item">
+            <div class="nav-icon">👤</div>
+            <div class="nav-text">Account</div>
+        </div>
+    </div>
+
+    <script>
+    // Quick Link Logic
+document.querySelector('.btn-withdraw').onclick = () => window.location.href = 'withdraw.html';
+document.querySelector('.btn-deposit').onclick = () => window.location.href = 'deposit.html';
+document.querySelector('.featured-card.wingo').onclick = () => window.location.href = 'wingo_game.html';
+document.querySelector('.nav-item:last-child').onclick = () => window.location.href = 'account.html';
+
+        // Create stars
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // Add click handlers
+        document.querySelectorAll('.game-card, .featured-card, .main-game-card').forEach(card => {
+            card.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 200);
+            });
+        });
+    </script>
+</body>
+</html>
