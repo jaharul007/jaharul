@@ -343,11 +343,12 @@ taaki chota dikhe */
                 <div>
                     <div class="wallet-text">Wallet balance</div>
                     <div class="balance">
-                        ₹0.00
-                        <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                        </svg>
-                    </div>
+    ₹<span id="acc_bal">0.00</span>
+    <svg class="refresh-icon" onclick="loadGlobalBalance()" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+    </svg>
+</div>
+
                 </div>
             </div>
             <div class="action-buttons">
@@ -476,34 +477,74 @@ taaki chota dikhe */
             <div class="nav-text">Account</div>
         </div>
     </div>
+      <script>
+    // 1. URL से फोन नंबर पकड़ना (Global Key)
+    const urlParams = new URLSearchParams(window.location.search);
+    const globalPhone = urlParams.get('phone');
 
-    <script>
-    // Quick Link Logic
-document.querySelector('.btn-withdraw').onclick = () => window.location.href = 'withdraw.html';
-document.querySelector('.btn-deposit').onclick = () => window.location.href = 'deposit.html';
-document.querySelector('.featured-card.wingo').onclick = () => window.location.href = 'wingo_game.html';
-document.querySelector('.nav-item:last-child').onclick = () => window.location.href = 'account.html';
-
-        // Create stars
-        const starsContainer = document.getElementById('stars');
-        for (let i = 0; i < 100; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 3 + 's';
-            starsContainer.appendChild(star);
+    // 2. MongoDB से डेटा लोड करने का फंक्शन
+    async function loadGlobalBalance() {
+        if (!globalPhone) {
+            console.warn("No phone found in URL. Redirecting to login...");
+            // window.location.href = 'index.html'; // अगर आप चाहें तो इनेबल करें
+            return;
         }
 
-        // Add click handlers
-        document.querySelectorAll('.game-card, .featured-card, .main-game-card').forEach(card => {
-            card.addEventListener('click', function() {
-                this.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 200);
-            });
-        });
-    </script>
+        try {
+            const response = await fetch(`/api/user?phone=${encodeURIComponent(globalPhone)}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                // बैलेंस अपडेट करना
+                document.getElementById('acc_bal').innerText = result.data.balance.toFixed(2);
+                
+                // सभी लिंक्स को 'फोन नंबर' के साथ अपडेट करना (ताकि ग्लोबल रहे)
+                updateAllLinks();
+            }
+        } catch (e) {
+            console.error("Balance sync failed", e);
+        }
+    }
+
+    // 3. नेविगेशन और बटन्स के लिंक्स में फोन जोड़ना
+    function updateAllLinks() {
+        // विड्रॉ बटन
+        document.querySelector('.btn-withdraw').onclick = () => 
+            window.location.href = `withdraw.html?phone=${globalPhone}`;
+        
+        // डिपॉजिट बटन
+        document.querySelector('.btn-deposit').onclick = () => 
+            window.location.href = `deposit.html?phone=${globalPhone}`;
+        
+        // विंगो गेम
+        document.querySelector('.featured-card.wingo').onclick = () => 
+            window.location.href = `wingo_game.html?phone=${globalPhone}`;
+        
+        // अकाउंट पेज (Bottom Nav last child)
+        document.querySelector('.nav-item:last-child').onclick = () => 
+            window.location.href = `account.html?phone=${globalPhone}`;
+
+        // बाकी नेविगेशन आइटम्स (Activity, Promotion etc.)
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems[1].onclick = () => window.location.href = `activity.html?phone=${globalPhone}`;
+        navItems[3].onclick = () => window.location.href = `promotion.html?phone=${globalPhone}`;
+    }
+
+    // स्टार्स बनाने वाला आपका पुराना कोड
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animationDelay = Math.random() * 3 + 's';
+        starsContainer.appendChild(star);
+    }
+
+    // पेज लोड होते ही बैलेंस दिखाओ
+    window.onload = loadGlobalBalance;
+</script>
+
+
 </body>
 </html>
