@@ -482,44 +482,45 @@ taaki chota dikhe */
     const urlParams = new URLSearchParams(window.location.search);
     const globalPhone = urlParams.get('phone');
 
-    // 2. बैलेंस लोड करने का बेहतर फंक्शन
     async function loadGlobalBalance() {
         if (!globalPhone) {
             console.error("Phone number missing in URL!");
+            // अगर फोन नंबर नहीं है, तो लॉगिन पेज पर भेज सकते हैं
             return;
         }
 
         try {
-            // यहाँ हम API कॉल कर रहे हैं आपके डेटाबेस से बैलेंस लाने के लिए
+            // सुधार: यहाँ पक्का करें कि path '/api/user' है जो हमने अभी बनाया है
             const response = await fetch(`/api/user?phone=${encodeURIComponent(globalPhone)}`);
             const result = await response.json();
             
             if (result.success && result.data) {
-                // यहाँ ₹100 या जो भी बैलेंस है वो अपडेट होगा
+                // बैलेंस को अपडेट करना
                 const currentBalance = parseFloat(result.data.balance) || 0;
                 document.getElementById('acc_bal').innerText = currentBalance.toFixed(2);
                 
-                // लिंक्स अपडेट करें
+                // लिंक्स अपडेट करें ताकि फोन नंबर साथ रहे
                 updateAllLinks();
+            } else {
+                console.log("User not found or error:", result.message);
             }
         } catch (e) {
             console.error("Balance fetch error:", e);
         }
     }
 
-    // 3. सभी बटन्स और लिंक्स में फोन नंबर जोड़ना ताकि डेटा बना रहे
     function updateAllLinks() {
         if(!globalPhone) return;
 
-        // Withdraw & Deposit
+        // Withdraw & Deposit buttons
         document.querySelector('.btn-withdraw').onclick = () => window.location.href = `withdraw.html?phone=${globalPhone}`;
         document.querySelector('.btn-deposit').onclick = () => window.location.href = `deposit.html?phone=${globalPhone}`;
         
-        // Games
+        // Games (Example: Wingo)
         const wingo = document.querySelector('.featured-card.wingo');
         if(wingo) wingo.onclick = () => window.location.href = `wingo_game.html?phone=${globalPhone}`;
         
-        // Bottom Nav Links
+        // Bottom Nav Items
         const navItems = document.querySelectorAll('.nav-item');
         if(navItems[1]) navItems[1].onclick = () => window.location.href = `activity.html?phone=${globalPhone}`;
         if(navItems[3]) navItems[3].onclick = () => window.location.href = `promotion.html?phone=${globalPhone}`;
@@ -540,14 +541,13 @@ taaki chota dikhe */
         }
     }
 
-    // पेज लोड होते ही सब रन करें
     window.addEventListener('DOMContentLoaded', () => {
         createStars();
         loadGlobalBalance();
-        
-        // एक बैकअप चेक: अगर डेटा स्लो है तो 1 सेकंड बाद फिर से रिफ्रेश करें
-        setTimeout(loadGlobalBalance, 1000);
+        // 2 सेकंड बाद फिर से चेक करें (Extra safety के लिए)
+        setTimeout(loadGlobalBalance, 2000);
     });
 </script>
+
 </body>
 </html>
