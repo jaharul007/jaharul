@@ -1,14 +1,22 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/register.js", "use": "@vercel/node" },
-    { "src": "api/login.js", "use": "@vercel/node" },
-    { "src": "*.html", "use": "@vercel/static" }
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
   ],
   "routes": [
-    { "src": "/api/register", "dest": "/api/register.js" },
-    { "src": "/api/login", "dest": "/api/login.js" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
