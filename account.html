@@ -270,13 +270,61 @@
         .logout-btn { width: 100%; background: transparent; border: 1px solid #444; padding: 12px; border-radius: 50px; color: #d4af37; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; cursor: pointer; }
 
         /* Bottom Navigation */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10, 22, 40, 0.95); display: flex; justify-content: space-around; padding: 7px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #8b92a8; flex: 1; text-decoration: none; }
-        .nav-item.active { color: #ffd700; }
-        .nav-icon { font-size: 21px; }
-        .nav-text { font-size: 12px; }
-        .get-bonus { position: relative; }
-        .bonus-badge { position: absolute; top: -25px; background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; border: 3px solid #0a1628; }
+                /* Bottom Navigation - Exactly as per homepage.html */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 22, 40, 0.95);
+            display: flex;
+            justify-content: space-around;
+            padding: 7px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0px;
+            cursor: pointer;
+            color: #8b92a8;
+            text-decoration: none; /* Link underline hatane ke liye */
+        }
+
+        .nav-item.active {
+            color: #ffd700;
+        }
+
+        .nav-icon {
+            font-size: 21px;
+        }
+
+        .nav-text {
+            font-size: 12px;
+        }
+
+        .get-bonus {
+            position: relative;
+        }
+
+        .bonus-badge {
+            position: absolute;
+            top: -9px;
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+            border-radius: 50%;
+            width: 45px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
@@ -403,10 +451,8 @@
                 <span style="font-size: 18px;">⏻</span> Log out
             </button>
         </div>
-    </div>
-
-    <div class="bottom-nav">
-        <a href="homepage.html" class="nav-item">
+    </div>    <div class="bottom-nav">
+        <a href="home_page.html" class="nav-item">
             <div class="nav-icon">🏠</div>
             <div class="nav-text">Home</div>
         </a>
@@ -429,6 +475,7 @@
         </a>
     </div>
 
+       
     <script>
         function logoutUser() {
             if(confirm("Do you want to logout?")) {
