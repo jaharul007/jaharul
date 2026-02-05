@@ -498,56 +498,38 @@
         }
 
         // Balance लोड करने का main function
-        async function loadGlobalBalance() {
+                async function loadGlobalBalance() {
             const balElement = document.getElementById('acc_bal');
             
-            // Phone number check
             if (!globalPhone) {
-                console.error("Phone number missing in URL!");
+                console.error("Phone number missing!");
                 balElement.innerText = "0.00";
-                showError("Phone number missing! Please login again.");
+                showError("Please login again.");
                 return;
             }
 
             try {
                 balElement.innerText = "...";
                 
-                const response = await fetch(`/api/user?phone=${encodeURIComponent(globalPhone)}`);
+                // Ab ye seedha /api/auth ko call karega balance mangne ke liye
+                const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${encodeURIComponent(globalPhone)}`);
                 
-                console.log("Response Status:", response.status);
-                
-                // पहले text में पढ़ें ताकि देख सकें क्या आ रहा है
-                const responseText = await response.text();
-                console.log("Raw Response:", responseText);
-                
-                // अब JSON में parse करें
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error("JSON Parse Error:", parseError);
-                    console.error("Response was:", responseText);
-                    balElement.innerText = "0.00";
-                    showError("Server returned invalid data");
-                    return;
-                }
+                const result = await response.json();
 
-                console.log("Parsed Result:", result);
-
-                if (result.success && result.data) {
-                    const currentBalance = parseFloat(result.data.balance) || 0;
+                if (result.success && result.balance !== undefined) {
+                    // Balance ko update karein
+                    const currentBalance = parseFloat(result.balance) || 0;
                     balElement.innerText = currentBalance.toFixed(2);
                     updateAllLinks();
                 } else {
-                    console.warn("User not found:", result.message);
                     balElement.innerText = "0.00";
                     showError(result.message || "User not found");
                 }
                 
             } catch (error) {
-                console.error("Critical Fetch Error:", error);
+                console.error("Fetch Error:", error);
                 balElement.innerText = "0.00";
-                showError("Connection error: " + error.message);
+                showError("Connection error.");
             }
         }
 
