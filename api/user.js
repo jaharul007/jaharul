@@ -1,66 +1,31 @@
-import clientPromise from '../lib/mongodb.js';
+import clientPromise from "../../lib/mongodb";
 
 export default async function handler(req, res) {
-  // 1. CORS Headers (ताकि ब्राउज़र ब्लॉक न करे)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const { phone } = req.query;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ success: false, message: 'Method Not Allowed' });
+  if (!phone) {
+    return res.status(400).json({ success: false, message: "Phone number is required" });
   }
 
   try {
-    const { phone } = req.query;
-
-    if (!phone) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Phone number is required' 
-      });
-    }
-
     const client = await clientPromise;
-    const db = client.db('test'); // नोट: अगर DB नाम अलग है तो 'test' की जगह वो लिखें
+    // .db() को खाली छोड़ने से यह डिफ़ॉल्ट डेटाबेस उठा लेगा
+    const db = client.db(); 
+    const user = await db.collection("users").findOne({ phone: phone });
 
-    /** * सुधार: यहाँ हमने $or लगाया है। 
-     * यह डेटाबेस में 'phone' और 'phoneNumber' दोनों कॉलम चेक करेगा।
-     */
-    const user = await db.collection('users').findOne({
-      $or: [
-        { phone: phone },
-        { phoneNumber: phone }
-      ]
-    });
-
-    if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found in database' 
+    if (user) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          balance: user.balance || 0,
+          phone: user.phone
+        }
       });
+    } else {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-
-    // बैलेंस और अन्य डेटा भेजना
-    return res.status(200).json({
-      success: true,
-      data: {
-        uid: user._id,
-        phone: user.phone || user.phoneNumber,
-        balance: user.balance !== undefined ? user.balance : 0, // अगर बैलेंस नहीं है तो 0 दिखाएगा
-        username: user.username || 'Member'
-      }
-    });
-
-  } catch (error) {
-    console.error("Database Error:", error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Internal Server Error',
-      error: error.message 
-    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
