@@ -161,32 +161,33 @@
             initialBalance = 100;
         }
 
+        // ... existing code ...
         try {
-            // API को डेटा भेजना (balance भी साथ भेज रहे हैं)
             const response = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     phoneNumber: phone,
                     password: password,
-                    inviteCode: invite,
-                    balance: initialBalance // यहाँ से 100 जा रहा है
+                    inviteCode: invite
+                    // balance yahan se hataya gaya hai security ke liye
                 })
             });
 
             const result = await response.json();
 
             if (response.ok && result.success === true) {
-                successBox.innerText = (initialBalance > 0) 
-                    ? "Success! ₹100 Bonus Added. Redirecting..." 
+                // Agar result mein balance 100 hai toh bonus message dikhayenge
+                successBox.innerText = (result.balance > 0) 
+                    ? `Success! ₹${result.balance} Bonus Added. Redirecting...` 
                     : "Registration Successful! Redirecting...";
                 successBox.style.display = 'block';
                 
-                // --- ग्लोबल बैलेंस का असली जादू यहाँ है ---
-                // हम फोन नंबर को URL में चिपका कर भेज रहे हैं
                 setTimeout(() => {
                     window.location.href = `homepage.html?phone=${encodeURIComponent(phone)}`; 
                 }, 1500);
+// ... rest of the code ...
+
 
             } else {
                 errorBox.innerText = result.message || "Registration failed.";
