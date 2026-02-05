@@ -115,8 +115,7 @@
 
     <button class="login-btn" onclick="window.location.href='login.html'">Already have an account? Login</button>
 </div>
-
-  <script>
+     <script>
     function togglePass(id) {
         const x = document.getElementById(id);
         x.type = x.type === "password" ? "text" : "password";
@@ -127,7 +126,6 @@
     const loadingBox = document.getElementById('loading');
     const registerBtn = document.getElementById('registerBtn');
 
-    // पेज लोड होते ही इनवाइट कोड में 1234 डालना (Optional)
     window.onload = () => {
         document.getElementById("inviteCode").value = "1234";
     };
@@ -145,7 +143,6 @@
         const confirm = document.getElementById("confirmPassword").value;
         const invite = document.getElementById("inviteCode").value;
 
-        // 1. पासवर्ड मैच चेक
         if (password !== confirm) {
             errorBox.innerText = "Passwords do not match!";
             errorBox.style.display = 'block';
@@ -155,39 +152,38 @@
         loadingBox.style.display = "block";
         registerBtn.disabled = true;
 
-        // 2. बोनस लॉजिक: अगर इनवाइट कोड 1234 है तो ₹100 बोनस
+        // Bonus Logic
         let initialBalance = 0;
         if (invite === "1234") {
             initialBalance = 100;
         }
 
-        // ... existing code ...
         try {
-            const response = await fetch("/api/register", {
+            const response = await fetch("/api/auth", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    action: 'register', 
                     phoneNumber: phone,
                     password: password,
-                    inviteCode: invite
-                    // balance yahan se hataya gaya hai security ke liye
+                    inviteCode: invite,
+                    balance: initialBalance
                 })
             });
 
             const result = await response.json();
 
             if (response.ok && result.success === true) {
-                // Agar result mein balance 100 hai toh bonus message dikhayenge
-                successBox.innerText = (result.balance > 0) 
-                    ? `Success! ₹${result.balance} Bonus Added. Redirecting...` 
+                // Agar initialBalance > 0 hai toh bonus message dikhayenge
+                successBox.innerText = (initialBalance > 0) 
+                    ? `Success! ₹${initialBalance} Bonus Added. Redirecting...` 
                     : "Registration Successful! Redirecting...";
+                
                 successBox.style.display = 'block';
                 
                 setTimeout(() => {
                     window.location.href = `homepage.html?phone=${encodeURIComponent(phone)}`; 
                 }, 1500);
-// ... rest of the code ...
-
 
             } else {
                 errorBox.innerText = result.message || "Registration failed.";
@@ -205,5 +201,7 @@
         }
     });
 </script>
+
+  
 </body>
 </html>
