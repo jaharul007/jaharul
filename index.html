@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDG GAME - Register</title>
+    <title>JAHARUL GAME - Register</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -61,7 +61,7 @@
 
 <div class="header">
     <button class="back-btn" onclick="window.history.back()">←</button>
-    <div class="logo">BDG GAME</div>
+    <div class="logo">JAHARUL GAME</div>
     <div class="lang">EN</div>
 </div>
 
@@ -127,17 +127,25 @@
     const loadingBox = document.getElementById('loading');
     const registerBtn = document.getElementById('registerBtn');
 
+    // पेज लोड होते ही इनवाइट कोड में 1234 डालना (Optional)
+    window.onload = () => {
+        document.getElementById("inviteCode").value = "1234";
+    };
+
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
         errorBox.style.display = 'none';
         successBox.style.display = 'none';
         
-        const phone = document.getElementById("countryCode").value + document.getElementById("phoneNumber").value;
+        const phoneInput = document.getElementById("phoneNumber").value;
+        const countryCode = document.getElementById("countryCode").value;
+        const phone = countryCode + phoneInput;
         const password = document.getElementById("password").value;
         const confirm = document.getElementById("confirmPassword").value;
         const invite = document.getElementById("inviteCode").value;
 
+        // 1. पासवर्ड मैच चेक
         if (password !== confirm) {
             errorBox.innerText = "Passwords do not match!";
             errorBox.style.display = 'block';
@@ -147,40 +155,48 @@
         loadingBox.style.display = "block";
         registerBtn.disabled = true;
 
+        // 2. बोनस लॉजिक: अगर इनवाइट कोड 1234 है तो ₹100 बोनस
+        let initialBalance = 0;
+        if (invite === "1234") {
+            initialBalance = 100;
+        }
+
         try {
-            // Dhyan dein: API URL sahi hona chahiye (Vercel par ye /api/register hi hota hai)
+            // API को डेटा भेजना (balance भी साथ भेज रहे हैं)
             const response = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     phoneNumber: phone,
                     password: password,
-                    inviteCode: invite
+                    inviteCode: invite,
+                    balance: initialBalance // यहाँ से 100 जा रहा है
                 })
             });
 
             const result = await response.json();
 
-            // Yahan check karein response.ok (Status 200) aur result.success dono
             if (response.ok && result.success === true) {
-                successBox.innerText = "Registration Successful! Redirecting...";
+                successBox.innerText = (initialBalance > 0) 
+                    ? "Success! ₹100 Bonus Added. Redirecting..." 
+                    : "Registration Successful! Redirecting...";
                 successBox.style.display = 'block';
                 
-                // Redirect to homepage.html
+                // --- ग्लोबल बैलेंस का असली जादू यहाँ है ---
+                // हम फोन नंबर को URL में चिपका कर भेज रहे हैं
                 setTimeout(() => {
-                    window.location.href = "homepage.html"; 
+                    window.location.href = `homepage.html?phone=${encodeURIComponent(phone)}`; 
                 }, 1500);
 
             } else {
-                // Backend se jo error message aa raha hai wahi dikhayega
-                errorBox.innerText = result.message || "Registration failed. Please try again.";
+                errorBox.innerText = result.message || "Registration failed.";
                 errorBox.style.display = 'block';
                 registerBtn.disabled = false;
             }
 
         } catch (err) {
             console.error("Fetch error:", err);
-            errorBox.innerText = "Connection Error. Please check your internet or Server.";
+            errorBox.innerText = "Connection Error.";
             errorBox.style.display = 'block';
             registerBtn.disabled = false;
         } finally {
