@@ -116,8 +116,7 @@
     <button class="login-btn" onclick="window.location.href='login.html'">Already have an account? Login</button>
 </div>
 
-<script>
-    // पासवर्ड दिखाने/छुपाने के लिए
+  <script>
     function togglePass(id) {
         const x = document.getElementById(id);
         x.type = x.type === "password" ? "text" : "password";
@@ -131,7 +130,6 @@
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        // मैसेज रिसेट करें
         errorBox.style.display = 'none';
         successBox.style.display = 'none';
         
@@ -140,18 +138,17 @@
         const confirm = document.getElementById("confirmPassword").value;
         const invite = document.getElementById("inviteCode").value;
 
-        // पासवर्ड मैच चेक
         if (password !== confirm) {
             errorBox.innerText = "Passwords do not match!";
             errorBox.style.display = 'block';
             return;
         }
 
-        // लोडिंग दिखाएं
         loadingBox.style.display = "block";
         registerBtn.disabled = true;
 
         try {
+            // Dhyan dein: API URL sahi hona chahiye (Vercel par ye /api/register hi hota hai)
             const response = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -164,26 +161,26 @@
 
             const result = await response.json();
 
-            if (response.ok && result.success) {
-                // सफलता!
+            // Yahan check karein response.ok (Status 200) aur result.success dono
+            if (response.ok && result.success === true) {
                 successBox.innerText = "Registration Successful! Redirecting...";
                 successBox.style.display = 'block';
                 
-                // 1.5 सेकंड बाद गेम पेज पर भेजें
+                // Redirect to homepage.html
                 setTimeout(() => {
-                    window.location.replace("wingo_game.html");
+                    window.location.href = "homepage.html"; 
                 }, 1500);
 
             } else {
-                // बैकएंड से एरर आया
-                errorBox.innerText = result.message || "Registration failed. Try again.";
+                // Backend se jo error message aa raha hai wahi dikhayega
+                errorBox.innerText = result.message || "Registration failed. Please try again.";
                 errorBox.style.display = 'block';
                 registerBtn.disabled = false;
             }
 
         } catch (err) {
             console.error("Fetch error:", err);
-            errorBox.innerText = "Connection Error. Check your internet.";
+            errorBox.innerText = "Connection Error. Please check your internet or Server.";
             errorBox.style.display = 'block';
             registerBtn.disabled = false;
         } finally {
@@ -191,6 +188,5 @@
         }
     });
 </script>
-
 </body>
 </html>
