@@ -482,32 +482,36 @@ taaki chota dikhe */
     const urlParams = new URLSearchParams(window.location.search);
     const globalPhone = urlParams.get('phone');
 
-    async function loadGlobalBalance() {
+        async function loadGlobalBalance() {
         if (!globalPhone) {
             console.error("Phone number missing in URL!");
-            // अगर फोन नंबर नहीं है, तो लॉगिन पेज पर भेज सकते हैं
             return;
         }
 
         try {
-            // सुधार: यहाँ पक्का करें कि path '/api/user' है जो हमने अभी बनाया है
+            // पक्का करें कि यहाँ ` (Backtick) का इस्तेमाल है, ' (Single Quote) का नहीं
             const response = await fetch(`/api/user?phone=${encodeURIComponent(globalPhone)}`);
             const result = await response.json();
             
+            console.log("Full API Response:", result); // इसे चेक करने के लिए डाला है
+
             if (result.success && result.data) {
-                // बैलेंस को अपडेट करना
+                // बैलेंस अपडेट
                 const currentBalance = parseFloat(result.data.balance) || 0;
                 document.getElementById('acc_bal').innerText = currentBalance.toFixed(2);
                 
-                // लिंक्स अपडेट करें ताकि फोन नंबर साथ रहे
+                // बटन्स को एक्टिव करें
                 updateAllLinks();
             } else {
-                console.log("User not found or error:", result.message);
+                console.warn("API success false or no data:", result.message);
+                document.getElementById('acc_bal').innerText = "0.00";
             }
         } catch (e) {
-            console.error("Balance fetch error:", e);
+            console.error("Fetch Error:", e);
+            document.getElementById('acc_bal').innerText = "Error";
         }
     }
+
 
     function updateAllLinks() {
         if(!globalPhone) return;
