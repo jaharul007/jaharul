@@ -4,7 +4,7 @@ import User from '../models/User';
 // MongoDB Connection Logic
 const connectDB = async () => {
     if (mongoose.connections[0].readyState) return;
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGO_URI);
 };
 
 export default async function handler(req, res) {
