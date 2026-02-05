@@ -245,8 +245,7 @@
             Don't have an account? <strong>Register</strong>
         </button>
     </div>
-
-    <script>
+      <script>
     function togglePassword(fieldId) {
         const field = document.getElementById(fieldId);
         field.type = field.type === 'password' ? 'text' : 'password';
@@ -268,11 +267,14 @@
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const phoneNumber = document.getElementById('phoneNumber').value;
+        const phoneNumberInput = document.getElementById('phoneNumber').value;
         const countryCode = document.getElementById('countryCode').value;
         const password = document.getElementById('password').value;
+        
+        // पूरा फोन नंबर एक साथ
+        const fullPhone = countryCode + phoneNumberInput;
 
-        if (phoneNumber.length < 10) {
+        if (phoneNumberInput.length < 10) {
             showError('Please enter a valid phone number');
             return;
         }
@@ -285,24 +287,28 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    phoneNumber: countryCode + phoneNumber,
+                    phoneNumber: fullPhone,
                     password: password
                 })
             });
 
             const data = await response.json();
 
-            if (response.ok) {
+            if (response.ok && data.success) {
                 showSuccess('Login successful! Redirecting...');
-                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                // --- बदलाव यहाँ है ---
+                // हम फोन नंबर को URL में चिपका कर होमपेज पर भेज रहे हैं
                 setTimeout(() => {
-                    window.location.href = 'homepage.html'; 
+                    window.location.href = `homepage.html?phone=${encodeURIComponent(fullPhone)}`; 
                 }, 1500);
+                
             } else {
-                showError(data.error || 'Login failed. Please check your credentials.');
+                showError(data.message || 'Login failed. Please check your credentials.');
                 document.getElementById('loginBtn').disabled = false;
             }
         } catch (error) {
+            console.error("Login Error:", error);
             showError('Network error. Please check your connection.');
             document.getElementById('loginBtn').disabled = false;
         } finally {
@@ -311,5 +317,6 @@
     });
 </script>
 
+    
 </body>
 </html>
