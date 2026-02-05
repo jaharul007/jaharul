@@ -282,15 +282,18 @@
         document.getElementById('loading').style.display = 'block';
         document.getElementById('loginBtn').disabled = true;
 
+        // ... baaki purana code ...
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api/auth', { // URL badal kar /api/auth kar diya
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    action: 'login', // Yeh batayega ki hum login kar rahe hain
                     phoneNumber: fullPhone,
                     password: password
                 })
             });
+// ... baaki redirect waala code ...
 
             const data = await response.json();
 
