@@ -1,24 +1,52 @@
-import clientPromise from "../lib/mongodb"; // पाथ चेक करें (../lib/ होगा)
+import clientPromise from "../lib/mongodb";
 
 export default async function handler(req, res) {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "GET") {
+    return res.status(405).json({ success: false, message: "Method Not Allowed" });
+  }
+
   try {
     const { phone } = req.query;
+    
     if (!phone) {
-      return res.status(400).json({ success: false, message: "Phone missing" });
+      return res.status(400).json({ success: false, message: "Phone number missing" });
     }
 
     const client = await clientPromise;
-    const db = client.db(); // ब्रैकेट खाली रखें
+    const db = client.db("jaharul_game"); // अपना database name यहाँ डालें
+    
     const user = await db.collection("users").findOne({ phone: phone });
 
     if (!user) {
-      return res.status(200).json({ success: true, data: { balance: 0 } });
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
     }
 
-    return res.status(200).json({ success: true, data: user });
+    // Password को response में न भेजें
+    const { password, ...userData } = user;
+
+    return res.status(200).json({ 
+      success: true, 
+      data: {
+        phone: userData.phone,
+        balance: userData.balance || 0
+      }
+    });
+
   } catch (error) {
-    console.error(error);
-    // यह लाइन पक्का करती है कि एरर आने पर भी JSON ही मिले, HTML नहीं
-    return res.status(500).json({ success: false, error: error.message });
+    console.error("User API Error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      error: "Server error",
+      message: error.message 
+    });
   }
 }
