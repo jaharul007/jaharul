@@ -1,8 +1,19 @@
 {
-  "name": "bdg-game",
+  "name": "jaharul-game",
   "version": "1.0.0",
+  "description": "Gaming platform with MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev"
+  },
   "dependencies": {
-    "mongoose": "^8.0.0",
+    "mongodb": "^6.3.0",
     "bcryptjs": "^2.4.3"
-  }
+  },
+  "devDependencies": {},
+  "keywords": ["gaming", "mongodb", "vercel"],
+  "author": "",
+  "license": "ISC"
 }
