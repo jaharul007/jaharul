@@ -1,19 +1,15 @@
 {
   "name": "jaharul-game",
   "version": "1.0.0",
-  "description": "Gaming platform with MongoDB",
+  "description": "Gaming App with MongoDB",
   "main": "index.js",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'No build step required'",
-    "start": "vercel dev"
-  },
   "dependencies": {
-    "mongodb": "^6.3.0",
-    "bcryptjs": "^2.4.3"
+    "mongoose": "^8.0.0"
   },
-  "devDependencies": {},
-  "keywords": ["gaming", "mongodb", "vercel"],
-  "author": "",
-  "license": "ISC"
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
 }
