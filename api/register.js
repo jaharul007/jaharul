@@ -1,26 +1,24 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-// Database URI from Vercel Environment Variables
+// Database URI
 const MONGO_URI = process.env.MONGO_URI;
 
-// User Model (Schema) - यहाँ balance और phone फील्ड्स अपडेट की गई हैं
+// Schema: यहाँ हमने 'phone' इस्तेमाल किया है ताकि user.js के साथ मैच हो सके
 const UserSchema = new mongoose.Schema({
-    phoneNumber: { type: String, required: true, unique: true },
+    phone: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     inviteCode: { type: String, default: null },
-    // बैलेंस फील्ड जोड़ दी गई है ताकि पैसा स्टोर हो सके
     balance: { type: Number, default: 0 }, 
     createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
-// MongoDB Connection Function
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
-    if (!MONGO_URI) throw new Error("MONGO_URI is undefined. Check Vercel Settings.");
     try {
+        // यहाँ पक्का करें कि MONGO_URI के अंत में /wingo_game (या आपका DB नाम) है
         await mongoose.connect(MONGO_URI);
     } catch (err) {
         console.error("MongoDB Connection Error:", err);
@@ -28,7 +26,6 @@ const connectDB = async () => {
 };
 
 module.exports = async (req, res) => {
-    // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -38,39 +35,36 @@ module.exports = async (req, res) => {
 
     try {
         await connectDB();
-        const { phoneNumber, password, inviteCode } = req.body;
+        const { phoneNumber, password, inviteCode } = req.body; // फ्रंटएंड से phoneNumber आ रहा है
 
         if (!phoneNumber || !password) {
             return res.status(400).json({ success: false, message: "Details are missing" });
         }
 
-        const userExists = await User.findOne({ phoneNumber });
+        // जाँच करें कि क्या यूजर पहले से है
+        const userExists = await User.findOne({ phone: phoneNumber });
         if (userExists) {
             return res.status(400).json({ success: false, message: "Phone number already registered" });
         }
 
-        // --- बोनस लॉजिक (Invite Code 1234) ---
-        let signupBonus = 0;
-        if (inviteCode === "1234") {
-            signupBonus = 100;
-        }
+        // बोनस लॉजिक: 1234 कोड पर ₹100
+        let signupBonus = (inviteCode === "1234") ? 100 : 0;
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
         const newUser = new User({ 
-            phoneNumber, 
+            phone: phoneNumber, // हम DB में 'phone' नाम से सेव कर रहे हैं
             password: hashedPassword, 
             inviteCode,
-            balance: signupBonus // यहाँ ₹100 सेव हो रहा है
+            balance: signupBonus 
         });
 
         await newUser.save();
 
-        // सफलता का मैसेज और फोन नंबर वापस भेजना ताकि फ्रंटएंड URL में यूज़ कर सके
         return res.status(200).json({ 
             success: true, 
-            message: signupBonus > 0 ? "Registration successful with ₹100 bonus!" : "Registration successful",
-            phone: phoneNumber // यह बहुत जरूरी है फ्रंटएंड के लिए
+            message: signupBonus > 0 ? "Registered with ₹100 bonus!" : "Registered!",
+            phone: phoneNumber 
         });
 
     } catch (error) {
