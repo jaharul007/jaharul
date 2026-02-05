@@ -1,7 +1,7 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
-  // 1. CORS Headers
+  // 1. CORS Headers (ताकि ब्राउज़र ब्लॉक न करे)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -25,10 +25,17 @@ export default async function handler(req, res) {
     }
 
     const client = await clientPromise;
-    const db = client.db('test'); // अगर आपने DB नाम बदला है तो यहाँ 'wingo_game' करें
+    const db = client.db('test'); // नोट: अगर DB नाम अलग है तो 'test' की जगह वो लिखें
 
-    // अब हम सिर्फ 'phone' फील्ड में ढूंढ रहे हैं
-    const user = await db.collection('users').findOne({ phone: phone });
+    /** * सुधार: यहाँ हमने $or लगाया है। 
+     * यह डेटाबेस में 'phone' और 'phoneNumber' दोनों कॉलम चेक करेगा।
+     */
+    const user = await db.collection('users').findOne({
+      $or: [
+        { phone: phone },
+        { phoneNumber: phone }
+      ]
+    });
 
     if (!user) {
       return res.status(404).json({ 
@@ -42,8 +49,8 @@ export default async function handler(req, res) {
       success: true,
       data: {
         uid: user._id,
-        phone: user.phone,
-        balance: user.balance || 0, // यहाँ ₹100 अब पक्का दिखेगा
+        phone: user.phone || user.phoneNumber,
+        balance: user.balance !== undefined ? user.balance : 0, // अगर बैलेंस नहीं है तो 0 दिखाएगा
         username: user.username || 'Member'
       }
     });
