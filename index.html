@@ -3,21 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAHARUL GAME - Login</title>
+    <title>BDG GAME - Register</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
             background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
             min-height: 100vh;
             color: #fff;
         }
-
         .header {
             display: flex;
             align-items: center;
@@ -25,291 +19,174 @@
             padding: 15px 20px;
             background: #3a3a3a;
         }
-
-        .back-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .logo {
-            color: #f4c542;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-
-        .lang {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #f4c542;
-            font-size: 16px;
-        }
-
-        .container {
-            padding: 40px 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .login-icon {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .login-icon::before {
-            content: "🔑";
-            font-size: 48px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #f4c542;
-            font-size: 24px;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #fff;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .phone-input-group {
-            display: flex;
-            gap: 10px;
-        }
-
+        .back-btn { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+        .logo { color: #f4c542; font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+        .lang { display: flex; align-items: center; gap: 5px; color: #f4c542; }
+        .container { padding: 40px 20px; max-width: 600px; margin: auto; }
+        h1 { text-align: center; color: #f4c542; margin-bottom: 30px; }
+        .form-group { margin-bottom: 25px; }
+        .form-label { margin-bottom: 10px; }
+        .phone-input-group { display: flex; gap: 10px; }
         .country-code {
-            background: #3a3a3a;
-            border: none;
-            color: #fff;
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            width: 120px;
-            cursor: pointer;
+            background: #3a3a3a; border: none; color: #fff;
+            padding: 15px; border-radius: 8px; width: 80px;
         }
-
-        input[type="text"],
-        input[type="password"],
-        input[type="tel"] {
-            width: 100%;
-            background: #3a3a3a;
-            border: none;
-            color: #fff;
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-size: 16px;
+        input {
+            width: 100%; background: #3a3a3a; border: none;
+            color: #fff; padding: 15px; border-radius: 8px;
         }
-
-        input::placeholder {
-            color: #777;
-        }
-
-        .password-field {
-            position: relative;
-        }
-
+        .password-field { position: relative; }
         .toggle-password {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #999;
-            cursor: pointer;
-            font-size: 20px;
+            position: absolute; right: 15px; top: 50%;
+            transform: translateY(-50%); background: none;
+            border: none; color: #999; cursor: pointer;
         }
-
-        .login-btn {
-            width: 100%;
-            background: linear-gradient(90deg, #f4c542 0%, #e0a830 100%);
-            border: none;
-            color: #2d2d2d;
-            padding: 18px;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 20px;
-            transition: opacity 0.3s;
-        }
-
-        .login-btn:hover {
-            opacity: 0.9;
-        }
-
-        .login-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
+        .checkbox-group { display: flex; gap: 10px; margin: 30px 0; align-items: center; }
         .register-btn {
-            width: 100%;
-            background: transparent;
-            border: 2px solid #f4c542;
-            color: #f4c542;
-            padding: 16px;
-            border-radius: 30px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
+            width: 100%; background: linear-gradient(90deg, #f4c542, #e0a830);
+            border: none; color: #2d2d2d; padding: 18px;
+            border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer;
         }
-
-        .register-btn:hover {
-            background: rgba(244, 197, 66, 0.1);
+        .register-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .login-btn {
+            width: 100%; background: transparent; border: 2px solid #f4c542;
+            color: #f4c542; padding: 16px; border-radius: 30px; margin-top: 15px; cursor: pointer;
         }
-
-        .error-message {
-            background: #ff4444;
-            color: #fff;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .success-message {
-            background: #44ff44;
-            color: #000;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            color: #f4c542;
-            margin: 10px 0;
-        }
+        .error-message { background: #ff4444; color: white; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; text-align: center; }
+        .success-message { background: #44ff44; color: #000; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .loading { display: none; text-align: center; color: #f4c542; margin-bottom: 10px; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <button class="back-btn" onclick="window.history.back()">←</button>
-        <div class="logo">BDG GAME</div>
-        <div class="lang">
-            <span class="flag">🇺🇸</span>
-            <span>EN</span>
+
+<div class="header">
+    <button class="back-btn" onclick="window.history.back()">←</button>
+    <div class="logo">BDG GAME</div>
+    <div class="lang">EN</div>
+</div>
+
+<div class="container">
+    <h1>Register</h1>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+    <div class="loading" id="loading">Connecting to server...</div>
+
+    <form id="registerForm">
+        <div class="form-group">
+            <div class="form-label">Phone number</div>
+            <div class="phone-input-group">
+                <select class="country-code" id="countryCode">
+                    <option value="+91">+91</option>
+                    <option value="+1">+1</option>
+                </select>
+                <input type="tel" id="phoneNumber" placeholder="Enter phone number" required>
+            </div>
         </div>
-    </div>
 
-    <div class="container">
-        <div class="login-icon"></div>
-        <h1>Login to your account</h1>
-
-        <div class="error-message" id="errorMessage"></div>
-        <div class="success-message" id="successMessage"></div>
-        <div class="loading" id="loading">Processing...</div>
-
-        <form id="loginForm">
-            <div class="form-group">
-                <div class="form-label">Phone number</div>
-                <div class="phone-input-group">
-                    <select class="country-code" id="countryCode">
-                        <option value="+91">+91</option>
-                        <option value="+1">+1</option>
-                        <option value="+44">+44</option>
-                        <option value="+86">+86</option>
-                    </select>
-                    <input type="tel" id="phoneNumber" placeholder="Please enter the phone number" required>
-                </div>
+        <div class="form-group">
+            <div class="form-label">Password</div>
+            <div class="password-field">
+                <input type="password" id="password" placeholder="Set password" required>
+                <button type="button" class="toggle-password" onclick="togglePass('password')">👁️</button>
             </div>
+        </div>
 
-            <div class="form-group">
-                <div class="form-label">Password</div>
-                <div class="password-field">
-                    <input type="password" id="password" placeholder="Enter your password" required>
-                    <button type="button" class="toggle-password" onclick="togglePassword('password')">👁️</button>
-                </div>
+        <div class="form-group">
+            <div class="form-label">Confirm Password</div>
+            <div class="password-field">
+                <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                <button type="button" class="toggle-password" onclick="togglePass('confirmPassword')">👁️</button>
             </div>
+        </div>
 
-            <button type="submit" class="login-btn" id="loginBtn">Login</button>
-        </form>
+        <div class="form-group">
+            <div class="form-label">Invite Code (Optional)</div>
+            <input type="text" id="inviteCode" placeholder="Enter invite code">
+        </div>
 
-        <button class="register-btn" onclick="window.location.href='register.html'">
-            Don't have an account? <strong>Register</strong>
-        </button>
-    </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="agreeTerms" checked required>
+            <label for="agreeTerms">I agree to the Privacy Policy</label>
+        </div>
 
-    <script>
-    function togglePassword(fieldId) {
-        const field = document.getElementById(fieldId);
-        field.type = field.type === 'password' ? 'text' : 'password';
+        <button type="submit" class="register-btn" id="registerBtn">Register</button>
+    </form>
+
+    <button class="login-btn" onclick="window.location.href='login.html'">Already have an account? Login</button>
+</div>
+
+  <script>
+    function togglePass(id) {
+        const x = document.getElementById(id);
+        x.type = x.type === "password" ? "text" : "password";
     }
 
-    function showError(message) {
-        const errorEl = document.getElementById('errorMessage');
-        errorEl.textContent = message;
-        errorEl.style.display = 'block';
-        setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
-    }
+    const errorBox = document.getElementById('errorMessage');
+    const successBox = document.getElementById('successMessage');
+    const loadingBox = document.getElementById('loading');
+    const registerBtn = document.getElementById('registerBtn');
 
-    function showSuccess(message) {
-        const successEl = document.getElementById('successMessage');
-        successEl.textContent = message;
-        successEl.style.display = 'block';
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const phoneNumber = document.getElementById('phoneNumber').value;
-        const countryCode = document.getElementById('countryCode').value;
-        const password = document.getElementById('password').value;
+        errorBox.style.display = 'none';
+        successBox.style.display = 'none';
+        
+        const phone = document.getElementById("countryCode").value + document.getElementById("phoneNumber").value;
+        const password = document.getElementById("password").value;
+        const confirm = document.getElementById("confirmPassword").value;
+        const invite = document.getElementById("inviteCode").value;
 
-        if (phoneNumber.length < 10) {
-            showError('Please enter a valid phone number');
+        if (password !== confirm) {
+            errorBox.innerText = "Passwords do not match!";
+            errorBox.style.display = 'block';
             return;
         }
 
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('loginBtn').disabled = true;
+        loadingBox.style.display = "block";
+        registerBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            // Dhyan dein: API URL sahi hona chahiye (Vercel par ye /api/register hi hota hai)
+            const response = await fetch("/api/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    phoneNumber: countryCode + phoneNumber,
-                    password: password
+                    phoneNumber: phone,
+                    password: password,
+                    inviteCode: invite
                 })
             });
 
-            const data = await response.json();
+            const result = await response.json();
 
-            if (response.ok) {
-                showSuccess('Login successful! Redirecting...');
-                localStorage.setItem('user', JSON.stringify(data.user));
+            // Yahan check karein response.ok (Status 200) aur result.success dono
+            if (response.ok && result.success === true) {
+                successBox.innerText = "Registration Successful! Redirecting...";
+                successBox.style.display = 'block';
+                
+                // Redirect to homepage.html
                 setTimeout(() => {
-                    window.location.href = 'homepage.html'; 
+                    window.location.href = "homepage.html"; 
                 }, 1500);
+
             } else {
-                showError(data.error || 'Login failed. Please check your credentials.');
-                document.getElementById('loginBtn').disabled = false;
+                // Backend se jo error message aa raha hai wahi dikhayega
+                errorBox.innerText = result.message || "Registration failed. Please try again.";
+                errorBox.style.display = 'block';
+                registerBtn.disabled = false;
             }
-        } catch (error) {
-            showError('Network error. Please check your connection.');
-            document.getElementById('loginBtn').disabled = false;
+
+        } catch (err) {
+            console.error("Fetch error:", err);
+            errorBox.innerText = "Connection Error. Please check your internet or Server.";
+            errorBox.style.display = 'block';
+            registerBtn.disabled = false;
         } finally {
-            document.getElementById('loading').style.display = 'none';
+            loadingBox.style.display = "none";
         }
     });
 </script>
-
 </body>
 </html>
