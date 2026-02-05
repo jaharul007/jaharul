@@ -482,74 +482,60 @@ taaki chota dikhe */
     const urlParams = new URLSearchParams(window.location.search);
     const globalPhone = urlParams.get('phone');
 
-        async function loadGlobalBalance() {
+    async function loadGlobalBalance() {
+        const balElement = document.getElementById('acc_bal');
+        
         if (!globalPhone) {
             console.error("Phone number missing in URL!");
+            balElement.innerText = "No Phone";
             return;
         }
 
         try {
-            // पक्का करें कि यहाँ ` (Backtick) का इस्तेमाल है, ' (Single Quote) का नहीं
-            const response = await fetch(`/api/user?phone=${encodeURIComponent(globalPhone)}`);
-            const result = await response.json();
+            balElement.innerText = "Loading..."; // चेक करने के लिए कि लोड हो रहा है
             
-            console.log("Full API Response:", result); // इसे चेक करने के लिए डाला है
+            const response = await fetch(`/api/user?phone=${encodeURIComponent(globalPhone)}`);
+            
+            // अगर API का रास्ता गलत है या फाइल नहीं मिली (404)
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Server Error:", errorText);
+                balElement.innerText = "Server Error";
+                return;
+            }
+
+            const result = await response.json();
+            console.log("Full API Response:", result);
 
             if (result.success && result.data) {
-                // बैलेंस अपडेट
-                const currentBalance = parseFloat(result.data.balance) || 0;
-                document.getElementById('acc_bal').innerText = currentBalance.toFixed(2);
-                
-                // बटन्स को एक्टिव करें
+                // बैलेंस को नंबर में बदलें और दिखाएं
+                const currentBalance = parseFloat(result.data.balance);
+                balElement.innerText = currentBalance.toFixed(2);
                 updateAllLinks();
             } else {
-                console.warn("API success false or no data:", result.message);
-                document.getElementById('acc_bal').innerText = "0.00";
+                // अगर यूजर डेटाबेस में नहीं मिला
+                console.warn("User Not Found in DB:", result.message);
+                balElement.innerText = "User 404";
             }
         } catch (e) {
-            console.error("Fetch Error:", e);
-            document.getElementById('acc_bal').innerText = "Error";
+            // अगर नेटवर्क या कोड में कोई बड़ी गलती है
+            console.error("Critical Fetch Error:", e);
+            balElement.innerText = "Fetch Fail";
+            alert("Connection Error: " + e.message); // स्क्रीन पर मैसेज दिखेगा
         }
     }
 
-
+    // बाकी के फंक्शन वैसे ही रहेंगे
     function updateAllLinks() {
         if(!globalPhone) return;
-
-        // Withdraw & Deposit buttons
         document.querySelector('.btn-withdraw').onclick = () => window.location.href = `withdraw.html?phone=${globalPhone}`;
         document.querySelector('.btn-deposit').onclick = () => window.location.href = `deposit.html?phone=${globalPhone}`;
-        
-        // Games (Example: Wingo)
         const wingo = document.querySelector('.featured-card.wingo');
         if(wingo) wingo.onclick = () => window.location.href = `wingo_game.html?phone=${globalPhone}`;
-        
-        // Bottom Nav Items
-        const navItems = document.querySelectorAll('.nav-item');
-        if(navItems[1]) navItems[1].onclick = () => window.location.href = `activity.html?phone=${globalPhone}`;
-        if(navItems[3]) navItems[3].onclick = () => window.location.href = `promotion.html?phone=${globalPhone}`;
-        if(navItems[4]) navItems[4].onclick = () => window.location.href = `account.html?phone=${globalPhone}`;
-    }
-
-    // स्टार्स एनीमेशन
-    function createStars() {
-        const starsContainer = document.getElementById('stars');
-        if(!starsContainer) return;
-        for (let i = 0; i < 100; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 3 + 's';
-            starsContainer.appendChild(star);
-        }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        createStars();
         loadGlobalBalance();
-        // 2 सेकंड बाद फिर से चेक करें (Extra safety के लिए)
-        setTimeout(loadGlobalBalance, 2000);
     });
 </script>
 
