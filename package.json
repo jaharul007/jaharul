@@ -2,7 +2,6 @@
   "name": "jaharul-game",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
   "engines": {
     "node": "24.x"
   },
@@ -10,6 +9,6 @@
     "mongoose": "^8.9.5"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node api/auth.js"
   }
 }
