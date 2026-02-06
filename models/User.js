@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const UserSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    inviteCode: { type: String },
-    balance: { type: Number, default: 0 },
-    createdAt: { type: Date, default: Date.now }
+    inviteCode: { type: String, default: "" },
+    balance: { type: Number, default: 0 }
 });
 
-module.exports = mongoose.models.User || mongoose.model('User', UserSchema);
+// Agar model pehle se bana hai toh wahi use karo, nahi toh naya banao
+export default mongoose.models.User || mongoose.model('User', userSchema);
