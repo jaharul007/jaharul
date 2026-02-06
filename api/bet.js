@@ -9,37 +9,45 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
   
   try {
-    const { phone, period, mode, betOn, amount, betType, multiplier } = req.body;
+    // Frontend से आने वाला डेटा
+    const { phone, phoneNumber, period, mode, betOn, amount, betType, multiplier } = req.body;
     
-    // 1. Validation - Amount ko Number mein convert karna zaroori hai
+    // index.html 'phoneNumber' भेजता है, WinGo 'phone' भेज सकता है। 
+    // हम पक्का कर रहे हैं कि हमारे पास सही नंबर हो।
+    const userIdentifier = phoneNumber || phone;
     const betAmount = parseFloat(amount);
-    if (!phone || !period || isNaN(betAmount) || betAmount <= 0) {
+
+    // 1. Validation
+    if (!userIdentifier || !period || isNaN(betAmount) || betAmount <= 0) {
       return res.status(400).json({ success: false, message: 'Invalid bet details' });
     }
     
     const client = await clientPromise;
     const db = client.db('wingo_game');
     
-    // 2. Atomic Update (Balance check aur deduct ek saath)
-    // Yeh sabse safe tareeka hai: Sirf tabhi deduct karo jab balance >= betAmount ho
+    // 2. Atomic Update - बैलेंस चेक और कटौती
+    // यहाँ हमने 'phoneNumber' फील्ड का उपयोग किया है जैसा तुमने DB में देखा
     const updateResult = await db.collection('users').updateOne(
-      { phone: phone, balance: { $gte: betAmount } }, 
+      { phoneNumber: userIdentifier, balance: { $gte: betAmount } }, 
       { 
         $inc: { balance: -betAmount, totalBets: 1 },
         $set: { updatedAt: new Date() }
       }
     );
 
-    // Agar nMatched 0 hai, matlab balance kam hai ya user nahi mila
+    // अगर अपडेट नहीं हुआ, मतलब या तो यूजर नहीं मिला या बैलेंस कम है
     if (updateResult.matchedCount === 0) {
-      const userCheck = await db.collection('users').findOne({ phone });
-      if (!userCheck) return res.status(404).json({ success: false, message: 'User not found' });
+      const userCheck = await db.collection('users').findOne({ phoneNumber: userIdentifier });
+      
+      if (!userCheck) {
+        return res.status(404).json({ success: false, message: 'User not found in Database' });
+      }
       return res.status(400).json({ success: false, message: 'Insufficient balance!' });
     }
     
-    // 3. Create bet document
+    // 3. बेट का डेटा 'bets' कलेक्शन में सेव करना
     const betData = {
-      phone,
+      phone: userIdentifier,
       period,
       mode: parseInt(mode),
       betOn: String(betOn),
@@ -54,10 +62,10 @@ export default async function handler(req, res) {
     
     await db.collection('bets').insertOne(betData);
     
-    // Naya balance fetch karna frontend ko dikhane ke liye
-    const updatedUser = await db.collection('users').findOne({ phone });
+    // नया बैलेंस वापस भेजना ताकि स्क्रीन पर तुरंत अपडेट हो सके
+    const updatedUser = await db.collection('users').findOne({ phoneNumber: userIdentifier });
     
-    console.log(`✅ Bet placed: ${phone} - ₹${betAmount} on ${betOn}`);
+    console.log(`✅ Bet placed: ${userIdentifier} - ₹${betAmount} on ${betOn}`);
     
     return res.status(200).json({
       success: true,
