@@ -7,5 +7,5 @@ const userSchema = new mongoose.Schema({
     balance: { type: Number, default: 0 }
 });
 
-// Agar model pehle se bana hai toh wahi use karo, nahi toh naya banao
+// Vercel ke liye ye line bahut zaroori hai
 export default mongoose.models.User || mongoose.model('User', userSchema);
