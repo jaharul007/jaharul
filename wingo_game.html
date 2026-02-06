@@ -1380,13 +1380,9 @@ let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
 let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
 let userBets = [];
 let activeBetChecks = {}; // Track active bet result checks
-
 function getCurrentUserPhone() {
-    // Ye function sirf ye batayega ki server ko kiska data nikalna hai.
-    // Aap yaha hardcoded phone number rakh sakte hain testing ke liye:
-    return '1234567890'; 
+    return globalPhone; // यह URL वाला असली नंबर देगा
 }
-
 // ========================================
 // ADMIN SYSTEM (TRIPLE CLICK NAV TO OPEN)
 // ========================================
