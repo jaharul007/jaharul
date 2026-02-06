@@ -1073,30 +1073,17 @@
 
     <div class="content">
         <div class="wallet-card">
-    <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-        <div class="bal-txt">₹<span id="balDisplay">0.00</span></div>
-        <span onclick="fetchBalanceFromGlobal()" style="cursor:pointer; font-size: 24px; color: #f3c34d; margin-top: -5px;">🔄</span>
-    </div>
-    <span style="font-size:12px; color:#ccc; letter-spacing: 1px;">AVAILABLE BALANCE</span>
-    <div class="w-btn-row">
-        <button class="w-btn withdraw" onclick="alert('Withdraw feature coming soon!')">Withdraw</button>
-        <button class="w-btn deposit" onclick="alert('Deposit feature coming soon!')">Deposit</button>
-    </div>
-</div>
-        <script>
-async function fetchBalanceFromGlobal() {
-    try {
-        const response = await fetch('/api/get-balance'); 
-        const data = await response.json();
-        if (data.success) {
-            document.getElementById('balDisplay').innerText = parseFloat(data.balance).toFixed(2);
-        }
-    } catch (error) {
-        console.log("Balance load error");
-    }
-}
-window.addEventListener('load', fetchBalanceFromGlobal);
-</script>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                <div class="bal-txt">₹<span id="balDisplay">0.00</span></div>
+                <span onclick="fetchFromDB()" style="cursor:pointer; font-size: 24px; color: #f3c34d; margin-top: -5px;">🔄</span>
+            </div>
+            <span style="font-size:12px; color:#ccc; letter-spacing: 1px;">AVAILABLE BALANCE</span>
+            <div class="w-btn-row">
+                <button class="w-btn withdraw" onclick="alert('Withdraw feature coming soon!')">Withdraw</button>
+                <button class="w-btn deposit" onclick="alert('Deposit feature coming soon!')">Deposit</button>
+            </div>
+        </div>
+
         <div class="game-tabs">
             <div class="g-tab" onclick="switchM(30, this)"><span class="tab-icon">⏱</span>WinGo 30s</div>
             <div class="g-tab active" onclick="switchM(60, this)"><span class="tab-icon">⏱</span>WinGo 1m</div>
@@ -1387,6 +1374,13 @@ let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
 let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
 let userBets = [];
 let activeBetChecks = {}; // Track active bet result checks
+
+function getCurrentUserPhone() {
+    // Ye function sirf ye batayega ki server ko kiska data nikalna hai.
+    // Aap yaha hardcoded phone number rakh sakte hain testing ke liye:
+    return '1234567890'; 
+}
+
 // ========================================
 // ADMIN SYSTEM (TRIPLE CLICK NAV TO OPEN)
 // ========================================
@@ -1464,6 +1458,25 @@ function adminSaveForce() {
         });
     } else { 
         alert('⚠️ Please enter a number 0-9'); 
+    }
+}
+
+// ========================================
+// BALANCE MANAGEMENT
+// ========================================
+async function loadBalance() {
+    const phone = getCurrentUserPhone();
+    if (!phone) return;
+    try {
+        // Is line ko badlein:
+const res = await fetch(`/api/user?phone=${phone}`); // '.js' hata diya
+        const data = await res.json();
+        if (data.success) {
+            currentBalance = parseFloat(data.balance);
+            document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
+        }
+    } catch (err) {
+        console.error('Balance load error:', err);
     }
 }
 
@@ -1707,6 +1720,18 @@ async function confirmBet() {
             betType: getBetType(selectedBetValue),
             multiplier: multiplier
         };
+
+// इसे बदलें (Vercel के लिए):
+// इसे बदलें (Vercel के लिए):
+        // Is line ko dhundhein aur badlein:
+const betRes = await fetch('/api/bet', { // '.js' hata diya
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(betData)
+});
+
+
+
         const betResult = await betRes.json();
         
         if (!betResult.success) {
