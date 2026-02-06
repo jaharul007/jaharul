@@ -19,7 +19,13 @@ export default async function handler(req, res) {
 
         if (action === 'getBalance') {
             try {
-                const user = await User.findOne({ phoneNumber });
+                // Security: Agar phoneNumber nahi hai toh error bhejien
+                if (!phoneNumber) return res.status(400).json({ success: false, message: 'Phone missing' });
+
+                // Bahut zaroori fix: space ko wapas '+' mein badlein
+                const cleanPhone = phoneNumber.replace(' ', '+'); 
+                
+                const user = await User.findOne({ phoneNumber: cleanPhone });
                 if (!user) {
                     return res.status(404).json({ success: false, message: 'User not found' });
                 }
@@ -28,7 +34,7 @@ export default async function handler(req, res) {
                 return res.status(500).json({ success: false, message: 'Server error' });
             }
         }
-    }
+    } // GET request ka bracket yahan close hoga
 
     // --- 2. POST Request: Register aur Login ke liye ---
     if (req.method === 'POST') {
@@ -70,6 +76,8 @@ export default async function handler(req, res) {
         }
     }
 
-    // Default response if no conditions met
-    return res.status(405).json({ message: 'Method not allowed' });
+    // Default response agar method match nahi karta
+    if (!res.writableEnded) {
+        return res.status(405).json({ message: 'Method not allowed' });
+    }
 }
