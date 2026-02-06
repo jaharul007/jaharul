@@ -482,98 +482,65 @@
         </div>
     </div>
      <script>
-    // URL से phone number पकड़ना
     const urlParams = new URLSearchParams(window.location.search);
     const globalPhone = urlParams.get('phone');
+    const phoneParam = globalPhone ? encodeURIComponent(globalPhone) : "";
 
-    // Error दिखाने का function
-    function showError(message) {
-        const errorBanner = document.getElementById('errorBanner');
-        if(errorBanner) {
-            errorBanner.innerText = message;
-            errorBanner.style.display = 'block';
-            setTimeout(() => { errorBanner.style.display = 'none'; }, 5000);
-        }
-    }
-
-    // Balance लोड करने का main function
-    async function loadGlobalBalance() {
-        const balElement = document.getElementById('acc_bal');
-        
+    // 1. Navigation Setup (Ye turant kaam karega)
+    function setupNavigation() {
         if (!globalPhone) {
-            balElement.innerText = "0.00";
-            // Agar phone nahi hai toh register page par bhej dein
-            window.location.href = 'index.html'; 
+            // Agar phone nahi hai toh sabko index par bhej do
+            document.body.onclick = (e) => {
+                if(e.target.closest('.btn, .nav-item, .featured-card, .game-card')) {
+                    window.location.href = 'index.html';
+                }
+            };
             return;
         }
 
-        try {
-            balElement.innerText = "...";
-            const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${encodeURIComponent(globalPhone)}`);
-            const result = await response.json();
+        // Withdraw & Deposit
+        document.querySelector('.btn-withdraw').onclick = () => window.location.href = `withdraw.html?phone=${phoneParam}`;
+        document.querySelector('.btn-deposit').onclick = () => window.location.href = `deposit.html?phone=${phoneParam}`;
 
-            if (result.success && result.balance !== undefined) {
-                const currentBalance = parseFloat(result.balance) || 0;
-                balElement.innerText = currentBalance.toFixed(2);
-                // Balance load hone ke baad saare links setup karein
-                setupNavigation();
-            } else {
-                balElement.innerText = "0.00";
-                showError(result.message || "User not found");
-            }
-        } catch (error) {
-            console.error("Fetch Error:", error);
-            balElement.innerText = "0.00";
-        }
-    }
+        // Featured Games
+        document.querySelector('.featured-card.wingo').onclick = () => window.location.href = `wingo_game.html?phone=${phoneParam}`;
+        document.querySelector('.featured-card.trx').onclick = () => window.location.href = `trx_game.html?phone=${phoneParam}`;
 
-    // Navigation setup karne ka function (Buttons ke liye)
-    function setupNavigation() {
-        if (!globalPhone) return;
-
-        const phoneParam = encodeURIComponent(globalPhone);
-
-        // 1. Withdraw Button
-        const withdrawBtn = document.querySelector('.btn-withdraw');
-        if (withdrawBtn) {
-            withdrawBtn.onclick = () => window.location.href = `withdraw.html?phone=${phoneParam}`;
-        }
-
-        // 2. Deposit Button
-        const depositBtn = document.querySelector('.btn-deposit');
-        if (depositBtn) {
-            depositBtn.onclick = () => window.location.href = `deposit.html?phone=${phoneParam}`;
-        }
-
-        // 3. Wingo Game Button (Featured Card)
-        const wingoCard = document.querySelector('.featured-card.wingo');
-        if (wingoCard) {
-            wingoCard.onclick = () => window.location.href = `wingo_game.html?phone=${phoneParam}`;
-        }
-
-        // 4. Account Button (Bottom Nav - Last Item)
-        // Hum '👤' icon wale nav-item ko target kar rahe hain
+        // Bottom Nav Items
         const navItems = document.querySelectorAll('.nav-item');
-        const accountBtn = navItems[navItems.length - 1]; // Last item is Account
-        if (accountBtn) {
-            accountBtn.onclick = () => window.location.href = `account.html?phone=${phoneParam}`;
-        }
-        
-        // Bonus: Activity & Promotion links (Optional)
+        if (navItems[0]) navItems[0].onclick = () => window.location.href = `homepage.html?phone=${phoneParam}`;
         if (navItems[1]) navItems[1].onclick = () => window.location.href = `activity.html?phone=${phoneParam}`;
         if (navItems[3]) navItems[3].onclick = () => window.location.href = `promotion.html?phone=${phoneParam}`;
+        if (navItems[4]) navItems[4].onclick = () => window.location.href = `account.html?phone=${phoneParam}`;
     }
 
-    // Page load setup
+    // 2. Balance Load logic
+    async function loadGlobalBalance() {
+        const balElement = document.getElementById('acc_bal');
+        if (!globalPhone) return;
+
+        try {
+            const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
+            const result = await response.json();
+            if (result.success) {
+                balElement.innerText = parseFloat(result.balance).toFixed(2);
+            }
+        } catch (error) {
+            console.error("Balance Load Error:", error);
+        }
+    }
+
+    // 3. Initialize everything
     window.addEventListener('DOMContentLoaded', () => {
-        loadGlobalBalance();
+        setupNavigation(); // Pehle buttons on karein
+        loadGlobalBalance(); // Fir balance load karein
         createStars();
     });
 
     function createStars() {
         const starsContainer = document.getElementById('stars');
         if(!starsContainer) return;
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 40; i++) {
             const star = document.createElement('div');
             star.className = 'star';
             star.style.left = Math.random() * 100 + '%';
