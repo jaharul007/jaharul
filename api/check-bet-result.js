@@ -4,15 +4,14 @@ export default async function handler(req, res) {
     const { phone, period } = req.query;
     try {
         const client = await clientPromise;
-        const db = client.db("test");
+        const db = client.db("test"); // DB 'test'
 
-        const bet = await db.collection("bets").findOne({ phone: phone, period: period });
+        // URL से आने वाले '+' को हैंडल करने के लिए
+        const cleanPhone = phone ? phone.replace(' ', '+') : "";
 
-        if (!bet) {
-            // अगर बेट नहीं है, तो चेक करें कि क्या रिजल्ट आ चुका है
-            const resData = await db.collection("results").findOne({ period: period });
-            return res.status(200).json({ status: resData ? 'no_bet' : 'pending' });
-        }
+        const bet = await db.collection("bets").findOne({ phone: cleanPhone, period: period });
+
+        if (!bet) return res.status(200).json({ status: 'pending' });
 
         return res.status(200).json({
             status: bet.status,
