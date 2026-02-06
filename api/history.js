@@ -1,6 +1,7 @@
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
+    // CORS Headers for Frontend Compatibility
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,78 +10,111 @@ export default async function handler(req, res) {
 
     try {
         const client = await clientPromise;
-        // जैसा आपने कहा: हिस्ट्री के लिए अलग डेटाबेस
-        const db = client.db("history_db"); 
-        const collection = db.collection("history");
+        // जैसा आपने कहा, 'test' डेटाबेस और 'results' कलेक्शन का उपयोग
+        const db = client.db("test"); 
+        const resultsCollection = db.collection("results");
 
-        // --- CASE 1: RESULT SAVE KARNA (POST) ---
-        // Yeh Admin Panel aur Timer dono use karenge
+        // --- CASE 1: RESULT SAVE/GENERATE KARNA (POST) ---
+        // यह तब कॉल होगा जब टाइमर 0 होगा या एडमिन रिजल्ट फोर्स करेगा
         if (req.method === 'POST') {
             const { period, mode, number, isAdmin } = req.body;
 
             if (!period || mode === undefined) {
-                return res.status(400).json({ success: false, message: "Missing Data" });
+                return res.status(400).json({ success: false, message: "Period or Mode missing" });
             }
 
-            // Check karo kya is period ka result pehle se hai?
-            const existing = await collection.findOne({ period: period, mode: parseInt(mode) });
+            // 1. Check if result already exists for this mode and period
+            const existing = await resultsCollection.findOne({ 
+                period: period, 
+                mode: parseInt(mode) 
+            });
 
             let finalNum;
+
             if (isAdmin && number !== undefined) {
-                // Agar admin ne force kiya hai
+                // अगर एडमिन ने कंट्रोल पैनल से नंबर भेजा है (Force Win)
                 finalNum = parseInt(number);
             } else if (!existing) {
-                // Agar naya period hai aur result nahi bana, toh random banao
+                // अगर नया पीरियड है और रिजल्ट नहीं बना, तो रैंडम नंबर (0-9) जनरेट करो
                 finalNum = Math.floor(Math.random() * 10);
             } else {
-                return res.json({ success: true, message: "Result already exists" });
+                // अगर रिजल्ट पहले से मौजूद है, तो वही वापस कर दो
+                return res.json({ 
+                    success: true, 
+                    message: "Result already exists", 
+                    number: existing.number 
+                });
             }
 
-            // Update ya Insert (Upsert)
-            await collection.updateOne(
+            // 2. Color और Size Logic (Game Rules के हिसाब से)
+            const color = (finalNum === 0) ? ['red', 'violet'] : 
+                          (finalNum === 5) ? ['green', 'violet'] : 
+                          (finalNum % 2 === 0) ? ['red'] : ['green'];
+            
+            const size = (finalNum >= 5) ? 'Big' : 'Small';
+
+            // 3. Database में Save करना (Upsert ensures no duplicates)
+            const resultDoc = {
+                period: period,
+                mode: parseInt(mode),
+                number: finalNum,
+                color: color,
+                size: size,
+                timestamp: new Date()
+            };
+
+            await resultsCollection.updateOne(
                 { period: period, mode: parseInt(mode) },
-                { 
-                    $set: { 
-                        number: finalNum, 
-                        timestamp: new Date(),
-                        color: (finalNum === 0) ? ['red', 'violet'] : (finalNum === 5) ? ['green', 'violet'] : (finalNum % 2 === 0) ? ['red'] : ['green'],
-                        size: (finalNum >= 5) ? 'Big' : 'Small'
-                    } 
-                },
+                { $set: resultDoc },
                 { upsert: true }
             );
 
-            return res.status(200).json({ success: true, number: finalNum });
+            return res.status(200).json({ 
+                success: true, 
+                message: "Result Processed",
+                data: resultDoc 
+            });
         }
 
-        // --- CASE 2: HISTORY DIKHANA (GET) ---
+        // --- CASE 2: HISTORY LIST DIKHANA (GET) ---
+        // विंगो गेम के नीचे जो हिस्ट्री टेबल होती है उसके लिए
         if (req.method === 'GET') {
-            const { mode, page = 1 } = req.query;
-            const limit = 10;
-            const skip = (parseInt(page) - 1) * limit;
+            const { mode, page = 1, limit = 10 } = req.query;
 
-            const historyData = await collection
+            if (mode === undefined) {
+                return res.status(400).json({ success: false, message: "Mode is required" });
+            }
+
+            const pageLimit = parseInt(limit);
+            const skip = (parseInt(page) - 1) * pageLimit;
+
+            // सिर्फ उस 'mode' की हिस्ट्री निकालो जो यूजर खेल रहा है (30s, 1m etc.)
+            const historyData = await resultsCollection
                 .find({ mode: parseInt(mode) })
-                .sort({ period: -1 }) // Naya result sabse upar
+                .sort({ period: -1 }) // नया पीरियड सबसे ऊपर (Descending)
                 .skip(skip)
-                .limit(limit)
+                .limit(pageLimit)
                 .toArray();
 
-            // Frontend compatibility format
+            // Total count for pagination (Optional but good for UI)
+            const total = await resultsCollection.countDocuments({ mode: parseInt(mode) });
+
+            // Frontend compatibility format (HTML table में दिखाने के लिए)
             const formattedData = historyData.map(item => ({
-                period: item.period,
-                number: item.number,
-                result: item.number,
-                n: item.number,
-                p: item.period,
-                color: item.color,
-                size: item.size
+                p: item.period,      // Period
+                n: item.number,      // Number
+                c: item.color,       // Color Array
+                s: item.size,        // Big/Small
+                t: item.timestamp    // Time
             }));
 
             return res.status(200).json({
                 success: true,
+                mode: parseInt(mode),
                 results: formattedData,
-                page: parseInt(page)
+                total: total,
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / pageLimit)
             });
         }
 
