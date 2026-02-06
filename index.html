@@ -3,516 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gaming App</title>
+    <title>JAHARUL GAME - Register</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(180deg, #0a1628 0%, #1a2a4a 100%);
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
             min-height: 100vh;
-            color: white;
-            overflow-x: hidden;
+            color: #fff;
         }
-
-        .stars {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 10px 12px 0px 12px;
-            position: relative;
-        }
-
         .header {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 13px;
+            padding: 15px 20px;
+            background: #3a3a3a;
         }
-
-        .wallet {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .back-btn { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+        .logo { color: #f4c542; font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+        .lang { display: flex; align-items: center; gap: 5px; color: #f4c542; }
+        .container { padding: 40px 20px; max-width: 600px; margin: auto; }
+        h1 { text-align: center; color: #f4c542; margin-bottom: 30px; }
+        .form-group { margin-bottom: 25px; }
+        .form-label { margin-bottom: 10px; }
+        .phone-input-group { display: flex; gap: 10px; }
+        .country-code {
+            background: #3a3a3a; border: none; color: #fff;
+            padding: 15px; border-radius: 8px; width: 80px;
         }
-
-        .wallet-icon {
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            border-radius: 50%;
+        input {
+            width: 100%; background: #3a3a3a; border: none;
+            color: #fff; padding: 15px; border-radius: 8px;
         }
-
-        .wallet-text {
-            color: #8b92a8;
-            font-size: 14px;
+        .password-field { position: relative; }
+        .toggle-password {
+            position: absolute; right: 15px; top: 50%;
+            transform: translateY(-50%); background: none;
+            border: none; color: #999; cursor: pointer;
         }
-
-        .balance {
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .checkbox-group { display: flex; gap: 10px; margin: 30px 0; align-items: center; }
+        .register-btn {
+            width: 100%; background: linear-gradient(90deg, #f4c542, #e0a830);
+            border: none; color: #2d2d2d; padding: 18px;
+            border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer;
         }
-
-        .refresh-icon {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            transition: transform 0.3s;
+        .register-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .login-btn {
+            width: 100%; background: transparent; border: 2px solid #f4c542;
+            color: #f4c542; padding: 16px; border-radius: 30px; margin-top: 15px; cursor: pointer;
         }
-
-        .refresh-icon:hover {
-            transform: rotate(180deg);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-        }
-
-        .btn {
-            padding: 9px 7px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-withdraw {
-            background: linear-gradient(135deg, #ffb347 0%, #ffcc70 100%);
-            color: white;
-        }
-
-        .btn-deposit {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
-            color: white;
-        }
-
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .game-card {
-            background: linear-gradient(135deg, rgba(26, 42, 74, 0.6) 0%, rgba(15, 25, 45, 0.8) 100%);
-            border-radius: 15px;
-            padding: 10px 5px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.3s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .game-icon {
-            width: 10px;
-            height: 10px;
-            margin: 0 auto 10px;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .game-name {
-            font-size: 11px;
-            color: #8fa1c4;
-        }
-
-        .featured-games {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .featured-card {
-            border-radius: 15px;
-            padding: 12px 10px;
-            text-align: center;
-            cursor: pointer;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100px;
-        }
-        
-        .featured-card.wingo {
-            background: linear-gradient(135deg, #f95ad2 0%, #4a3af5 100%);
-        }
-
-        .featured-card.trx {
-            background: linear-gradient(135deg, #f95ad2 0%, #d93ac1 100%);
-        }
-
-        .featured-title {
-            font-size: 25px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
-
-        .featured-icon {
-            font-size: 50px;
-            margin-bottom: 0px;
-        }
-
-        .main-games {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 9px;
-            margin-bottom: 20px;
-        }
-
-        .main-game-card {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b1428 100%);
-            border-radius: 18px;
-            padding: 4px;
-            text-align: center;
-            cursor: pointer;
-            min-height: 110px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        .main-game-card.aviator {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b1428 100%);
-        }
-
-        .main-game-card.dragon {
-            background: linear-gradient(135deg, #7b3ff2 0%, #5c2db8 100%);
-        }
-
-        .main-game-card.chicken {
-            background: linear-gradient(135deg, #ff1744 0%, #c2185b 100%);
-        }
-
-        .main-game-card.vortex {
-            background: linear-gradient(135deg, #1a237e 0%, #0d1b5e 100%);
-        }
-
-        .main-game-card.mines {
-            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
-        }
-
-        .main-game-card.fortune {
-            background: linear-gradient(135deg, #ff9800 0%, #e65100 100%);
-        }
-
-        .main-game-card.teenpatti {
-            background: linear-gradient(135deg, #1e3a5f 0%, #0f1d3a 100%);
-        }
-
-        .main-game-card.money {
-            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-        }
-
-        .main-game-card.andar {
-            background: linear-gradient(135deg, #5e35b1 0%, #4527a0 100%);
-        }
-
-        .hot-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-            padding: 2px 6px;
-            border-radius: 9px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .main-game-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 10px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(10, 22, 40, 0.95);
-            display: flex;
-            justify-content: space-around;
-            padding: 7px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0px;
-            cursor: pointer;
-            color: #8b92a8;
-        }
-
-        .nav-item.active {
-            color: #ffd700;
-        }
-
-        .nav-icon {
-            font-size: 21px;
-        }
-
-        .nav-text {
-            font-size: 12px;
-        }
-
-        .get-bonus {
-            position: relative;
-        }
-
-        .bonus-badge {
-            position: absolute;
-            top: -9px;
-            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-            border-radius: 50%;
-            width: 45px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .error-banner {
-            background: #ff4444;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: none;
-        }
+        .error-message { background: #ff4444; color: white; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; text-align: center; }
+        .success-message { background: #44ff44; color: #000; padding: 12px; border-radius: 8px; display: none; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .loading { display: none; text-align: center; color: #f4c542; margin-bottom: 10px; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="stars" id="stars"></div>
-    
-    <div class="container">
-        <!-- Error Banner -->
-        <div class="error-banner" id="errorBanner"></div>
 
-        <!-- Header -->
-        <div class="header">
-            <div class="wallet">
-                <div class="wallet-icon"></div>
-                <div>
-                    <div class="wallet-text">Wallet balance</div>
-                    <div class="balance">
-                        ₹<span id="acc_bal">0.00</span>
-                        <svg class="refresh-icon" onclick="loadGlobalBalance()" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button class="btn btn-withdraw">
-                    <span>↑</span> Withdraw
-                </button>
-                <button class="btn btn-deposit">
-                    <span>↓</span> Deposit
-                </button>
+<div class="header">
+    <button class="back-btn" onclick="window.history.back()">←</button>
+    <div class="logo">JAHARUL GAME</div>
+    <div class="lang">EN</div>
+</div>
+
+<div class="container">
+    <h1>Register</h1>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+    <div class="loading" id="loading">Connecting to server...</div>
+
+    <form id="registerForm">
+        <div class="form-group">
+            <div class="form-label">Phone number</div>
+            <div class="phone-input-group">
+                <select class="country-code" id="countryCode">
+                    <option value="+91">+91</option>
+                    <option value="+1">+1</option>
+                </select>
+                <input type="tel" id="phoneNumber" placeholder="Enter phone number" required>
             </div>
         </div>
 
-        <!-- Top Games Grid -->
-        <div class="games-grid">
-            <div class="game-card">
-                <div class="game-icon">🎱</div>
-                <div class="game-name">Lottery</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎮</div>
-                <div class="game-name">Mini games</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">💙</div>
-                <div class="game-name">Hot Slots</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎰</div>
-                <div class="game-name">Slots</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🐠</div>
-                <div class="game-name">Fishing</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎲</div>
-                <div class="game-name">PVC</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎯</div>
-                <div class="game-name">Casino</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🏏</div>
-                <div class="game-name">Sports</div>
+        <div class="form-group">
+            <div class="form-label">Password</div>
+            <div class="password-field">
+                <input type="password" id="password" placeholder="Set password" required>
+                <button type="button" class="toggle-password" onclick="togglePass('password')">👁️</button>
             </div>
         </div>
 
-        <!-- Featured Games -->
-        <div class="featured-games"> 
-            <div class="featured-card wingo">
-                <div class="featured-icon">🎱</div>
-                <div class="featured-title" style="font-size: 26px;">WINGO</div>
-            </div>
-            <div class="featured-card trx">
-                <div class="featured-icon">💜</div>
-                <div class="featured-title" style="font-size: 25px;">TRX WINGO</div>
+        <div class="form-group">
+            <div class="form-label">Confirm Password</div>
+            <div class="password-field">
+                <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                <button type="button" class="toggle-password" onclick="togglePass('confirmPassword')">👁️</button>
             </div>
         </div>
 
-        <!-- Main Games -->
-        <div class="main-games">
-            <div class="main-game-card aviator">
-                <div class="main-game-title">AVIATOR</div>
-                <div style="font-size: 40px; margin-top: 15px;">✈️</div>
-            </div>
-            <div class="main-game-card dragon">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">🐉</div>
-                <div class="main-game-title">DRAGON VSTIGER</div>
-            </div>
-            <div class="main-game-card chicken">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">🐔</div>
-                <div class="main-game-title">CHICKEN ROAD</div>
-            </div>
-            <div class="main-game-card vortex">
-                <div style="font-size: 50px;">🌀</div>
-                <div class="main-game-title">VORTEX</div>
-            </div>
-            <div class="main-game-card mines">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">💣</div>
-                <div class="main-game-title">MINES</div>
-            </div>
-            <div class="main-game-card fortune">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">💰</div>
-                <div class="main-game-title">FORTUNE GEMS</div>
-            </div>
-            <div class="main-game-card teenpatti">
-                <div style="font-size: 50px;">🃏</div>
-                <div class="main-game-title">TEEN PATTI</div>
-            </div>
-            <div class="main-game-card money">
-                <div style="font-size: 50px;">💵</div>
-                <div class="main-game-title">MONEY COMING</div>
-            </div>
-            <div class="main-game-card andar">
-                <div style="font-size: 50px;">🎰</div>
-                <div class="main-game-title">ANDAR BAHAR</div>
-            </div>
+        <div class="form-group">
+            <div class="form-label">Invite Code (Optional)</div>
+            <input type="text" id="inviteCode" placeholder="Enter invite code">
         </div>
 
-        <div style="height: 80px;"></div>
-    </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="agreeTerms" checked required>
+            <label for="agreeTerms">I agree to the Privacy Policy</label>
+        </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <div class="nav-item active">
-            <div class="nav-icon">🏠</div>
-            <div class="nav-text">Home</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">📋</div>
-            <div class="nav-text">Activity</div>
-        </div>
-        <div class="nav-item get-bonus">
-            <div class="bonus-badge">100</div>
-            <div class="nav-icon">💰</div>
-            <div class="nav-text">Get 500</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">🎁</div>
-            <div class="nav-text">Promotion</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">👤</div>
-            <div class="nav-text">Account</div>
-        </div>
-    </div>
-       <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const globalPhone = urlParams.get('phone'); // Ye URL se +91... nikalega
+        <button type="submit" class="register-btn" id="registerBtn">Register</button>
+    </form>
 
-    async function loadGlobalBalance() {
-        const balElement = document.getElementById('acc_bal');
+    <button class="login-btn" onclick="window.location.href='login.html'">Already have an account? Login</button>
+</div>
+     <script>
+    function togglePass(id) {
+        const x = document.getElementById(id);
+        x.type = x.type === "password" ? "text" : "password";
+    }
+
+    const errorBox = document.getElementById('errorMessage');
+    const successBox = document.getElementById('successMessage');
+    const loadingBox = document.getElementById('loading');
+    const registerBtn = document.getElementById('registerBtn');
+
+    window.onload = () => {
+        document.getElementById("inviteCode").value = "1234";
+    };
+
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        errorBox.style.display = 'none';
+        successBox.style.display = 'none';
         
-        if (!globalPhone) {
-            balElement.innerText = "0.00";
+        const phoneInput = document.getElementById("phoneNumber").value;
+        const countryCode = document.getElementById("countryCode").value;
+        const phone = countryCode + phoneInput;
+        const password = document.getElementById("password").value;
+        const confirm = document.getElementById("confirmPassword").value;
+        const invite = document.getElementById("inviteCode").value;
+
+        if (password !== confirm) {
+            errorBox.innerText = "Passwords do not match!";
+            errorBox.style.display = 'block';
             return;
         }
 
+        loadingBox.style.display = "block";
+        registerBtn.disabled = true;
+
+        // Bonus Logic
+        let initialBalance = 0;
+        if (invite === "1234") {
+            initialBalance = 100;
+        }
+
         try {
-            // EncodeURIComponent zaroori hai taaki '+' sign sahi se jaye
-            const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${encodeURIComponent(globalPhone)}`);
+            const response = await fetch("/api/auth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: 'register', 
+                    phoneNumber: phone,
+                    password: password,
+                    inviteCode: invite,
+                    balance: initialBalance
+                })
+            });
+
             const result = await response.json();
 
-            if (result.success) {
-                // Ensure number format and update UI
-                const num = parseFloat(result.balance);
-                balElement.innerText = num.toFixed(2);
-            } else {
-                console.log("Error from API:", result.message);
-                balElement.innerText = "0.00";
-            }
-        } catch (error) {
-            console.error("Fetch Error:", error);
-        }
-    }
+            if (response.ok && result.success === true) {
+                // Agar initialBalance > 0 hai toh bonus message dikhayenge
+                successBox.innerText = (initialBalance > 0) 
+                    ? `Success! ₹${initialBalance} Bonus Added. Redirecting...` 
+                    : "Registration Successful! Redirecting...";
+                
+                successBox.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = `homepage.html?phone=${encodeURIComponent(phone)}`; 
+                }, 1500);
 
-    // Page load hone par call karein
-    window.addEventListener('DOMContentLoaded', loadGlobalBalance);
+            } else {
+                errorBox.innerText = result.message || "Registration failed.";
+                errorBox.style.display = 'block';
+                registerBtn.disabled = false;
+            }
+
+        } catch (err) {
+            console.error("Fetch error:", err);
+            errorBox.innerText = "Connection Error.";
+            errorBox.style.display = 'block';
+            registerBtn.disabled = false;
+        } finally {
+            loadingBox.style.display = "none";
+        }
+    });
 </script>
+
+  
 </body>
 </html>
