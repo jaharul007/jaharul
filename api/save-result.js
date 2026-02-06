@@ -5,19 +5,16 @@ export default async function handler(req, res) {
 
     try {
         const client = await clientPromise;
-        const db = client.db("test"); // DB 'test' फिक्स
+        const db = client.db("test"); // आपके DB का नाम 'test'
         const { period, mode: reqMode, number: adminNum } = req.body;
         const mode = parseInt(reqMode) || 60;
 
-        // 1. रिजल्ट जनरेट करें
         let finalNum = (adminNum !== undefined) ? parseInt(adminNum) : Math.floor(Math.random() * 10);
         
-        // 2. रिजल्ट को 'results' में सेव करें
         await db.collection('results').insertOne({
             period, number: finalNum, mode, timestamp: new Date()
         });
 
-        // 3. जीतने वालों का हिसाब
         const pendingBets = await db.collection('bets').find({ period, mode, status: 'pending' }).toArray();
         
         const winSize = finalNum >= 5 ? 'Big' : 'Small';
@@ -40,7 +37,7 @@ export default async function handler(req, res) {
 
             if (isWin) {
                 const winAmount = bet.amount * mult;
-                // आपके 'users' कलेक्शन में 'phoneNumber' फील्ड अपडेट हो रही है
+                // यहाँ 'phoneNumber' का उपयोग किया है ताकि बैलेंस बढ़े
                 await db.collection('users').updateOne(
                     { phoneNumber: bet.phone }, 
                     { $inc: { balance: winAmount } }
@@ -50,7 +47,6 @@ export default async function handler(req, res) {
                 await db.collection('bets').updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
             }
         }
-
         return res.status(200).json({ success: true, number: finalNum });
     } catch (e) {
         return res.status(500).json({ error: e.message });
