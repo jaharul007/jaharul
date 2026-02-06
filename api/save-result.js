@@ -1,21 +1,37 @@
-import clientPromise from '../lib/mongodb.js';
+import clientPromise from '../lib/mongodb.js'; // 'i' small rakhein
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success: false });
 
     try {
         const client = await clientPromise;
-        const db = client.db("test"); // आपके DB का नाम 'test'
+        const db = client.db("test"); 
+        
+        // Body se data nikalna
         const { period, mode: reqMode, number: adminNum } = req.body;
         const mode = parseInt(reqMode) || 60;
 
-        let finalNum = (adminNum !== undefined) ? parseInt(adminNum) : Math.floor(Math.random() * 10);
+        // 1. Result fix karna (Admin input ya Random)
+        let finalNum = (adminNum !== undefined && adminNum !== "") ? parseInt(adminNum) : Math.floor(Math.random() * 10);
         
-        await db.collection('results').insertOne({
-            period, number: finalNum, mode, timestamp: new Date()
-        });
+        // --- HISTORY SAVING SECTION ---
+        // 'results' collection mein data daalna
+        const resultData = {
+            period: period.toString(), // String mein convert karna safe rehta hai
+            number: finalNum,
+            mode: mode,
+            timestamp: new Date()
+        };
+        
+        await db.collection('results').insertOne(resultData);
+        // ------------------------------
 
-        const pendingBets = await db.collection('bets').find({ period, mode, status: 'pending' }).toArray();
+        // 2. Betting Calculation
+        const pendingBets = await db.collection('bets').find({ 
+            period: period.toString(), 
+            mode: mode, 
+            status: 'pending' 
+        }).toArray();
         
         const winSize = finalNum >= 5 ? 'Big' : 'Small';
         let winColors = [];
@@ -24,11 +40,12 @@ export default async function handler(req, res) {
         else if (finalNum % 2 === 0) winColors = ['Red'];
         else winColors = ['Green'];
 
+        // Loop for updating balance and bets
         for (let bet of pendingBets) {
             let isWin = false;
             let mult = 0;
 
-            if (parseInt(bet.betOn) === finalNum) { isWin = true; mult = 9; }
+            if (bet.betOn == finalNum) { isWin = true; mult = 9; }
             else if (bet.betOn === winSize) { isWin = true; mult = 2; }
             else if (winColors.includes(bet.betOn)) {
                 isWin = true;
@@ -36,19 +53,35 @@ export default async function handler(req, res) {
             }
 
             if (isWin) {
-                const winAmount = bet.amount * mult;
-                // यहाँ 'phoneNumber' का उपयोग किया है ताकि बैलेंस बढ़े
+                const winAmount = parseFloat(bet.amount) * mult;
+                
+                // User collection mein balance update
                 await db.collection('users').updateOne(
                     { phoneNumber: bet.phone }, 
                     { $inc: { balance: winAmount } }
                 );
-                await db.collection('bets').updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
+                
+                // Bet status update
+                await db.collection('bets').updateOne(
+                    { _id: bet._id }, 
+                    { $set: { status: 'won', winAmount: winAmount, result: finalNum } }
+                );
             } else {
-                await db.collection('bets').updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
+                await db.collection('bets').updateOne(
+                    { _id: bet._id }, 
+                    { $set: { status: 'lost', winAmount: 0, result: finalNum } }
+                );
             }
         }
-        return res.status(200).json({ success: true, number: finalNum });
+
+        return res.status(200).json({ 
+            success: true, 
+            message: "Result saved and bets settled", 
+            number: finalNum 
+        });
+
     } catch (e) {
-        return res.status(500).json({ error: e.message });
+        console.error("Save Result Error:", e);
+        return res.status(500).json({ success: false, error: e.message });
     }
 }
