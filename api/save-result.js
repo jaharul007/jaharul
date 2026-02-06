@@ -5,19 +5,19 @@ export default async function handler(req, res) {
 
     try {
         const client = await clientPromise;
-        const db = client.db("test"); // DB नाम 'test' फिक्स किया
+        const db = client.db("test"); // DB 'test' फिक्स
         const { period, mode: reqMode, number: adminNum } = req.body;
         const mode = parseInt(reqMode) || 60;
 
-        // 1. रिजल्ट तय करना
+        // 1. रिजल्ट जनरेट करें
         let finalNum = (adminNum !== undefined) ? parseInt(adminNum) : Math.floor(Math.random() * 10);
         
-        // 2. रिजल्ट सेव करना
+        // 2. रिजल्ट को 'results' में सेव करें
         await db.collection('results').insertOne({
             period, number: finalNum, mode, timestamp: new Date()
         });
 
-        // 3. जीतने वालों का पैसा बढ़ाना (Settlement)
+        // 3. जीतने वालों का हिसाब
         const pendingBets = await db.collection('bets').find({ period, mode, status: 'pending' }).toArray();
         
         const winSize = finalNum >= 5 ? 'Big' : 'Small';
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
 
             if (isWin) {
                 const winAmount = bet.amount * mult;
-                // यहाँ 'phoneNumber' का इस्तेमाल किया है ताकि आपकी bet.js से मैच हो
+                // आपके 'users' कलेक्शन में 'phoneNumber' फील्ड अपडेट हो रही है
                 await db.collection('users').updateOne(
                     { phoneNumber: bet.phone }, 
                     { $inc: { balance: winAmount } }
