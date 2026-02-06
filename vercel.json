@@ -1,18 +1,21 @@
 {
   "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "outputDirectory": ".",
   "rewrites": [
+    {
+      "source": "/",
+      "destination": "/index.html"
+    },
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1"
     }
   ],
   "headers": [
     {
-      "source": "index.html",
+      "source": "/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
