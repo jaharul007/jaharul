@@ -3,13 +3,18 @@
   "version": "1.0.0",
   "description": "Gaming App with MongoDB",
   "main": "index.js",
+  "engines": {
+    "node": "24.x"
+  },
   "dependencies": {
-    "mongoose": "^8.0.0"
+    "mongoose": "^8.9.5"
   },
   "devDependencies": {
-    "vercel": "^32.0.0"
+    "vercel": "^39.0.0"
   },
   "scripts": {
-    "start": "node index.js"
+    "build": "echo 'Building...'",
+    "start": "node index.js",
+    "dev": "vercel dev"
   }
 }
