@@ -1,10 +1,11 @@
 import mongoose from 'mongoose';
-import User from '../models/User';
+import User from './models/User.js'; // Extension .js zaroori hai
 
 const connectDB = async () => {
     if (mongoose.connections[0].readyState) return;
     try {
         await mongoose.connect(process.env.MONGO_URI);
+        console.log("MongoDB Connected");
     } catch (error) {
         console.error("MongoDB Connection Error:", error);
     }
@@ -13,40 +14,30 @@ const connectDB = async () => {
 export default async function handler(req, res) {
     await connectDB();
 
-    // --- 1. GET Request: Homepage par balance dikhane ke liye ---
+    // --- GET Request: Homepage balance ---
     if (req.method === 'GET') {
         const { action, phoneNumber } = req.query;
-
         if (action === 'getBalance') {
             try {
-                // Security: Agar phoneNumber nahi hai toh error bhejien
                 if (!phoneNumber) return res.status(400).json({ success: false, message: 'Phone missing' });
-
-                // Bahut zaroori fix: space ko wapas '+' mein badlein
                 const cleanPhone = phoneNumber.replace(' ', '+'); 
-                
                 const user = await User.findOne({ phoneNumber: cleanPhone });
-                if (!user) {
-                    return res.status(404).json({ success: false, message: 'User not found' });
-                }
+                if (!user) return res.status(404).json({ success: false, message: 'User not found' });
                 return res.status(200).json({ success: true, balance: user.balance });
             } catch (err) {
                 return res.status(500).json({ success: false, message: 'Server error' });
             }
         }
-    } // GET request ka bracket yahan close hoga
+    }
 
-    // --- 2. POST Request: Register aur Login ke liye ---
+    // --- POST Request: Register/Login ---
     if (req.method === 'POST') {
         const { action, phoneNumber, password, inviteCode, balance } = req.body;
 
-        // --- REGISTER LOGIC ---
         if (action === 'register') {
             try {
                 const userExists = await User.findOne({ phoneNumber });
-                if (userExists) {
-                    return res.status(400).json({ success: false, message: 'Phone number already registered' });
-                }
+                if (userExists) return res.status(400).json({ success: false, message: 'Already registered' });
 
                 const newUser = new User({
                     phoneNumber,
@@ -54,30 +45,21 @@ export default async function handler(req, res) {
                     inviteCode: inviteCode || "",
                     balance: balance || 0
                 });
-
                 await newUser.save();
-                return res.status(201).json({ success: true, message: 'Registration Successful', balance: newUser.balance });
+                return res.status(201).json({ success: true, message: 'Success', balance: newUser.balance });
             } catch (err) {
                 return res.status(500).json({ success: false, message: 'Registration Failed' });
             }
         }
-
-        // --- LOGIN LOGIC ---
         else if (action === 'login') {
             try {
                 const user = await User.findOne({ phoneNumber, password });
-                if (!user) {
-                    return res.status(401).json({ success: false, message: 'Invalid Phone or Password' });
-                }
-                return res.status(200).json({ success: true, message: 'Login Success', balance: user.balance });
+                if (!user) return res.status(401).json({ success: false, message: 'Invalid Credentials' });
+                return res.status(200).json({ success: true, balance: user.balance });
             } catch (err) {
                 return res.status(500).json({ success: false, message: 'Login Failed' });
             }
         }
     }
-
-    // Default response agar method match nahi karta
-    if (!res.writableEnded) {
-        return res.status(405).json({ message: 'Method not allowed' });
-    }
+    return res.status(405).json({ message: 'Method not allowed' });
 }
