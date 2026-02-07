@@ -1,108 +1,241 @@
-import clientPromise from '../lib/mongodb.js';
+import mongoose from 'mongoose';
+import User from '../models/User.js';
+import Bet from '../models/Bet.js';
+import Result from '../models/Result.js';
+
+const connectDB = async () => {
+    if (mongoose.connections && mongoose.connections[0].readyState) {
+        return;
+    }
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("MongoDB Connected Successfully");
+    } catch (error) {
+        console.error("MongoDB Connection Error:", error);
+    }
+};
 
 export default async function handler(req, res) {
-    const client = await clientPromise;
-    const db = client.db('test');
-    const usersColl = db.collection('users');
-    const betsColl = db.collection('bets');
-    const resultsColl = db.collection('results');
+    // CORS Headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // 1. GET REQUEST: बैलेंस चेक, रिजल्ट चेक और एडमिन डेटा
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
+    await connectDB();
+
+    // ========================================
+    // GET REQUESTS
+    // ========================================
     if (req.method === 'GET') {
-        const { action, phone, period, mode } = req.query;
+        const { phone, period, mode } = req.query;
 
         try {
-            // --- फीचर: यूजर का बैलेंस दिखाना ---
-            if (action === 'getBalance') {
-                const user = await usersColl.findOne({ phoneNumber: phone });
-                if (!user) {
-                    // अगर यूजर नहीं है, तो नया बनाओ (Initial Balance 1000)
-                    await usersColl.insertOne({ phoneNumber: phone, balance: 1000 });
-                    return res.status(200).json({ success: true, balance: 1000 });
+            // --- CHECK BET RESULT (Win/Loss Status) ---
+            if (phone && period) {
+                const result = await Result.findOne({ 
+                    period: period, 
+                    mode: parseInt(mode) 
+                });
+
+                if (!result) {
+                    return res.json({ status: 'pending' });
                 }
-                return res.status(200).json({ success: true, balance: user.balance });
-            }
 
-            // --- फीचर: विन/लॉस चेक करना (Auto Pay) ---
-            if (action === 'checkResult') {
-                const result = await resultsColl.findOne({ period: period, mode: parseInt(mode) });
-                if (!result) return res.json({ status: 'pending' });
+                const bet = await Bet.findOne({ 
+                    phone, 
+                    period, 
+                    status: 'pending' 
+                });
 
-                const bet = await betsColl.findOne({ phone, period, status: 'pending' });
                 if (!bet) {
-                    const alreadyChecked = await betsColl.findOne({ phone, period });
-                    return res.json({ status: alreadyChecked ? alreadyChecked.status : 'no_bet', resultNumber: result.number });
+                    const alreadyChecked = await Bet.findOne({ phone, period });
+                    return res.json({ 
+                        status: alreadyChecked ? alreadyChecked.status : 'no_bet', 
+                        resultNumber: result.number 
+                    });
                 }
 
-                // Winning Logic
-                let finalNum = result.number;
+                // ===== WINNING LOGIC =====
+                const finalNum = result.number;
                 let isWin = false;
                 let mult = 0;
+
                 const winSize = finalNum >= 5 ? 'Big' : 'Small';
-                const winColors = (finalNum === 0) ? ['Red', 'Violet'] : (finalNum === 5) ? ['Green', 'Violet'] : (finalNum % 2 === 0) ? ['Red'] : ['Green'];
+                // In dono lines ko lowercase kar dein
+const winColors = (finalNum === 0) ? ['red', 'violet'] : 
+                  (finalNum === 5) ? ['green', 'violet'] : 
+                  (finalNum % 2 === 0) ? ['red'] : ['green'];
 
-                if (bet.betOn == finalNum) { isWin = true; mult = 9; }
-                else if (bet.betOn === winSize) { isWin = true; mult = 2; }
-                else if (winColors.includes(bet.betOn)) {
-                    isWin = true;
-                    mult = (bet.betOn === 'Violet') ? 4.5 : (finalNum === 0 || finalNum === 5 ? 1.5 : 2);
+                // Number match (9x)
+                if (bet.betOn == finalNum) { 
+                    isWin = true; 
+                    mult = 9; 
                 }
+                // Size match (2x) - Fixed Case Sensitivity
+else if (bet.betOn.toLowerCase() === winSize.toLowerCase()) { 
+    isWin = true; 
+    mult = 2; 
+}
+                // Color match logic (Fixed Case Sensitivity)
+else if (winColors.includes(bet.betOn.toLowerCase())) {
+    isWin = true;
+    const userBet = bet.betOn.toLowerCase(); 
 
+    if (userBet === 'violet') { 
+        mult = 4.5;
+    } else if (finalNum === 0 || finalNum === 5) {
+        mult = 1.5; 
+    } else {
+        mult = 2;
+    }
+}
+
+                // Process WIN
                 if (isWin) {
                     const winAmount = bet.amount * mult;
-                    await usersColl.updateOne({ phoneNumber: phone }, { $inc: { balance: winAmount } });
-                    await betsColl.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
-                    return res.json({ status: 'won', winAmount, resultNumber: finalNum });
-                } else {
-                    await betsColl.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
-                    return res.json({ status: 'lost', resultNumber: finalNum });
+                    
+                    // Update user balance
+                    await User.updateOne(
+                        { phoneNumber: phone }, 
+                        { $inc: { balance: winAmount } }
+                    );
+                    
+                    // Update bet status
+                    await Bet.updateOne(
+                        { _id: bet._id }, 
+                        { $set: { status: 'won', winAmount, result: finalNum } }
+                    );
+                    
+                    return res.json({ 
+                        status: 'won', 
+                        winAmount, 
+                        resultNumber: finalNum 
+                    });
+                } 
+                // Process LOSS
+                else {
+                    await Bet.updateOne(
+                        { _id: bet._id }, 
+                        { $set: { status: 'lost', winAmount: 0, result: finalNum } }
+                    );
+                    
+                    return res.json({ 
+                        status: 'lost', 
+                        resultNumber: finalNum 
+                    });
                 }
             }
 
-            // --- फीचर: एडमिन के लिए लाइव बेट्स देखना ---
-            if (action === 'adminSummary') {
-                const pendingBets = await betsColl.find({ period: period, mode: parseInt(mode) }).toArray();
-                return res.json({ success: true, bets: pendingBets });
+            // --- ADMIN: GET LIVE BET SUMMARY ---
+            if (period && mode && !phone) {
+                const pendingBets = await Bet.find({ 
+                    period: period, 
+                    mode: parseInt(mode) 
+                }).lean();
+
+                // Calculate summaries
+                const colorSums = { Green: 0, Violet: 0, Red: 0 };
+                const numberSums = {};
+                
+                for (let i = 0; i <= 9; i++) {
+                    numberSums[i] = 0;
+                }
+
+                pendingBets.forEach(bet => {
+                    if (['green', 'violet', 'red'].includes(bet.betOn.toLowerCase())) {
+    // bet.betOn ko pehle normalize karein
+    const normalizedColor = bet.betOn.charAt(0).toUpperCase() + bet.betOn.slice(1).toLowerCase();
+    colorSums[normalizedColor] += bet.amount;
+}
+                    if (!isNaN(bet.betOn) && bet.betOn >= 0 && bet.betOn <= 9) {
+                        numberSums[bet.betOn] += bet.amount;
+                    }
+                });
+
+                // Get all users with active bets
+                const users = await User.find({}).lean();
+                const userBetCounts = {};
+                
+                pendingBets.forEach(bet => {
+                    userBetCounts[bet.phone] = (userBetCounts[bet.phone] || 0) + 1;
+                });
+
+                const userList = users.map(u => ({
+                    phoneNumber: u.phoneNumber,
+                    balance: u.balance,
+                    activeBets: userBetCounts[u.phoneNumber] || 0
+                }));
+
+                return res.json({ 
+                    success: true, 
+                    bets: pendingBets,
+                    colorSums,
+                    numberSums,
+                    userList
+                });
             }
 
-        } catch (e) { return res.status(500).json({ error: e.message }); }
+        } catch (e) {
+            console.error("GET Error:", e);
+            return res.status(500).json({ error: e.message });
+        }
     }
 
-    // 2. POST REQUEST: बैट लगाना और एडमिन द्वारा रिजल्ट फोर्स करना
+    // ========================================
+    // POST REQUESTS
+    // ========================================
     if (req.method === 'POST') {
-        const { action, phone, period, mode, betOn, amount, forceNumber } = req.body;
-
         try {
-            // --- फीचर: बैट लगाना और पैसा काटना ---
-            if (action === 'placeBet') {
+            const body = req.body;
+
+            // --- PLACE BET ---
+            if (body.phone && body.period && body.betOn && body.amount) {
+                const { phone, period, mode, betOn, amount, betType, multiplier } = body;
                 const betAmount = parseFloat(amount);
-                const updateResult = await usersColl.updateOne(
+
+                // Check and deduct balance
+                const updateResult = await User.updateOne(
                     { phoneNumber: phone, balance: { $gte: betAmount } },
                     { $inc: { balance: -betAmount } }
                 );
 
-                if (updateResult.matchedCount === 0) return res.status(400).json({ success: false, message: 'Balance kam hai!' });
+                if (updateResult.matchedCount === 0) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Insufficient balance!' 
+                    });
+                }
 
-                await betsColl.insertOne({
-                    phone, period, mode: parseInt(mode), betOn: String(betOn),
-                    amount: betAmount, status: 'pending', timestamp: new Date()
+                // Create bet
+                await Bet.create({
+                    phone,
+                    period,
+                    mode: parseInt(mode),
+                    betOn: String(betOn),
+                    amount: betAmount,
+                    status: 'pending',
+                    betType: betType || 'number',
+                    multiplier: multiplier || 1,
+                    timestamp: new Date()
                 });
 
-                const user = await usersColl.findOne({ phoneNumber: phone });
-                return res.status(200).json({ success: true, newBalance: user.balance });
+                // Get updated balance
+                const user = await User.findOne({ phoneNumber: phone });
+
+                return res.status(200).json({ 
+                    success: true, 
+                    newBalance: user.balance,
+                    message: 'Bet placed successfully'
+                });
             }
 
-            // --- फीचर: एडमिन कंट्रोल (रिजल्ट फोर्स करना) ---
-            if (action === 'forceResult') {
-                // यह रिजल्ट को results कलेक्शन में डाल देगा ताकि गेम वही नंबर दिखाए
-                await resultsColl.updateOne(
-                    { period: period, mode: parseInt(mode) },
-                    { $set: { number: parseInt(forceNumber), timestamp: new Date() } },
-                    { upsert: true }
-                );
-                return res.json({ success: true, message: 'Result forced successfully!' });
-            }
-
-        } catch (e) { return res.status(500).json({ error: e.message }); }
+        } catch (e) {
+            console.error("POST Error:", e);
+            return res.status(500).json({ error: e.message });
+        }
     }
+
+    return res.status(405).json({ message: 'Method not allowed' });
 }
