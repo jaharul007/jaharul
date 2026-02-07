@@ -18,80 +18,111 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
         try {
             const { period, mode, number, isAdmin } = req.body;
+            let finalNum;
 
-            // 1. चेक करें कि रिजल्ट पहले से तो नहीं है
-            const existing = await Result.findOne({ period, mode: parseInt(mode) });
-            if (existing) return res.json({ success: true, message: "Result already exists", data: existing });
+            // 1. Check if result already exists
+            const existingResult = await Result.findOne({ period, mode: parseInt(mode) });
 
-            // 2. रिजल्ट नंबर तय करना (Admin Force या Random)
-            let finalNum = (isAdmin && number !== undefined) ? parseInt(number) : Math.floor(Math.random() * 10);
+            if (existingResult && !isAdmin) {
+                return res.json({ success: true, message: "Result already exists", data: existingResult });
+            }
+
+            // 2. Decide Number (Admin Force or Random)
+            finalNum = (isAdmin && number !== undefined) ? parseInt(number) : Math.floor(Math.random() * 10);
 
             const color = (finalNum === 0) ? ['red', 'violet'] : 
                           (finalNum === 5) ? ['green', 'violet'] : 
                           (finalNum % 2 === 0) ? ['red'] : ['green'];
             const size = (finalNum >= 5) ? 'Big' : 'Small';
 
-            // 3. रिजल्ट को सेव करें
-            const savedResult = await Result.create({
-                period, mode: parseInt(mode), number: finalNum,
-                color, size, isForced: isAdmin || false, timestamp: new Date()
-            });
+            // 3. Save or Update Result
+            let savedResult;
+            if (isAdmin && existingResult) {
+                // Admin is overwriting an existing random result
+                savedResult = await Result.findOneAndUpdate(
+                    { period, mode: parseInt(mode) },
+                    { number: finalNum, color, size, isForced: true },
+                    { new: true }
+                );
+            } else {
+                savedResult = await Result.create({
+                    period, mode: parseInt(mode), number: finalNum,
+                    color, size, isForced: isAdmin || false, timestamp: new Date()
+                });
+            }
 
             // =====================================================
-            // 4. SETTLEMENT LOGIC (जीतने वालों को पैसा बांटना)
+            // 4. SETTLEMENT LOGIC (Winning Payout)
             // =====================================================
-            const pendingBets = await Bet.find({ period, mode: parseInt(mode), status: 'pending' });
+            // Agar Admin ne result badla hai, toh pehle purani win amounts ko reverse karna padta hai (optional but safe)
+            // Filhal hum sirf Pending aur is Period ki bets process karenge.
+            const bets = await Bet.find({ period, mode: parseInt(mode) });
 
-            if (pendingBets.length > 0) {
-                for (let bet of pendingBets) {
-                    let isWin = false;
-                    let mult = 0;
-                    const betOn = bet.betOn.toLowerCase();
+            for (let bet of bets) {
+                let isWin = false;
+                let mult = 0;
+                const betOn = bet.betOn.toLowerCase();
 
-                    // Winning Logic
-                    if (betOn == finalNum.toString()) { // Number Match
-                        isWin = true; mult = 9;
-                    } else if (betOn === size.toLowerCase()) { // Size Match
-                        isWin = true; mult = 2;
-                    } else if (color.includes(betOn)) { // Color Match
-                        isWin = true;
-                        if (betOn === 'violet') mult = 4.5;
-                        else if (finalNum === 0 || finalNum === 5) mult = 1.5;
-                        else mult = 2;
+                // Logic for Winning
+                if (betOn === finalNum.toString()) { 
+                    isWin = true; mult = 9; 
+                } else if (betOn === size.toLowerCase()) { 
+                    isWin = true; mult = 2; 
+                } else if (color.includes(betOn)) { 
+                    isWin = true;
+                    if (betOn === 'violet') mult = 4.5;
+                    else if (finalNum === 0 || finalNum === 5) mult = 1.5;
+                    else mult = 2;
+                }
+
+                if (isWin) {
+                    const winAmount = bet.amount * mult;
+                    
+                    // Update User Balance (Sirf tab jab status pending ho ya result change hua ho)
+                    if (bet.status !== 'won') {
+                        await User.findOneAndUpdate(
+                            { phoneNumber: bet.phone },
+                            { $inc: { balance: winAmount } }
+                        );
                     }
-
-                    if (isWin) {
-                        const winAmount = bet.amount * mult;
-                        // यूजर का बैलेंस बढ़ाएं
-                        await User.updateOne({ phoneNumber: bet.phone }, { $inc: { balance: winAmount } });
-                        // बेट स्टेटस अपडेट करें
-                        await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
-                    } else {
-                        // हारने वालों का स्टेटस अपडेट
-                        await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
-                    }
+                    
+                    // Update Bet Status
+                    await Bet.updateOne(
+                        { _id: bet._id },
+                        { $set: { status: 'won', winAmount: winAmount, result: finalNum } }
+                    );
+                } else {
+                    // Agar haar gaya (ya admin ne result badla aur ab haar gaya)
+                    // Status ko update karein
+                    await Bet.updateOne(
+                        { _id: bet._id },
+                        { $set: { status: 'lost', winAmount: 0, result: finalNum } }
+                    );
                 }
             }
 
-            return res.status(200).json({ success: true, message: "Result & Payout Done", data: savedResult });
+            return res.status(200).json({ success: true, message: "Settlement Completed", data: savedResult });
 
         } catch (e) {
+            console.error("History POST Error:", e);
             return res.status(500).json({ success: false, error: e.message });
         }
     }
 
-    // GET Request (History Fetching) - Same as before
+    // GET Request (History Fetching)
     if (req.method === 'GET') {
         try {
             const { mode, page = 1, limit = 10 } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
-            const historyData = await Result.find({ mode: parseInt(mode) }).sort({ period: -1 }).skip(skip).limit(parseInt(limit)).lean();
-            const total = await Result.countDocuments({ mode: parseInt(mode) });
+            const historyData = await Result.find({ mode: parseInt(mode) })
+                .sort({ period: -1 })
+                .skip(skip)
+                .limit(parseInt(limit))
+                .lean();
 
             return res.status(200).json({
                 success: true,
                 results: historyData.map(item => ({ p: item.period, n: item.number, c: item.color, s: item.size })),
-                totalPages: Math.ceil(total / limit)
             });
         } catch (e) {
             return res.status(500).json({ success: false, error: e.message });
