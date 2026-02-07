@@ -1066,11 +1066,10 @@
 <div class="container">
     <!-- NAV HEADER (triple-click here to open admin) -->
     <div class="nav-header" id="navHeader">
-    <span onclick="window.location.href=`homepage.html?phone=${phoneParam}`" style="cursor:pointer; font-size: 20px;">❮</span>
-    <span>JAHARUL GAME</span>
-    <span style="width: 20px;"></span>
-</div>
-
+        <span onclick="window.location.href=`homepage.html?phone=${phoneParam}`" style="cursor:pointer; font-size: 20px;">❮</span>
+        <span>JAHARUL GAME</span>
+        <span style="width: 20px;"></span>
+    </div>
 
     <div class="content">
         <div class="wallet-card">
@@ -1345,44 +1344,22 @@
 </div>
 
 <script>
-    // Naya function: Pichle bet ka result check karne ke liye
-async function checkPendingBets(period) {
-    if (!globalPhone) return;
-    
-    setTimeout(async () => {
-        try {
-            // यहाँ globalPhone का इस्तेमाल करें
-            const res = await fetch(`/api/check-bet-result.js?phone=${globalPhone}&period=${period}`);
-            const data = await res.json();
-            
-            if (data.status === 'won') {
-                showResultPopup('win', data.winAmount, period, data.resultNumber);
-                loadBalance(); // जीतने के बाद बैलेंस अपडेट
-            } else if (data.status === 'lost') {
-                showResultPopup('lose', 0, period, data.resultNumber);
-            }
-        } catch (e) {
-            console.error("Error checking bet result:", e);
-        }
-    }, 4000);
-}
-
 // ========================================
 // GLOBAL SETTINGS & AUTH
 // ========================================
-// सबसे ऊपर ये डालें
 const urlParams = new URLSearchParams(window.location.search);
 const globalPhone = urlParams.get('phone');
 const phoneParam = globalPhone ? encodeURIComponent(globalPhone) : "";
 
-// इसके नीचे आपकी पुरानी लाइन्स रहेंगी...
 let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
 let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
 let userBets = [];
-let activeBetChecks = {}; // Track active bet result checks
+let activeBetChecks = {};
+
 function getCurrentUserPhone() {
-    return globalPhone; // यह URL वाला असली नंबर देगा
+    return globalPhone;
 }
+
 // ========================================
 // ADMIN SYSTEM (TRIPLE CLICK NAV TO OPEN)
 // ========================================
@@ -1400,7 +1377,9 @@ function openAdmin() {
     syncAdminData();
 }
 
-function closeAdmin() { document.getElementById('adminOverlay').classList.remove('show'); }
+function closeAdmin() { 
+    document.getElementById('adminOverlay').classList.remove('show'); 
+}
 
 function buildAdminNumGrid() {
     const grid = document.getElementById('adminNumGrid');
@@ -1411,53 +1390,82 @@ function buildAdminNumGrid() {
     }
 }
 
-function syncAdminData() {
-    fetch(`/api/history?mode=${currentMode}&limit=1`).then(r => r.json()).then(data => {
-        const txt = document.getElementById('adminStatusTxt');
-        let historyData = data.results || data.history || data.data || [];
+async function syncAdminData() {
+    const period = document.getElementById('periodDisplay').innerText.trim();
+    
+    try {
+        // Get admin summary from bet.js API
+        const res = await fetch(`/api/bet?period=${period}&mode=${currentMode}`);
+        const data = await res.json();
         
-        fetch(`/api/get-forced-status?mode=${currentMode}`).then(res => res.json()).then(forced => {
-            if (forced.number !== undefined && forced.number !== null) {
-                txt.innerText = '⚡ NEXT FORCED: ' + forced.number;
-                txt.style.color = '#ffff00';
-            } else if (historyData.length > 0) {
-                txt.innerText = 'LAST RESULT: ' + historyData[0].number;
-                txt.style.color = '#fff';
+        if (data.success) {
+            // Update color sums
+            document.getElementById('admin-sum-Green').innerText = '₹' + (data.colorSums.Green || 0);
+            document.getElementById('admin-sum-Violet').innerText = '₹' + (data.colorSums.Violet || 0);
+            document.getElementById('admin-sum-Red').innerText = '₹' + (data.colorSums.Red || 0);
+            
+            // Update number sums
+            for (let i = 0; i <= 9; i++) {
+                document.getElementById('admin-sum-Num' + i).innerText = '₹' + (data.numberSums[i] || 0);
             }
-        });
-    }).catch(() => {});
+            
+            // Update user list
+            if (data.userList && data.userList.length > 0) {
+                const tbody = document.getElementById('adminUsersBody');
+                tbody.innerHTML = data.userList.map((u, idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${u.phoneNumber.substring(0, 8)}...</td>
+                        <td class="${u.balance > 0 ? 'bal-positive' : 'bal-zero'}">₹${u.balance.toFixed(2)}</td>
+                        <td>${u.activeBets}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        // Check if there's a forced result
+        const txt = document.getElementById('adminStatusTxt');
+        const histRes = await fetch(`/api/history?mode=${currentMode}&limit=1`);
+        const histData = await histRes.json();
+        
+        if (histData.success && histData.results && histData.results.length > 0) {
+            txt.innerText = 'LAST RESULT: ' + histData.results[0].n;
+            txt.style.color = '#fff';
+        }
+    } catch (e) {
+        console.error("Admin sync error:", e);
+    }
 }
 
-function adminSaveForce() {
-    let val = document.getElementById('adminForceInp').value;
-    let period = document.getElementById('periodDisplay').innerText.trim(); 
+async function adminSaveForce() {
+    const val = document.getElementById('adminForceInp').value;
+    const period = document.getElementById('periodDisplay').innerText.trim();
 
     if (val !== '' && val >= 0 && val <= 9) {
-        console.log("Sending Data:", { number: val, mode: currentMode, period: period });
-
-        fetch('/api/add-result.js', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                number: parseInt(val), 
-                mode: parseInt(currentMode), 
-                period: period 
-            })
-        })
-        .then(async res => {
-            if (res.status === 404) throw new Error("API file not found (404)");
+        try {
+            const res = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    number: parseInt(val), 
+                    mode: parseInt(currentMode), 
+                    period: period,
+                    isAdmin: true
+                })
+            });
+            
             const data = await res.json();
-            if(data.success) { 
+            
+            if (data.success) { 
                 alert('✅ Success! Result set for ' + period); 
                 syncAdminData();
             } else {
-                alert('❌ Backend Error: ' + data.message);
+                alert('❌ Error: ' + data.message);
             }
-        })
-        .catch(err => {
+        } catch (err) {
             console.error(err);
             alert('❌ Connection Error: ' + err.message);
-        });
+        }
     } else { 
         alert('⚠️ Please enter a number 0-9'); 
     }
@@ -1471,9 +1479,9 @@ async function loadBalance() {
     if (!globalPhone) return;
 
     try {
-        // आपकी auth.js API को कॉल कर रहा है
         const res = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
         const data = await res.json();
+        
         if (data.success) {
             currentBalance = parseFloat(data.balance);
             balElement.innerText = currentBalance.toFixed(2);
@@ -1495,10 +1503,8 @@ function showResultPopup(type, amount, period, resultNumber, betOn) {
     const periodEl = document.getElementById('resultPeriod');
     const pillsContainer = document.getElementById('lotteryPills');
     
-    // Set card type
     card.className = 'result-card ' + type;
     
-    // Set content based on win/lose
     if (type === 'win') {
         title.innerText = 'Congratulations';
         label.innerText = 'Bonus';
@@ -1513,17 +1519,13 @@ function showResultPopup(type, amount, period, resultNumber, betOn) {
         document.getElementById('confettiContainer').innerHTML = '';
     }
     
-    // Period info
     const modeName = document.getElementById('modeName').innerText;
     periodEl.innerHTML = `Period: ${modeName}<br>${period}`;
     
-    // Generate lottery result pills
     pillsContainer.innerHTML = generateResultPills(resultNumber);
     
-    // Show overlay
     overlay.classList.add('show');
     
-    // Auto close after 3 seconds
     setTimeout(() => {
         closeResultPopup();
     }, 3000);
@@ -1532,19 +1534,16 @@ function showResultPopup(type, amount, period, resultNumber, betOn) {
 function generateResultPills(number) {
     let html = '';
     
-    // Color pill
     let color = (number % 2 === 0) ? 'red' : 'green';
     if (number === 0 || number === 5) {
         color = 'violet';
     }
     html += `<span class="pill ${color}">${color.charAt(0).toUpperCase() + color.slice(1)}</span>`;
     
-    // Number pill
     let numColor = (number % 2 === 0) ? 'red' : 'green';
     if (number === 0 || number === 5) numColor = 'violet';
     html += `<span class="pill number ${numColor}">${number}</span>`;
     
-    // Size pill
     let size = number >= 5 ? 'big' : 'small';
     html += `<span class="pill ${size}">${size.charAt(0).toUpperCase() + size.slice(1)}</span>`;
     
@@ -1578,7 +1577,6 @@ function createConfetti() {
 async function checkBetResult(betData) {
     const checkKey = `${betData.phone}_${betData.period}`;
     
-    // Avoid duplicate checks for same bet
     if (activeBetChecks[checkKey]) {
         return;
     }
@@ -1587,30 +1585,27 @@ async function checkBetResult(betData) {
     
     const checkInterval = setInterval(async () => {
         try {
-            const res = await fetch(`/api/check-bet-result?phone=${betData.phone}&period=${betData.period}`);
+            const res = await fetch(`/api/bet?phone=${betData.phone}&period=${betData.period}&mode=${betData.mode}`);
             const data = await res.json();
             
             if (data.status !== 'pending') {
                 clearInterval(checkInterval);
                 delete activeBetChecks[checkKey];
                 
-                // Show result popup
                 if (data.status === 'won') {
                     showResultPopup('win', data.winAmount, betData.period, data.resultNumber, betData.betOn);
                 } else if (data.status === 'lost') {
                     showResultPopup('lose', 0, betData.period, data.resultNumber, betData.betOn);
                 }
                 
-                // Refresh balance & history
                 loadBalance();
                 loadMyHistory();
             }
         } catch(e) {
             console.error('Result check error:', e);
         }
-    }, 2000); // Check every 2 seconds
+    }, 2000);
     
-    // Stop checking after 5 minutes (safety timeout)
     setTimeout(() => {
         clearInterval(checkInterval);
         delete activeBetChecks[checkKey];
@@ -1696,7 +1691,10 @@ function getBetType(betValue) {
 // ========================================
 async function confirmBet() {
     const phone = getCurrentUserPhone();
-    if (!phone) { alert('❌ Please login first!'); return; }
+    if (!phone) { 
+        alert('❌ Please login first!'); 
+        return; 
+    }
 
     const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
     const period = document.getElementById('periodDisplay').innerText;
@@ -1723,12 +1721,12 @@ async function confirmBet() {
             betType: getBetType(selectedBetValue),
             multiplier: multiplier
         };
-        // फ़ोन नंबर के साथ API कॉल करें ताकि सही अकाउंट से पैसा कटे
-const betRes = await fetch(`/api/bet?phone=${phoneParam}`, { 
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(betData)
-});
+
+        const betRes = await fetch(`/api/bet`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(betData)
+        });
 
         const betResult = await betRes.json();
         
@@ -1749,7 +1747,6 @@ const betRes = await fetch(`/api/bet?phone=${phoneParam}`, {
         closeBetPopup();
         loadMyHistory();
         
-        // Start checking for result
         checkBetResult(betData);
         
     } catch(e) {
@@ -1786,11 +1783,13 @@ function renderHistory(history) {
         document.getElementById('historyBody').innerHTML = '<tr><td colspan="4">No Data</td></tr>';
         return;
     }
+    
     const html = history.slice(0, 10).map(i => {
         const n = parseInt(i.n || i.number || i.result || 0);
         const period = i.p || i.period || 'N/A';
         let numColor = (n % 2 === 0) ? '#ff4d4d' : '#10b981';
         if (n === 0 || n === 5) numColor = '#9b51e0';
+        
         let dots = '';
         if (n === 0) {
             dots = '<span class="res-dot" style="background:#ff4d4d;"></span><span class="res-dot" style="background:#9b51e0;"></span>';
@@ -1799,8 +1798,10 @@ function renderHistory(history) {
         } else {
             dots = `<span class="res-dot" style="background:${numColor};"></span>`;
         }
+        
         const sizeText = n >= 5 ? 'Big' : 'Small';
         const sizeColor = n >= 5 ? '#ffa726' : '#42a5f5';
+        
         return `<tr>
             <td class="p-period">${period}</td>
             <td><span class="res-number" style="color:${numColor};">${n}</span></td>
@@ -1808,23 +1809,36 @@ function renderHistory(history) {
             <td><div style="display:flex; justify-content:center;">${dots}</div></td>
         </tr>`;
     }).join('');
+    
     document.getElementById('historyBody').innerHTML = html;
 }
 
 async function loadMyHistory() {
     const phone = getCurrentUserPhone();
     if (!phone) return;
+    
     try {
         const res = await fetch(`/api/myhistory?phone=${phone}&mode=${currentMode}`);
         const data = await res.json();
+        
         if (data.success && data.bets && data.bets.length > 0) {
             userBets = data.bets;
             document.getElementById('myHistoryTable').style.display = 'table';
             document.getElementById('myHistoryEmpty').style.display = 'none';
+            
             const html = userBets.slice(0, 20).map(bet => {
                 let statusColor = '#f59e0b', statusIcon = '⏳', statusText = 'Pending';
-                if (bet.status === 'won') { statusColor = '#10b981'; statusIcon = '✅'; statusText = `+₹${(bet.winAmount || 0).toFixed(2)}`; }
-                else if (bet.status === 'lost') { statusColor = '#ef4444'; statusIcon = '❌'; statusText = `-₹${bet.amount.toFixed(2)}`; }
+                if (bet.status === 'won') { 
+                    statusColor = '#10b981'; 
+                    statusIcon = '✅'; 
+                    statusText = `+₹${(bet.winAmount || 0).toFixed(2)}`; 
+                }
+                else if (bet.status === 'lost') { 
+                    statusColor = '#ef4444'; 
+                    statusIcon = '❌'; 
+                    statusText = `-₹${bet.amount.toFixed(2)}`; 
+                }
+                
                 return `<tr>
                     <td class="p-period">${bet.period}</td>
                     <td style="color:#4fa1f9; font-weight:700;">${bet.betOn}</td>
@@ -1832,6 +1846,7 @@ async function loadMyHistory() {
                     <td><span style="color:${statusColor}; font-size:16px;">${statusIcon} ${statusText}</span></td>
                 </tr>`;
             }).join('');
+            
             document.getElementById('myHistoryBody').innerHTML = html;
         } else {
             document.getElementById('myHistoryTable').style.display = 'none';
@@ -1839,6 +1854,7 @@ async function loadMyHistory() {
             document.getElementById('myHistoryEmpty').style.display = 'block';
         }
     } catch (e) {
+        console.error("My history error:", e);
         document.getElementById('myHistoryEmpty').innerText = 'Error loading history';
         document.getElementById('myHistoryEmpty').style.display = 'block';
     }
@@ -1853,18 +1869,25 @@ async function fetchFromDB() {
                        now.getDate().toString().padStart(2, '0');
         const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
         
+        // Auto-save result when timer hits 0
         try {
-            await fetch('/api/save-result.js', {
+            await fetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ period: currentPeriod, mode: currentMode })
+                body: JSON.stringify({ 
+                    period: currentPeriod, 
+                    mode: currentMode 
+                })
             });
-        } catch(e) { console.log("Save API Error (Normal if using local):", e); }
+        } catch(e) { 
+            console.log("Save result info:", e.message); 
+        }
         
-        const res = await fetch(`/api/history.js?mode=${currentMode}&page=${currentPage}`);
+        // Fetch history
+        const res = await fetch(`/api/history?mode=${currentMode}&page=${currentPage}`);
         if(res.ok) { 
             const data = await res.json();
-            let historyData = Array.isArray(data) ? data : (data.results || data.history || data.data || []);
+            let historyData = data.results || [];
             renderHistory(historyData);
         }
 
@@ -1881,7 +1904,6 @@ function startTimer() {
         let totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
         let rem = currentMode - (totalSeconds % currentMode);
         
-        // Display Logic
         let m = Math.floor(rem / 60).toString().padStart(2, '0');
         let s = (rem % 60).toString().padStart(2, '0');
         document.getElementById('timerDigits').innerHTML = `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span><span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span><span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
@@ -1893,15 +1915,12 @@ function startTimer() {
         let oldP = displayEl.innerText;
         displayEl.innerText = currentP;
 
-        // Jab period change ho (Timer restarts)
         if (oldP !== "" && oldP !== currentP) {
-            console.log("Period Changed! Checking result for:", oldP);
-            fetchFromDB(); // Refresh history
-            setTimeout(() => { checkPendingBets(oldP); }, 3000); // Check user win/loss
+            console.log("Period Changed! New:", currentP);
+            fetchFromDB();
         }
     }, 1000);
 }
-
 
 function switchM(s, el) {
     currentMode = s;
@@ -1914,7 +1933,7 @@ function switchM(s, el) {
 }
 
 // ========================================
-// NEW LOTTERY BALLS GENERATOR (0-9)
+// LOTTERY BALLS GENERATOR (0-9)
 // ========================================
 window.onload = () => {
     getCurrentUserPhone();
