@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const betSchema = new mongoose.Schema({
-    phone: { 
+    phoneNumber: {  // ✅ CHANGED: phone → phoneNumber
         type: String, 
         required: true 
     },
