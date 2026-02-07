@@ -1,9 +1,7 @@
 import mongoose from 'mongoose';
-// '../' ka matlab hai api folder se bahar nikal kar models folder mein jaana
 import User from '../models/User.js'; 
 
 const connectDB = async () => {
-    // Connection check
     if (mongoose.connections && mongoose.connections[0].readyState) {
         return;
     }
@@ -16,72 +14,124 @@ const connectDB = async () => {
 };
 
 export default async function handler(req, res) {
-    // Database connect karein
+    // CORS Headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
     await connectDB();
 
-    // --- 1. GET Request: Balance check karne ke liye ---
+    // --- GET Request: Balance check ---
     if (req.method === 'GET') {
         const { action, phoneNumber } = req.query;
 
         if (action === 'getBalance') {
             try {
-                if (!phoneNumber) return res.status(400).json({ success: false, message: 'Phone missing' });
+                if (!phoneNumber) {
+                    return res.status(400).json({ success: false, message: 'Phone number missing' });
+                }
                 
                 // URL encoding fix
-                const cleanPhone = phoneNumber.replace(' ', '+'); 
+                const cleanPhone = decodeURIComponent(phoneNumber);
                 const user = await User.findOne({ phoneNumber: cleanPhone });
 
                 if (!user) {
                     return res.status(404).json({ success: false, message: 'User not found' });
                 }
-                return res.status(200).json({ success: true, balance: user.balance });
+                
+                return res.status(200).json({ 
+                    success: true, 
+                    balance: user.balance,
+                    phoneNumber: user.phoneNumber
+                });
             } catch (err) {
+                console.error("Get Balance Error:", err);
                 return res.status(500).json({ success: false, message: 'Server error' });
             }
         }
     }
 
-    // --- 2. POST Request: Register aur Login ke liye ---
+    // --- POST Request: Register aur Login ---
     if (req.method === 'POST') {
         const { action, phoneNumber, password, inviteCode, balance } = req.body;
 
         // REGISTER LOGIC
         if (action === 'register') {
             try {
+                if (!phoneNumber || !password) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Phone number and password required' 
+                    });
+                }
+
                 const userExists = await User.findOne({ phoneNumber });
                 if (userExists) {
-                    return res.status(400).json({ success: false, message: 'Phone number already registered' });
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Phone number already registered' 
+                    });
                 }
 
                 const newUser = new User({
                     phoneNumber,
                     password, 
                     inviteCode: inviteCode || "",
-                    balance: balance || 0
+                    balance: balance || 1000
                 });
 
                 await newUser.save();
-                return res.status(201).json({ success: true, message: 'Registration Successful', balance: newUser.balance });
+                
+                return res.status(201).json({ 
+                    success: true, 
+                    message: 'Registration Successful', 
+                    balance: newUser.balance,
+                    phoneNumber: newUser.phoneNumber
+                });
             } catch (err) {
-                console.error("Reg Error:", err);
-                return res.status(500).json({ success: false, message: 'Registration Failed' });
+                console.error("Registration Error:", err);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Registration Failed' 
+                });
             }
         }
 
         // LOGIN LOGIC
         else if (action === 'login') {
             try {
+                if (!phoneNumber || !password) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Phone number and password required' 
+                    });
+                }
+
                 const user = await User.findOne({ phoneNumber, password });
                 if (!user) {
-                    return res.status(401).json({ success: false, message: 'Invalid Phone or Password' });
+                    return res.status(401).json({ 
+                        success: false, 
+                        message: 'Invalid Phone or Password' 
+                    });
                 }
-                return res.status(200).json({ success: true, message: 'Login Success', balance: user.balance });
+                
+                return res.status(200).json({ 
+                    success: true, 
+                    message: 'Login Success', 
+                    balance: user.balance,
+                    phoneNumber: user.phoneNumber
+                });
             } catch (err) {
-                return res.status(500).json({ success: false, message: 'Login Failed' });
+                console.error("Login Error:", err);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Login Failed' 
+                });
             }
         }
     }
 
-    // Agar koi method match nahi hua
     return res.status(405).json({ message: 'Method not allowed' });
 }
