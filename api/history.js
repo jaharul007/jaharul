@@ -31,61 +31,39 @@ export default async function handler(req, res) {
         try {
             const { period, mode, number, isAdmin } = req.body;
 
-            if (!period || mode === undefined) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Period or Mode missing" 
-                });
+                        if (!period || mode === undefined) {
+                return res.status(400).json({ success: false, message: "Period or Mode missing" });
             }
 
-            // Check if result already exists
-            const existing = await Result.findOne({ 
-                period: period, 
-                mode: parseInt(mode) 
-            });
+            // पहले चेक करें कि क्या रिजल्ट मौजूद है
+            const existing = await Result.findOne({ period: period, mode: parseInt(mode) });
 
-            if (existing) {
-                return res.json({ 
-                    success: true, 
-                    message: "Result already exists", 
-                    number: existing.number,
-                    data: existing
-                });
+            // अगर रिजल्ट है और आप एडमिन नहीं हैं, तो पुराना ही दिखाओ
+            if (existing && !isAdmin) {
+                return res.json({ success: true, message: "Result already exists", number: existing.number });
             }
 
-            // Determine result number
-            let finalNum;
-            let isForced = false;
+            // नंबर तय करें (एडमिन वाला या रैंडम)
+            let finalNum = (isAdmin && number !== undefined) ? parseInt(number) : Math.floor(Math.random() * 10);
+            let isForced = !!isAdmin;
 
-            if (isAdmin && number !== undefined) {
-                // Admin forced result
-                finalNum = parseInt(number);
-                isForced = true;
-            } else {
-                // Auto-generate random result (0-9)
-                finalNum = Math.floor(Math.random() * 10);
-            }
-
-            // Calculate color and size
             const color = (finalNum === 0) ? ['red', 'violet'] : 
                           (finalNum === 5) ? ['green', 'violet'] : 
                           (finalNum % 2 === 0) ? ['red'] : ['green'];
-            
             const size = (finalNum >= 5) ? 'Big' : 'Small';
 
-            // Save result to database
             const resultDoc = {
-                period: period,
-                mode: parseInt(mode),
-                number: finalNum,
-                color: color,
-                size: size,
-                isForced: isForced,
-                timestamp: new Date()
+                period, mode: parseInt(mode), number: finalNum, color, size, isForced, timestamp: new Date()
             };
 
-            const savedResult = await Result.create(resultDoc);
-// --- AUTO SETTLEMENT LOGIC ---
+            // अपडेट या क्रिएट करने का लॉजिक
+            let savedResult;
+            if (existing && isAdmin) {
+                savedResult = await Result.findOneAndUpdate({ period, mode: parseInt(mode) }, resultDoc, { new: true });
+            } else {
+                savedResult = await Result.create(resultDoc);
+            }
+
 // 1. Is Period aur Mode ke saare Pending bets nikalein
 const pendingBets = await Bet.find({ 
     period: period, 
@@ -109,17 +87,19 @@ for (let bet of pendingBets) {
         else mult = 2;
     }
 
-    if (isWin) {
+        if (isWin) {
         const winAmount = bet.amount * mult;
-        // User ka balance badhayein
+        
+        // 1. यहाँ User के लिए 'phoneNumber' और Bet से 'phone' उठाना है
         await User.updateOne({ phoneNumber: bet.phone }, { $inc: { balance: winAmount } });
-        // Bet status update karein
+        
+        // 2. Bet स्टेटस अपडेट
         await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
     } else {
-        // Haarne wale ka status update karein
+        // हारने वाले के लिए
         await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
     }
-}
+
 // --- END OF SETTLEMENT ---
 
             console.log(`✅ Result Generated: Period ${period}, Mode ${mode}, Number ${finalNum}`);
