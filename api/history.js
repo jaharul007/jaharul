@@ -27,26 +27,21 @@ export default async function handler(req, res) {
     // ========================================
     if (req.method === 'POST') {
         try {
-            // ✅ HTML से आने वाले डेटा को सही से पकड़ना
             const { period, mode, number, isAdmin } = req.body;
 
             if (!period || mode === undefined) {
                 return res.status(400).json({ success: false, message: "Period or Mode missing" });
             }
 
-            // 1. चेक करें कि रिज़ल्ट पहले से है या नहीं
-            const existing = await Result.findOne({ period: period, mode: parseInt(mode) });
+            // 1. रिज़ल्ट चेक और सेट करना
+            let existing = await Result.findOne({ period: period.toString(), mode: parseInt(mode) });
 
-            if (existing) {
-                // अगर एडमिन नया नंबर भेज रहा है तो पुराना डिलीट करें, वरना वही भेज दें
-                if (isAdmin && number !== undefined) {
-                    await Result.deleteOne({ period: period, mode: parseInt(mode) });
-                } else {
-                    return res.json({ success: true, message: "Result already exists", number: existing.number });
-                }
+            if (existing && isAdmin && number !== undefined) {
+                await Result.deleteOne({ period: period.toString(), mode: parseInt(mode) });
+            } else if (existing) {
+                return res.json({ success: true, message: "Result already exists", number: existing.number });
             }
 
-            // 2. नंबर तय करना
             let finalNum;
             if (isAdmin === true && (number !== undefined && number !== null && number !== '')) {
                 finalNum = parseInt(number);
@@ -59,9 +54,9 @@ export default async function handler(req, res) {
                             (finalNum === 5) ? ['Green', 'Violet'] : 
                             (finalNum % 2 === 0) ? ['Red'] : ['Green'];
 
-            // 3. रिज़ल्ट सेव करना
+            // 2. रिज़ल्ट डेटाबेस में डालना
             const savedResult = await Result.create({
-                period: period.toString(), // Ensure string
+                period: period.toString(),
                 mode: parseInt(mode),
                 number: finalNum,
                 color: winColors,
@@ -69,53 +64,74 @@ export default async function handler(req, res) {
                 timestamp: new Date()
             });
 
-            // 💰 विनिंग डिस्ट्रीब्यूशन (AUTO-PAYMENT)
-            // यहाँ phoneNumber और phone दोनों चेक कर रहा हूँ ताकि गलती न हो
-            const pendingBets = await Bet.find({ period: period.toString(), mode: parseInt(mode), status: 'pending' });
+            // 3. 💰 ऑटो-पेमेंट लॉजिक (Paisa बांटना)
+            // 'pending' बेट्स ढूंढना (period को String/Number दोनों में चेक कर रहा हूँ)
+            const pendingBets = await Bet.find({ 
+                period: { $in: [period.toString(), period] }, 
+                mode: parseInt(mode), 
+                status: 'pending' 
+            });
+
+            console.log(`🔎 Period ${period}: Found ${pendingBets.length} bets to process.`);
 
             for (let bet of pendingBets) {
                 let isWin = false;
                 let mult = 0;
 
-                // जीत की जाँच (Loose equality == for string/number match)
+                // Win logic (== का इस्तेमाल ताकि String/Number मैच हो जाए)
                 if (bet.betOn == finalNum) { isWin = true; mult = 9; }
                 else if (bet.betOn === winSize) { isWin = true; mult = 2; }
                 else if (winColors.includes(bet.betOn)) {
                     isWin = true;
+                    // Violet logic: 0/5 आने पर Green/Red 1.5x मिलता है, Violet 4.5x
                     mult = (bet.betOn === 'Violet') ? 4.5 : (finalNum === 0 || finalNum === 5 ? 1.5 : 2);
                 }
 
-                const userQuery = { phoneNumber: bet.phoneNumber };
+                // यूजर का फ़ोन नंबर निकालें (तेरा मॉडल phoneNumber यूज़ कर रहा है)
+                const userPhone = bet.phoneNumber || bet.phone;
 
                 if (isWin) {
                     const winAmount = bet.amount * mult;
-                    // ✅ बैलेंस अपडेट
-                    await User.updateOne(userQuery, { $inc: { balance: winAmount } });
-                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount: winAmount, result: finalNum } });
+                    console.log(`✅ Winning: User ${userPhone} won ₹${winAmount}`);
+
+                    // 1. यूजर के बैलेंस में पैसा जोड़ो
+                    await User.updateOne(
+                        { phoneNumber: userPhone }, 
+                        { $inc: { balance: winAmount } }
+                    );
+
+                    // 2. बेट का स्टेटस 'won' करो
+                    await Bet.updateOne(
+                        { _id: bet._id }, 
+                        { $set: { status: 'won', winAmount: winAmount, result: finalNum } }
+                    );
                 } else {
-                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
+                    // हारने वालों का स्टेटस 'lost' करो
+                    await Bet.updateOne(
+                        { _id: bet._id }, 
+                        { $set: { status: 'lost', winAmount: 0, result: finalNum } }
+                    );
                 }
             }
 
             return res.status(200).json({ success: true, number: finalNum });
 
         } catch (e) {
-            console.error("❌ POST Error:", e);
+            console.error("❌ POST Error in history.js:", e);
             return res.status(500).json({ success: false, error: e.message });
         }
     }
 
     // ========================================
-    // GET: FETCH HISTORY (यहीं गड़बड़ थी, इसे फिक्स किया)
+    // GET: FETCH HISTORY
     // ========================================
     if (req.method === 'GET') {
         try {
             const { mode, page = 1, limit = 10 } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
 
-            // डेटाबेस से लेटेस्ट 10 हिस्ट्री निकालना
             const historyData = await Result.find({ mode: parseInt(mode) })
-                .sort({ timestamp: -1 }) // टाइम के हिसाब से उल्टा
+                .sort({ timestamp: -1 }) // ताज़ा रिज़ल्ट सबसे ऊपर
                 .skip(skip)
                 .limit(parseInt(limit))
                 .lean();
@@ -127,7 +143,7 @@ export default async function handler(req, res) {
                 results: historyData.map(i => ({ 
                     p: i.period, 
                     n: i.number, 
-                    c: Array.isArray(i.color) ? i.color : [i.color], 
+                    c: i.color, 
                     s: i.size 
                 })),
                 total,
@@ -137,4 +153,6 @@ export default async function handler(req, res) {
             return res.status(500).json({ success: false, error: e.message });
         }
     }
+
+    return res.status(405).json({ message: 'Method not allowed' });
 }
