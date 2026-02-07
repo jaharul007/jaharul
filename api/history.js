@@ -1,105 +1,173 @@
-import clientPromise from '../lib/mongodb.js';
+import mongoose from 'mongoose';
+import Result from '../models/Result.js';
+import User from '../models/User.js';
+import Bet from '../models/Bet.js';
+const connectDB = async () => {
+    if (mongoose.connections && mongoose.connections[0].readyState) {
+        return;
+    }
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("MongoDB Connected Successfully");
+    } catch (error) {
+        console.error("MongoDB Connection Error:", error);
+    }
+};
 
 export default async function handler(req, res) {
-    // CORS Headers for Frontend Compatibility
+    // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    try {
-        const client = await clientPromise;
-        // जैसा आपने कहा, 'test' डेटाबेस और 'results' कलेक्शन का उपयोग
-        const db = client.db("test"); 
-        const resultsCollection = db.collection("results");
+    await connectDB();
 
-        // --- CASE 1: RESULT SAVE/GENERATE KARNA (POST) ---
-        // यह तब कॉल होगा जब टाइमर 0 होगा या एडमिन रिजल्ट फोर्स करेगा
-        if (req.method === 'POST') {
+    // ========================================
+    // POST: AUTO RESULT GENERATION / ADMIN FORCE
+    // ========================================
+    if (req.method === 'POST') {
+        try {
             const { period, mode, number, isAdmin } = req.body;
 
             if (!period || mode === undefined) {
-                return res.status(400).json({ success: false, message: "Period or Mode missing" });
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Period or Mode missing" 
+                });
             }
 
-            // 1. Check if result already exists for this mode and period
-            const existing = await resultsCollection.findOne({ 
+            // Check if result already exists
+            const existing = await Result.findOne({ 
                 period: period, 
                 mode: parseInt(mode) 
             });
 
-            let finalNum;
-
-            if (isAdmin && number !== undefined) {
-                // अगर एडमिन ने कंट्रोल पैनल से नंबर भेजा है (Force Win)
-                finalNum = parseInt(number);
-            } else if (!existing) {
-                // अगर नया पीरियड है और रिजल्ट नहीं बना, तो रैंडम नंबर (0-9) जनरेट करो
-                finalNum = Math.floor(Math.random() * 10);
-            } else {
-                // अगर रिजल्ट पहले से मौजूद है, तो वही वापस कर दो
+            if (existing) {
                 return res.json({ 
                     success: true, 
                     message: "Result already exists", 
-                    number: existing.number 
+                    number: existing.number,
+                    data: existing
                 });
             }
 
-            // 2. Color और Size Logic (Game Rules के हिसाब से)
+            // Determine result number
+            let finalNum;
+            let isForced = false;
+
+            if (isAdmin && number !== undefined) {
+                // Admin forced result
+                finalNum = parseInt(number);
+                isForced = true;
+            } else {
+                // Auto-generate random result (0-9)
+                finalNum = Math.floor(Math.random() * 10);
+            }
+
+            // Calculate color and size
             const color = (finalNum === 0) ? ['red', 'violet'] : 
                           (finalNum === 5) ? ['green', 'violet'] : 
                           (finalNum % 2 === 0) ? ['red'] : ['green'];
             
             const size = (finalNum >= 5) ? 'Big' : 'Small';
 
-            // 3. Database में Save करना (Upsert ensures no duplicates)
+            // Save result to database
             const resultDoc = {
                 period: period,
                 mode: parseInt(mode),
                 number: finalNum,
                 color: color,
                 size: size,
+                isForced: isForced,
                 timestamp: new Date()
             };
 
-            await resultsCollection.updateOne(
-                { period: period, mode: parseInt(mode) },
-                { $set: resultDoc },
-                { upsert: true }
-            );
+            const savedResult = await Result.create(resultDoc);
+// --- AUTO SETTLEMENT LOGIC ---
+// 1. Is Period aur Mode ke saare Pending bets nikalein
+const pendingBets = await Bet.find({ 
+    period: period, 
+    mode: parseInt(mode), 
+    status: 'pending' 
+});
+
+// 2. Har bet ko check karein aur settle karein
+for (let bet of pendingBets) {
+    let isWin = false;
+    let mult = 0;
+    const userBet = bet.betOn.toLowerCase();
+
+    // Winning Conditions (Same as bet.js)
+    if (userBet == finalNum) { isWin = true; mult = 9; }
+    else if (userBet === size.toLowerCase()) { isWin = true; mult = 2; }
+    else if (color.includes(userBet)) {
+        isWin = true;
+        if (userBet === 'violet') mult = 4.5;
+        else if (finalNum === 0 || finalNum === 5) mult = 1.5;
+        else mult = 2;
+    }
+
+    if (isWin) {
+        const winAmount = bet.amount * mult;
+        // User ka balance badhayein
+        await User.updateOne({ phoneNumber: bet.phone }, { $inc: { balance: winAmount } });
+        // Bet status update karein
+        await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
+    } else {
+        // Haarne wale ka status update karein
+        await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
+    }
+}
+// --- END OF SETTLEMENT ---
+
+            console.log(`✅ Result Generated: Period ${period}, Mode ${mode}, Number ${finalNum}`);
 
             return res.status(200).json({ 
                 success: true, 
-                message: "Result Processed",
-                data: resultDoc 
+                message: isForced ? "Result Forced by Admin" : "Result Auto-Generated",
+                data: savedResult
+            });
+
+        } catch (e) {
+            console.error("❌ History POST Error:", e);
+            return res.status(500).json({ 
+                success: false, 
+                error: e.message 
             });
         }
+    }
 
-        // --- CASE 2: HISTORY LIST DIKHANA (GET) ---
-        // विंगो गेम के नीचे जो हिस्ट्री टेबल होती है उसके लिए
-        if (req.method === 'GET') {
+    // ========================================
+    // GET: FETCH HISTORY FOR ALL MODES
+    // ========================================
+    if (req.method === 'GET') {
+        try {
             const { mode, page = 1, limit = 10 } = req.query;
 
             if (mode === undefined) {
-                return res.status(400).json({ success: false, message: "Mode is required" });
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Mode is required" 
+                });
             }
 
             const pageLimit = parseInt(limit);
             const skip = (parseInt(page) - 1) * pageLimit;
 
-            // सिर्फ उस 'mode' की हिस्ट्री निकालो जो यूजर खेल रहा है (30s, 1m etc.)
-            const historyData = await resultsCollection
+            // Fetch results for specific mode
+            const historyData = await Result
                 .find({ mode: parseInt(mode) })
-                .sort({ period: -1 }) // नया पीरियड सबसे ऊपर (Descending)
+                .sort({ period: -1 }) // Latest first
                 .skip(skip)
                 .limit(pageLimit)
-                .toArray();
+                .lean();
 
-            // Total count for pagination (Optional but good for UI)
-            const total = await resultsCollection.countDocuments({ mode: parseInt(mode) });
+            // Total count for pagination
+            const total = await Result.countDocuments({ mode: parseInt(mode) });
 
-            // Frontend compatibility format (HTML table में दिखाने के लिए)
+            // Format for frontend compatibility
             const formattedData = historyData.map(item => ({
                 p: item.period,      // Period
                 n: item.number,      // Number
@@ -116,10 +184,15 @@ export default async function handler(req, res) {
                 currentPage: parseInt(page),
                 totalPages: Math.ceil(total / pageLimit)
             });
-        }
 
-    } catch (e) {
-        console.error("❌ History API Error:", e);
-        return res.status(500).json({ success: false, error: e.message });
+        } catch (e) {
+            console.error("❌ History GET Error:", e);
+            return res.status(500).json({ 
+                success: false, 
+                error: e.message 
+            });
+        }
     }
+
+    return res.status(405).json({ message: 'Method not allowed' });
 }
