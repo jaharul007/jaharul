@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+limport mongoose from 'mongoose';
 import Result from '../models/Result.js';
 import Bet from '../models/Bet.js';   
 import User from '../models/User.js'; 
@@ -22,9 +22,6 @@ export default async function handler(req, res) {
 
     await connectDB();
 
-    // ========================================
-    // POST: GENERATE RESULT & PAY WINNERS
-    // ========================================
     if (req.method === 'POST') {
         try {
             const { period, mode, number, isAdmin } = req.body;
@@ -35,11 +32,11 @@ export default async function handler(req, res) {
 
             // 1. रिज़ल्ट चेक और सेट करना
             let existing = await Result.findOne({ period: period.toString(), mode: parseInt(mode) });
-
-            if (existing && isAdmin && number !== undefined) {
-                await Result.deleteOne({ period: period.toString(), mode: parseInt(mode) });
-            } else if (existing) {
+            if (existing && !isAdmin) {
                 return res.json({ success: true, message: "Result already exists", number: existing.number });
+            }
+            if (existing && isAdmin) {
+                await Result.deleteOne({ period: period.toString(), mode: parseInt(mode) });
             }
 
             let finalNum;
@@ -54,8 +51,8 @@ export default async function handler(req, res) {
                             (finalNum === 5) ? ['Green', 'Violet'] : 
                             (finalNum % 2 === 0) ? ['Red'] : ['Green'];
 
-            // 2. रिज़ल्ट डेटाबेस में डालना
-            const savedResult = await Result.create({
+            // 2. रिज़ल्ट सेव करना
+            await Result.create({
                 period: period.toString(),
                 mode: parseInt(mode),
                 number: finalNum,
@@ -64,88 +61,76 @@ export default async function handler(req, res) {
                 timestamp: new Date()
             });
 
-            // 3. 💰 ऑटो-पेमेंट लॉजिक (Paisa बांटना)
-            // 'pending' बेट्स ढूंढना (period को String/Number दोनों में चेक कर रहा हूँ)
+            // 3. 💰 ऑटो-पेमेंट लॉजिक
             const pendingBets = await Bet.find({ 
-                period: { $in: [period.toString(), period] }, 
+                period: period.toString(), 
                 mode: parseInt(mode), 
                 status: 'pending' 
             });
 
-            console.log(`🔎 Period ${period}: Found ${pendingBets.length} bets to process.`);
+            console.log(`🔎 Period ${period}: Found ${pendingBets.length} bets.`);
 
             for (let bet of pendingBets) {
                 let isWin = false;
                 let mult = 0;
 
-                // Win logic (== का इस्तेमाल ताकि String/Number मैच हो जाए)
-                if (bet.betOn == finalNum) { isWin = true; mult = 9; }
-                else if (bet.betOn === winSize) { isWin = true; mult = 2; }
-                else if (winColors.includes(bet.betOn)) {
+                // ✅ सेफ्टी: 'betOn' और 'beton' दोनों चेक करेगा ताकि कोड कभी फेल न हो
+                const userChoice = bet.betOn || bet.beton;
+
+                if (userChoice == finalNum) { isWin = true; mult = 9; }
+                else if (userChoice === winSize) { isWin = true; mult = 2; }
+                else if (winColors.includes(userChoice)) {
                     isWin = true;
-                    // Violet logic: 0/5 आने पर Green/Red 1.5x मिलता है, Violet 4.5x
-                    mult = (bet.betOn === 'Violet') ? 4.5 : (finalNum === 0 || finalNum === 5 ? 1.5 : 2);
+                    mult = (userChoice === 'Violet') ? 4.5 : (finalNum === 0 || finalNum === 5 ? 1.5 : 2);
                 }
 
-                // यूजर का फ़ोन नंबर निकालें (तेरा मॉडल phoneNumber यूज़ कर रहा है)
-                const userPhone = bet.phoneNumber || bet.phone;
+                // ✅ नंबर को String में बदल कर Trim करना (स्पेस की समस्या खत्म)
+                const userPhone = (bet.phoneNumber || bet.phone).toString().trim();
 
                 if (isWin) {
                     const winAmount = bet.amount * mult;
-                    console.log(`✅ Winning: User ${userPhone} won ₹${winAmount}`);
-
-                    // 1. यूजर के बैलेंस में पैसा जोड़ो
-                    await User.updateOne(
+                    
+                    // 💸 यहाँ पैसा बढ़ेगा (updateOne की जगह findOneAndUpdate use किया ताकि Log मिल सके)
+                    const updated = await User.findOneAndUpdate(
                         { phoneNumber: userPhone }, 
-                        { $inc: { balance: winAmount } }
+                        { $inc: { balance: winAmount } },
+                        { new: true }
                     );
 
-                    // 2. बेट का स्टेटस 'won' करो
-                    await Bet.updateOne(
-                        { _id: bet._id }, 
-                        { $set: { status: 'won', winAmount: winAmount, result: finalNum } }
-                    );
+                    if (updated) {
+                        console.log(`✅ Paid ₹${winAmount} to ${userPhone}. New Bal: ${updated.balance}`);
+                    } else {
+                        console.log(`❌ User NOT FOUND: Could not pay ${userPhone}`);
+                    }
+
+                    await Bet.updateOne({ _id: bet._id }, { 
+                        $set: { status: 'won', winAmount: winAmount, result: finalNum } 
+                    });
                 } else {
-                    // हारने वालों का स्टेटस 'lost' करो
-                    await Bet.updateOne(
-                        { _id: bet._id }, 
-                        { $set: { status: 'lost', winAmount: 0, result: finalNum } }
-                    );
+                    await Bet.updateOne({ _id: bet._id }, { 
+                        $set: { status: 'lost', winAmount: 0, result: finalNum } 
+                    });
                 }
             }
 
             return res.status(200).json({ success: true, number: finalNum });
 
         } catch (e) {
-            console.error("❌ POST Error in history.js:", e);
+            console.error("❌ POST Error:", e);
             return res.status(500).json({ success: false, error: e.message });
         }
     }
 
-    // ========================================
-    // GET: FETCH HISTORY
-    // ========================================
+    // GET logic remains same...
     if (req.method === 'GET') {
         try {
             const { mode, page = 1, limit = 10 } = req.query;
             const skip = (parseInt(page) - 1) * parseInt(limit);
-
-            const historyData = await Result.find({ mode: parseInt(mode) })
-                .sort({ timestamp: -1 }) // ताज़ा रिज़ल्ट सबसे ऊपर
-                .skip(skip)
-                .limit(parseInt(limit))
-                .lean();
-
+            const historyData = await Result.find({ mode: parseInt(mode) }).sort({ timestamp: -1 }).skip(skip).limit(parseInt(limit)).lean();
             const total = await Result.countDocuments({ mode: parseInt(mode) });
-
             return res.status(200).json({
                 success: true,
-                results: historyData.map(i => ({ 
-                    p: i.period, 
-                    n: i.number, 
-                    c: i.color, 
-                    s: i.size 
-                })),
+                results: historyData.map(i => ({ p: i.period, n: i.number, c: i.color, s: i.size })),
                 total,
                 totalPages: Math.ceil(total / parseInt(limit))
             });
@@ -153,6 +138,4 @@ export default async function handler(req, res) {
             return res.status(500).json({ success: false, error: e.message });
         }
     }
-
-    return res.status(405).json({ message: 'Method not allowed' });
 }
