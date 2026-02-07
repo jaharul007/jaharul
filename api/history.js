@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import Result from '../models/Result.js';
+import Bet from '../models/Bet.js';   // ✅ सही जगह (Top)
+import User from '../models/User.js'; // ✅ सही जगह (Top)
 
 const connectDB = async () => {
     if (mongoose.connections && mongoose.connections[0].readyState) {
@@ -23,106 +25,76 @@ export default async function handler(req, res) {
     await connectDB();
 
     // ========================================
-    // POST: GENERATE OR FORCE RESULT
+    // POST: GENERATE RESULT & PAY WINNERS
     // ========================================
     if (req.method === 'POST') {
         try {
             const { period, mode, number, isAdmin } = req.body;
 
             if (!period || mode === undefined) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Period or Mode missing" 
-                });
+                return res.status(400).json({ success: false, message: "Period or Mode missing" });
             }
 
-            // Check if result already exists
-            const existing = await Result.findOne({ 
-                period: period, 
-                mode: parseInt(mode) 
-            });
+            const existing = await Result.findOne({ period: period, mode: parseInt(mode) });
 
-            // ✅ FIXED: If admin is forcing, DELETE old result first
             if (existing && isAdmin && number !== undefined) {
-                console.log(`🔧 Admin forcing new result, deleting old: ${existing.number}`);
-                await Result.deleteOne({ 
-                    period: period, 
-                    mode: parseInt(mode) 
-                });
+                await Result.deleteOne({ period: period, mode: parseInt(mode) });
             } else if (existing) {
-                // Normal case - result exists and not forcing
-                return res.json({ 
-                    success: true, 
-                    message: "Result already exists", 
-                    number: existing.number,
-                    data: existing
-                });
+                return res.json({ success: true, message: "Result already exists", number: existing.number });
             }
 
-            // Determine result number
             let finalNum;
-            let isForced = false;
-
-            // ✅ FIXED: Admin force logic
             if (isAdmin === true && number !== undefined && number !== null && number !== '') {
                 finalNum = parseInt(number);
-                isForced = true;
-                console.log(`🔧 ADMIN FORCING RESULT: ${finalNum}`);
             } else {
                 finalNum = Math.floor(Math.random() * 10);
-                console.log(`🎰 AUTO RESULT: ${finalNum}`);
             }
 
-            // Validate number
-            if (finalNum < 0 || finalNum > 9 || isNaN(finalNum)) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Invalid number (must be 0-9)" 
-                });
-            }
+            // विनिंग पैरामीटर्स कैलकुलेट करें
+            const winSize = (finalNum >= 5) ? 'Big' : 'Small';
+            let winColors = (finalNum === 0) ? ['Red', 'Violet'] : 
+                            (finalNum === 5) ? ['Green', 'Violet'] : 
+                            (finalNum % 2 === 0) ? ['Red'] : ['Green'];
 
-            // Calculate color and size
-            let color;
-            if (finalNum === 0) {
-                color = ['red', 'violet'];
-            } else if (finalNum === 5) {
-                color = ['green', 'violet'];
-            } else if (finalNum % 2 === 0) {
-                color = ['red'];
-            } else {
-                color = ['green'];
-            }
-            
-            const size = (finalNum >= 5) ? 'Big' : 'Small';
-
-            // Save result
-            const resultDoc = {
-                period: period,
+            // रिज़ल्ट सेव करें
+            const savedResult = await Result.create({
+                period,
                 mode: parseInt(mode),
                 number: finalNum,
-                color: color,
-                size: size,
-                isForced: isForced,
+                color: winColors,
+                size: winSize,
                 timestamp: new Date()
-            };
-
-            const savedResult = await Result.create(resultDoc);
-
-            console.log(`✅ Result saved: Period ${period}, Number ${finalNum}, Forced: ${isForced}`);
-
-            return res.status(200).json({ 
-                success: true, 
-                message: isForced ? "Admin result saved" : "Auto result generated",
-                number: finalNum,
-                data: savedResult
             });
+
+            // 💰 विनिंग डिस्ट्रीब्यूशन (AUTO-PAYMENT)
+            const pendingBets = await Bet.find({ period, mode: parseInt(mode), status: 'pending' });
+
+            for (let bet of pendingBets) {
+                let isWin = false;
+                let mult = 0;
+
+                // जीत की जाँच
+                if (bet.betOn == finalNum) { isWin = true; mult = 9; }
+                else if (bet.betOn === winSize) { isWin = true; mult = 2; }
+                else if (winColors.includes(bet.betOn)) {
+                    isWin = true;
+                    mult = (bet.betOn === 'Violet') ? 4.5 : (finalNum === 0 || finalNum === 5 ? 1.5 : 2);
+                }
+
+                if (isWin) {
+                    const winAmount = bet.amount * mult;
+                    await User.updateOne({ phoneNumber: bet.phoneNumber }, { $inc: { balance: winAmount } });
+                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
+                } else {
+                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
+                }
+            }
+
+            return res.status(200).json({ success: true, number: finalNum, data: savedResult });
 
         } catch (e) {
             console.error("❌ POST Error:", e);
-            return res.status(500).json({ 
-                success: false, 
-                error: e.message 
-            });
+            return res.status(500).json({ success: false, error: e.message });
         }
     }
 
@@ -132,49 +104,21 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         try {
             const { mode, page = 1, limit = 10 } = req.query;
+            const skip = (parseInt(page) - 1) * parseInt(limit);
 
-            if (mode === undefined) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Mode is required" 
-                });
-            }
-
-            const pageLimit = parseInt(limit);
-            const skip = (parseInt(page) - 1) * pageLimit;
-
-            const historyData = await Result
-                .find({ mode: parseInt(mode) })
-                .sort({ period: -1 })
-                .skip(skip)
-                .limit(pageLimit)
-                .lean();
+            const historyData = await Result.find({ mode: parseInt(mode) })
+                .sort({ period: -1 }).skip(skip).limit(parseInt(limit)).lean();
 
             const total = await Result.countDocuments({ mode: parseInt(mode) });
 
-            const formattedData = historyData.map(item => ({
-                p: item.period,
-                n: item.number,
-                c: item.color,
-                s: item.size,
-                t: item.timestamp
-            }));
-
             return res.status(200).json({
                 success: true,
-                mode: parseInt(mode),
-                results: formattedData,
-                total: total,
-                currentPage: parseInt(page),
-                totalPages: Math.ceil(total / pageLimit)
+                results: historyData.map(i => ({ p: i.period, n: i.number, c: i.color, s: i.size, t: i.timestamp })),
+                total,
+                totalPages: Math.ceil(total / parseInt(limit))
             });
-
         } catch (e) {
-            console.error("❌ GET Error:", e);
-            return res.status(500).json({ 
-                success: false, 
-                error: e.message 
-            });
+            return res.status(500).json({ success: false, error: e.message });
         }
     }
 
