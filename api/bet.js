@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Bet from '../models/Bet.js';
-import Result from '../models/Result.js';
 
 const connectDB = async () => {
     if (mongoose.connections && mongoose.connections[0].readyState) return;
@@ -14,6 +13,7 @@ const connectDB = async () => {
 };
 
 export default async function handler(req, res) {
+    // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -23,19 +23,18 @@ export default async function handler(req, res) {
     await connectDB();
 
     // ========================================
-    // GET: स्टेटस चेक करने के लिए
+    // GET: यूजर की बेट का स्टेटस चेक करने के लिए
     // ========================================
     if (req.method === 'GET') {
         const { phone, period, mode } = req.query;
 
         try {
             if (phone && period) {
-                // यहाँ period को String में ढूंढना जरूरी है
                 const bet = await Bet.findOne({ 
-                    phoneNumber: phone, 
+                    phoneNumber: phone.toString().trim(), 
                     period: period.toString(), 
                     mode: parseInt(mode)
-                }).sort({ timestamp: -1 }); // ताज़ा बेट पहले
+                }).sort({ timestamp: -1 });
 
                 if (!bet) return res.json({ status: 'no_bet' });
 
@@ -51,34 +50,41 @@ export default async function handler(req, res) {
     }
 
     // ========================================
-    // POST: बेट लगाना और पैसा काटना
+    // POST: बेट लगाना और बैलेंस काटना
     // ========================================
     if (req.method === 'POST') {
         try {
             const { phone, period, mode, betOn, amount, betType, multiplier } = req.body;
 
+            // बेसिक वैलिडेशन
             if (!phone || !period || !betOn || !amount) {
                 return res.status(400).json({ success: false, message: 'Missing fields' });
             }
 
             const betAmount = parseFloat(amount);
-            const user = await User.findOne({ phoneNumber: phone });
-            
-            if (!user) return res.status(404).json({ success: false, message: 'User not found!' });
-            if (user.balance < betAmount) return res.status(400).json({ success: false, message: 'Insufficient balance!' });
+            const cleanPhone = phone.toString().trim();
 
-            // 1. बैलेंस काटो
-            await User.updateOne(
-                { phoneNumber: phone },
-                { $inc: { balance: -betAmount } }
+            // 1. बैलेंस चेक करो और काटो (Atomic Update - सबसे सुरक्षित तरीका)
+            // यह तभी पैसा काटेगा जब यूजर के पास पर्याप्त बैलेंस होगा
+            const updatedUser = await User.findOneAndUpdate(
+                { phoneNumber: cleanPhone, balance: { $gte: betAmount } },
+                { $inc: { balance: -betAmount } },
+                { new: true }
             );
+            
+            if (!updatedUser) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Insufficient balance or User not found!' 
+                });
+            }
 
-            // 2. बेट सेव करो (period को String बना कर सेव करें ताकि history.js उसे ढूंढ सके)
-            await Bet.create({
-                phoneNumber: phone,
+            // 2. बेट सेव करो (बड़े 'O' यानी betOn के साथ)
+            const newBet = await Bet.create({
+                phoneNumber: cleanPhone,
                 period: period.toString(), 
                 mode: parseInt(mode),
-                betOn: betOn.toString(),
+                betOn: betOn.toString(), // ✅ तेरा 'O' बड़ा है यहाँ
                 amount: betAmount,
                 status: 'pending',
                 betType: betType || 'number',
@@ -86,9 +92,11 @@ export default async function handler(req, res) {
                 timestamp: new Date()
             });
 
+            console.log(`✅ Bet Placed: ${cleanPhone} bet ₹${betAmount} on ${betOn}`);
+
             return res.status(200).json({ 
                 success: true, 
-                newBalance: user.balance - betAmount,
+                newBalance: updatedUser.balance,
                 message: 'Bet placed successfully'
             });
 
