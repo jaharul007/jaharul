@@ -1,66 +1,56 @@
 import mongoose from 'mongoose';
+import Result from '../models/Result.js';
+import User from '../models/User.js'; 
 import Bet from '../models/Bet.js';
 
-const connectDB = async () => {
-    if (mongoose.connections && mongoose.connections[0].readyState) {
-        return;
-    }
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log("MongoDB Connected Successfully");
-    } catch (error) {
-        console.error("MongoDB Connection Error:", error);
-    }
-};
-
 export default async function handler(req, res) {
-    // CORS Headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (mongoose.connections[0].readyState !== 1) await mongoose.connect(process.env.MONGO_URI);
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-
-    await connectDB();
-
-    if (req.method === 'GET') {
-        const { phone, mode, limit = 50 } = req.query;
-
-        if (!phone) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Phone number required' 
-            });
-        }
-
+    if (req.method === 'POST') {
         try {
-            const query = { phone };
+            const { period, mode, number, isAdmin } = req.body;
+
+            // 1. रिजल्ट पहले से है या नहीं
+            const existing = await Result.findOne({ period, mode: parseInt(mode) });
+            if (existing) return res.json({ success: true, message: "Already Settled" });
+
+            // 2. एडमिन नंबर या रैंडम
+            let finalNum = (isAdmin && number !== undefined) ? parseInt(number) : Math.floor(Math.random() * 10);
             
-            // If mode specified, filter by mode
-            if (mode) {
-                query.mode = parseInt(mode);
+            const color = (finalNum === 0) ? ['red', 'violet'] : (finalNum === 5) ? ['green', 'violet'] : (finalNum % 2 === 0) ? ['red'] : ['green'];
+            const size = (finalNum >= 5) ? 'Big' : 'Small';
+
+            // 3. रिजल्ट सेव करें
+            const savedResult = await Result.create({
+                period, mode: parseInt(mode), number: finalNum, color, size, isForced: isAdmin || false
+            });
+
+            // 4. पैसा बाँटना (Settlement)
+            const pendingBets = await Bet.find({ period, mode: parseInt(mode), status: 'pending' });
+
+            for (let bet of pendingBets) {
+                let isWin = false;
+                let mult = 0;
+                const userChoice = bet.betOn.toLowerCase();
+
+                if (userChoice == finalNum.toString()) { isWin = true; mult = 9; }
+                else if (userChoice === size.toLowerCase()) { isWin = true; mult = 2; }
+                else if (color.includes(userChoice)) {
+                    isWin = true;
+                    mult = (userChoice === 'violet') ? 4.5 : (finalNum === 0 || finalNum === 5) ? 1.5 : 2;
+                }
+
+                if (isWin) {
+                    const winAmount = bet.amount * mult;
+                    // बैलेंस अपडेट (User model में phoneNumber ही होना चाहिए)
+                    await User.updateOne({ phoneNumber: bet.phone }, { $inc: { balance: winAmount } });
+                    // बेट अपडेट
+                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
+                } else {
+                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
+                }
             }
-
-            const userBets = await Bet
-                .find(query)
-                .sort({ timestamp: -1 })
-                .limit(parseInt(limit))
-                .lean();
-
-            return res.json({
-                success: true,
-                bets: userBets,
-                count: userBets.length
-            });
-
-        } catch (e) {
-            console.error("My History Error:", e);
-            return res.status(500).json({ 
-                success: false, 
-                error: e.message 
-            });
-        }
+            return res.status(200).json({ success: true, data: savedResult });
+        } catch (e) { return res.status(500).json({ error: e.message }); }
     }
-
-    return res.status(405).json({ message: 'Method not allowed' });
 }
