@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import Result from '../models/Result.js';
-import User from '../models/User.js';
+import User from '../models/User.js'; 
 import Bet from '../models/Bet.js';
 const connectDB = async () => {
     if (mongoose.connections && mongoose.connections[0].readyState) {
@@ -31,76 +31,60 @@ export default async function handler(req, res) {
         try {
             const { period, mode, number, isAdmin } = req.body;
 
-                        if (!period || mode === undefined) {
-                return res.status(400).json({ success: false, message: "Period or Mode missing" });
+            if (!period || mode === undefined) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Period or Mode missing" 
+                });
             }
 
-            // पहले चेक करें कि क्या रिजल्ट मौजूद है
-            const existing = await Result.findOne({ period: period, mode: parseInt(mode) });
+            // Check if result already exists
+            const existing = await Result.findOne({ 
+                period: period, 
+                mode: parseInt(mode) 
+            });
 
-            // अगर रिजल्ट है और आप एडमिन नहीं हैं, तो पुराना ही दिखाओ
-            if (existing && !isAdmin) {
-                return res.json({ success: true, message: "Result already exists", number: existing.number });
+            if (existing) {
+                return res.json({ 
+                    success: true, 
+                    message: "Result already exists", 
+                    number: existing.number,
+                    data: existing
+                });
             }
 
-            // नंबर तय करें (एडमिन वाला या रैंडम)
-            let finalNum = (isAdmin && number !== undefined) ? parseInt(number) : Math.floor(Math.random() * 10);
-            let isForced = !!isAdmin;
+            // Determine result number
+            let finalNum;
+            let isForced = false;
 
+            if (isAdmin && number !== undefined) {
+                // Admin forced result
+                finalNum = parseInt(number);
+                isForced = true;
+            } else {
+                // Auto-generate random result (0-9)
+                finalNum = Math.floor(Math.random() * 10);
+            }
+
+            // Calculate color and size
             const color = (finalNum === 0) ? ['red', 'violet'] : 
                           (finalNum === 5) ? ['green', 'violet'] : 
                           (finalNum % 2 === 0) ? ['red'] : ['green'];
+            
             const size = (finalNum >= 5) ? 'Big' : 'Small';
 
+            // Save result to database
             const resultDoc = {
-                period, mode: parseInt(mode), number: finalNum, color, size, isForced, timestamp: new Date()
+                period: period,
+                mode: parseInt(mode),
+                number: finalNum,
+                color: color,
+                size: size,
+                isForced: isForced,
+                timestamp: new Date()
             };
 
-            // अपडेट या क्रिएट करने का लॉजिक
-            let savedResult;
-            if (existing && isAdmin) {
-                savedResult = await Result.findOneAndUpdate({ period, mode: parseInt(mode) }, resultDoc, { new: true });
-            } else {
-                savedResult = await Result.create(resultDoc);
-            }
-
-// 1. Is Period aur Mode ke saare Pending bets nikalein
-const pendingBets = await Bet.find({ 
-    period: period, 
-    mode: parseInt(mode), 
-    status: 'pending' 
-});
-
-// 2. Har bet ko check karein aur settle karein
-for (let bet of pendingBets) {
-    let isWin = false;
-    let mult = 0;
-    const userBet = bet.betOn.toLowerCase();
-
-    // Winning Conditions (Same as bet.js)
-    if (userBet == finalNum) { isWin = true; mult = 9; }
-    else if (userBet === size.toLowerCase()) { isWin = true; mult = 2; }
-    else if (color.includes(userBet)) {
-        isWin = true;
-        if (userBet === 'violet') mult = 4.5;
-        else if (finalNum === 0 || finalNum === 5) mult = 1.5;
-        else mult = 2;
-    }
-
-        if (isWin) {
-        const winAmount = bet.amount * mult;
-        
-        // 1. यहाँ User के लिए 'phoneNumber' और Bet से 'phone' उठाना है
-        await User.updateOne({ phoneNumber: bet.phone }, { $inc: { balance: winAmount } });
-        
-        // 2. Bet स्टेटस अपडेट
-        await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
-    } else {
-        // हारने वाले के लिए
-        await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
-    }
-
-// --- END OF SETTLEMENT ---
+            const savedResult = await Result.create(resultDoc);
 
             console.log(`✅ Result Generated: Period ${period}, Mode ${mode}, Number ${finalNum}`);
 
