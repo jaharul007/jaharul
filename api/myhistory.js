@@ -1,4 +1,4 @@
-Import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import Bet from '../models/Bet.js';
 
 const connectDB = async () => {
@@ -7,14 +7,13 @@ const connectDB = async () => {
     }
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log("MongoDB Connected Successfully");
+        console.log("✅ MongoDB Connected");
     } catch (error) {
-        console.error("MongoDB Connection Error:", error);
+        console.error("❌ MongoDB Error:", error);
     }
 };
 
 export default async function handler(req, res) {
-    // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -34,9 +33,9 @@ export default async function handler(req, res) {
         }
 
         try {
-            const query = { phone };
+            // ✅ CHANGED: phone → phoneNumber
+            const query = { phoneNumber: phone };
             
-            // If mode specified, filter by mode
             if (mode) {
                 query.mode = parseInt(mode);
             }
@@ -54,7 +53,7 @@ export default async function handler(req, res) {
             });
 
         } catch (e) {
-            console.error("My History Error:", e);
+            console.error("❌ My History Error:", e);
             return res.status(500).json({ 
                 success: false, 
                 error: e.message 
