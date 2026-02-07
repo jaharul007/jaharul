@@ -4,9 +4,7 @@ import Bet from '../models/Bet.js';
 import Result from '../models/Result.js';
 
 const connectDB = async () => {
-    if (mongoose.connections && mongoose.connections[0].readyState) {
-        return;
-    }
+    if (mongoose.connections && mongoose.connections[0].readyState) return;
     try {
         await mongoose.connect(process.env.MONGO_URI);
         console.log("✅ MongoDB Connected");
@@ -25,88 +23,77 @@ export default async function handler(req, res) {
     await connectDB();
 
     // ========================================
-    // GET: सिर्फ स्टेटस चेक करने के लिए (नो विनिंग लॉजिक)
+    // GET: स्टेटस चेक करने के लिए
     // ========================================
     if (req.method === 'GET') {
         const { phone, period, mode } = req.query;
 
         try {
             if (phone && period) {
-                // सीधे डेटाबेस से स्टेटस उठाओ (क्योंकि history.js इसे अपडेट कर चुका होगा)
+                // यहाँ period को String में ढूंढना जरूरी है
                 const bet = await Bet.findOne({ 
                     phoneNumber: phone, 
-                    period, 
+                    period: period.toString(), 
                     mode: parseInt(mode)
-                });
+                }).sort({ timestamp: -1 }); // ताज़ा बेट पहले
 
-                if (!bet) {
-                    return res.json({ status: 'no_bet' });
-                }
+                if (!bet) return res.json({ status: 'no_bet' });
 
                 return res.json({ 
-                    status: bet.status, // 'pending', 'won', or 'lost'
+                    status: bet.status, 
                     winAmount: bet.winAmount || 0,
                     resultNumber: bet.result 
                 });
             }
-
-            // एडमिन के लिए समरी (अगर जरुरत हो)
-            if (period && mode && !phone) {
-                const pendingBets = await Bet.find({ period, mode: parseInt(mode) }).lean();
-                return res.json({ success: true, bets: pendingBets });
-            }
-
         } catch (e) {
             return res.status(500).json({ error: e.message });
         }
     }
 
     // ========================================
-    // POST: सिर्फ पैसा काटना और बेट लगाना
+    // POST: बेट लगाना और पैसा काटना
     // ========================================
     if (req.method === 'POST') {
         try {
             const { phone, period, mode, betOn, amount, betType, multiplier } = req.body;
 
-            if (phone && period && betOn && amount) {
-                const betAmount = parseFloat(amount);
-                const user = await User.findOne({ phoneNumber: phone });
-                
-                if (!user) return res.status(404).json({ success: false, message: 'User not found!' });
-
-                if (user.balance < betAmount) {
-                    return res.status(400).json({ success: false, message: 'Insufficient balance!' });
-                }
-
-                // 1. बैलेंस काटो
-                await User.updateOne(
-                    { phoneNumber: phone },
-                    { $inc: { balance: -betAmount } }
-                );
-
-                // 2. बेट सेव करो (status 'pending' रहेगा)
-                await Bet.create({
-                    phoneNumber: phone,
-                    period,
-                    mode: parseInt(mode),
-                    betOn: String(betOn),
-                    amount: betAmount,
-                    status: 'pending',
-                    betType: betType || 'number',
-                    multiplier: multiplier || 1,
-                    timestamp: new Date()
-                });
-
-                const updatedUser = await User.findOne({ phoneNumber: phone });
-
-                return res.status(200).json({ 
-                    success: true, 
-                    newBalance: updatedUser.balance,
-                    message: 'Bet placed successfully'
-                });
+            if (!phone || !period || !betOn || !amount) {
+                return res.status(400).json({ success: false, message: 'Missing fields' });
             }
 
+            const betAmount = parseFloat(amount);
+            const user = await User.findOne({ phoneNumber: phone });
+            
+            if (!user) return res.status(404).json({ success: false, message: 'User not found!' });
+            if (user.balance < betAmount) return res.status(400).json({ success: false, message: 'Insufficient balance!' });
+
+            // 1. बैलेंस काटो
+            await User.updateOne(
+                { phoneNumber: phone },
+                { $inc: { balance: -betAmount } }
+            );
+
+            // 2. बेट सेव करो (period को String बना कर सेव करें ताकि history.js उसे ढूंढ सके)
+            await Bet.create({
+                phoneNumber: phone,
+                period: period.toString(), 
+                mode: parseInt(mode),
+                betOn: betOn.toString(),
+                amount: betAmount,
+                status: 'pending',
+                betType: betType || 'number',
+                multiplier: multiplier || 1,
+                timestamp: new Date()
+            });
+
+            return res.status(200).json({ 
+                success: true, 
+                newBalance: user.balance - betAmount,
+                message: 'Bet placed successfully'
+            });
+
         } catch (e) {
+            console.error("❌ Bet Error:", e);
             return res.status(500).json({ error: e.message });
         }
     }
