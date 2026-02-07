@@ -1,96 +1,182 @@
 import mongoose from 'mongoose';
 import Result from '../models/Result.js';
-import User from '../models/User.js'; 
-import Bet from '../models/Bet.js';
 
 const connectDB = async () => {
-    if (mongoose.connections && mongoose.connections[0].readyState) return;
-    await mongoose.connect(process.env.MONGO_URI);
+    if (mongoose.connections && mongoose.connections[0].readyState) {
+        return;
+    }
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("✅ MongoDB Connected");
+    } catch (error) {
+        console.error("❌ MongoDB Error:", error);
+    }
 };
 
 export default async function handler(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
     await connectDB();
 
+    // ========================================
+    // POST: GENERATE OR FORCE RESULT
+    // ========================================
     if (req.method === 'POST') {
         try {
             const { period, mode, number, isAdmin } = req.body;
-            let finalNum;
 
-            const existingResult = await Result.findOne({ period, mode: parseInt(mode) });
-
-            // अगर रिजल्ट है और एडमिन नहीं है, तो वही पुराना भेज दो
-            if (existingResult && !isAdmin) {
-                return res.json({ success: true, message: "Result already exists", data: existingResult });
-            }
-
-            // 1. नंबर तय करना
-            finalNum = (isAdmin && number !== undefined) ? parseInt(number) : Math.floor(Math.random() * 10);
-
-            const color = (finalNum === 0) ? ['red', 'violet'] : 
-                          (finalNum === 5) ? ['green', 'violet'] : 
-                          (finalNum % 2 === 0) ? ['red'] : ['green'];
-            const size = (finalNum >= 5) ? 'Big' : 'Small';
-
-            // 2. रिजल्ट सेव या अपडेट (एडमिन के लिए)
-            let savedResult;
-            if (isAdmin && existingResult) {
-                savedResult = await Result.findOneAndUpdate(
-                    { period, mode: parseInt(mode) },
-                    { number: finalNum, color, size, isForced: true },
-                    { new: true }
-                );
-            } else {
-                savedResult = await Result.create({
-                    period, mode: parseInt(mode), number: finalNum,
-                    color, size, isForced: isAdmin || false, timestamp: new Date()
+            if (!period || mode === undefined) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Period or Mode missing" 
                 });
             }
 
-            // 3. Payout Logic (जड़ यही थी)
-            const bets = await Bet.find({ period, mode: parseInt(mode) });
+            // Check if result already exists
+            const existing = await Result.findOne({ 
+                period: period, 
+                mode: parseInt(mode) 
+            });
 
-            for (let bet of bets) {
-                let isWin = false;
-                let mult = 0;
-                const betOn = bet.betOn.toLowerCase();
-
-                if (betOn === finalNum.toString()) { isWin = true; mult = 9; } 
-                else if (betOn === size.toLowerCase()) { isWin = true; mult = 2; } 
-                else if (color.includes(betOn)) { 
-                    isWin = true;
-                    mult = (betOn === 'violet') ? 4.5 : (finalNum === 0 || finalNum === 5) ? 1.5 : 2;
-                }
-
-                if (isWin) {
-                    const winAmount = bet.amount * mult;
-                    
-                    // अगर एडमिन ने नंबर बदला है, तो सिर्फ उन लोगों को पैसा मिलेगा जिनका स्टेटस अभी पेंडिंग था
-                    // या जो अब नए नंबर से जीत रहे हैं।
-                    if (bet.status !== 'won') {
-                        // FIX: User model use 'phoneNumber', Bet model use 'phone'
-                        await User.findOneAndUpdate(
-                            { phoneNumber: bet.phone }, 
-                            { $inc: { balance: winAmount } }
-                        );
-                    }
-                    
-                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'won', winAmount, result: finalNum } });
-                } else {
-                    // अगर हार गया तो स्टेटस 'lost'
-                    await Bet.updateOne({ _id: bet._id }, { $set: { status: 'lost', winAmount: 0, result: finalNum } });
-                }
+            // ✅ FIXED: If admin is forcing, DELETE old result first
+            if (existing && isAdmin && number !== undefined) {
+                console.log(`🔧 Admin forcing new result, deleting old: ${existing.number}`);
+                await Result.deleteOne({ 
+                    period: period, 
+                    mode: parseInt(mode) 
+                });
+            } else if (existing) {
+                // Normal case - result exists and not forcing
+                return res.json({ 
+                    success: true, 
+                    message: "Result already exists", 
+                    number: existing.number,
+                    data: existing
+                });
             }
 
-            return res.status(200).json({ success: true, message: "Settlement Done", data: savedResult });
+            // Determine result number
+            let finalNum;
+            let isForced = false;
+
+            // ✅ FIXED: Admin force logic
+            if (isAdmin === true && number !== undefined && number !== null && number !== '') {
+                finalNum = parseInt(number);
+                isForced = true;
+                console.log(`🔧 ADMIN FORCING RESULT: ${finalNum}`);
+            } else {
+                finalNum = Math.floor(Math.random() * 10);
+                console.log(`🎰 AUTO RESULT: ${finalNum}`);
+            }
+
+            // Validate number
+            if (finalNum < 0 || finalNum > 9 || isNaN(finalNum)) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Invalid number (must be 0-9)" 
+                });
+            }
+
+            // Calculate color and size
+            let color;
+            if (finalNum === 0) {
+                color = ['red', 'violet'];
+            } else if (finalNum === 5) {
+                color = ['green', 'violet'];
+            } else if (finalNum % 2 === 0) {
+                color = ['red'];
+            } else {
+                color = ['green'];
+            }
+            
+            const size = (finalNum >= 5) ? 'Big' : 'Small';
+
+            // Save result
+            const resultDoc = {
+                period: period,
+                mode: parseInt(mode),
+                number: finalNum,
+                color: color,
+                size: size,
+                isForced: isForced,
+                timestamp: new Date()
+            };
+
+            const savedResult = await Result.create(resultDoc);
+
+            console.log(`✅ Result saved: Period ${period}, Number ${finalNum}, Forced: ${isForced}`);
+
+            return res.status(200).json({ 
+                success: true, 
+                message: isForced ? "Admin result saved" : "Auto result generated",
+                number: finalNum,
+                data: savedResult
+            });
+
         } catch (e) {
-            return res.status(500).json({ success: false, error: e.message });
+            console.error("❌ POST Error:", e);
+            return res.status(500).json({ 
+                success: false, 
+                error: e.message 
+            });
         }
     }
 
-    // GET Request (History Fetching)
+    // ========================================
+    // GET: FETCH HISTORY
+    // ========================================
     if (req.method === 'GET') {
-        const { mode } = req.query;
-        const historyData = await Result.find({ mode: parseInt(mode) }).sort({ period: -1 }).limit(10).lean();
-        return res.json({ success: true, results: historyData.map(item => ({ p: item.period, n: item.number, c: item.color, s: item.size })) });
+        try {
+            const { mode, page = 1, limit = 10 } = req.query;
+
+            if (mode === undefined) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Mode is required" 
+                });
+            }
+
+            const pageLimit = parseInt(limit);
+            const skip = (parseInt(page) - 1) * pageLimit;
+
+            const historyData = await Result
+                .find({ mode: parseInt(mode) })
+                .sort({ period: -1 })
+                .skip(skip)
+                .limit(pageLimit)
+                .lean();
+
+            const total = await Result.countDocuments({ mode: parseInt(mode) });
+
+            const formattedData = historyData.map(item => ({
+                p: item.period,
+                n: item.number,
+                c: item.color,
+                s: item.size,
+                t: item.timestamp
+            }));
+
+            return res.status(200).json({
+                success: true,
+                mode: parseInt(mode),
+                results: formattedData,
+                total: total,
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / pageLimit)
+            });
+
+        } catch (e) {
+            console.error("❌ GET Error:", e);
+            return res.status(500).json({ 
+                success: false, 
+                error: e.message 
+            });
+        }
     }
+
+    return res.status(405).json({ message: 'Method not allowed' });
 }
