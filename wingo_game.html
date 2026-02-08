@@ -1079,8 +1079,8 @@
             </div>
             <span style="font-size:12px; color:#ccc; letter-spacing: 1px;">AVAILABLE BALANCE</span>
             <div class="w-btn-row">
-                <button class="w-btn withdraw" onclick="alert('Withdraw feature coming soon!')">Withdraw</button>
-                <button class="w-btn deposit" onclick="alert('Deposit feature coming soon!')">Deposit</button>
+                <button class="w-btn withdraw" onclick="window.location.href='withdraw.html'">Withdraw</button>
+                <button class="w-btn deposit" onclick="window.location.href='deposit.html'">Deposit</button>
             </div>
         </div>
 
@@ -1327,12 +1327,17 @@
             <div class="result-period" id="resultPeriod">Period: WinGo 1 Min<br>202506281000999</div>
         </div>
 
-        <!-- Auto Close -->
-        <div class="auto-close">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>3 seconds auto close</span>
+        <!-- Manual Close with Tick Toggle -->
+        <div class="auto-close" onclick="toggleAutoClose()" style="cursor: pointer;">
+            <div style="position: relative; width: 28px; height: 28px;">
+                <svg id="tickCircle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; width: 28px; height: 28px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+                <svg id="tickMark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="position: absolute; width: 28px; height: 28px;">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <span>Click to close</span>
         </div>
 
         <!-- Close Button -->
@@ -1583,8 +1588,6 @@ async function confirmBet() {
         
         console.log(`✅ Bet placed! Balance: ₹${currentBalance}`);
         
-        alert(`✅ Bet Placed!\n\nAmount: ₹${totalAmt}\nBet: ${selectedBetValue}\nNew Balance: ₹${currentBalance.toFixed(2)}`);
-        
         closeBetPopup();
         loadMyHistory();
         
@@ -1746,9 +1749,8 @@ function showResultPopup(type, amount, period, resultNumber, betOn) {
     
     overlay.classList.add('show');
     
-    setTimeout(() => {
-        closeResultPopup();
-    }, 3000);
+    // Show tick mark initially
+    document.getElementById('tickMark').style.display = 'block';
 }
 
 function generateResultPills(number) {
@@ -1772,6 +1774,15 @@ function generateResultPills(number) {
 
 function closeResultPopup() {
     document.getElementById('resultOverlay').classList.remove('show');
+}
+
+function toggleAutoClose() {
+    const tickMark = document.getElementById('tickMark');
+    if (tickMark.style.display === 'none') {
+        tickMark.style.display = 'block';
+    } else {
+        tickMark.style.display = 'none';
+    }
 }
 
 function createConfetti() {
