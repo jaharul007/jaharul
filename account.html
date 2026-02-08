@@ -344,7 +344,7 @@
         <div class="wallet-card">
             <div class="bal-title">Total balance</div>
             <div class="bal-row">
-                <div class="balance-val">₹<span id="acc_bal">0.00</span> <span style="cursor:pointer; font-size:18px;" onclick="location.reload()">🔄</span></div>
+                <div class="balance-val">₹<span id="acc_bal">0.00</span> <span style="cursor:pointer; font-size:18px;" onclick="loadGlobalBalance()">🔄</span></div>
                 <div class="enter-wallet" onclick="window.location.href='wallet.html'">Enter wallet</div>
             </div>
             
@@ -452,7 +452,7 @@
             </button>
         </div>
     </div>    <div class="bottom-nav">
-        <a href="home_page.html" class="nav-item">
+        <a href="homepage.html" class="nav-item">
             <div class="nav-icon">🏠</div>
             <div class="nav-text">Home</div>
         </a>
@@ -475,14 +475,70 @@
         </a>
     </div>
 
-       
-    <script>
-        function logoutUser() {
-            if(confirm("Do you want to logout?")) {
-                localStorage.clear();
-                window.location.href = 'login.html';
+       <script>
+    // 1. URL से फोन नंबर और पैरामीटर्स निकालना
+    const urlParams = new URLSearchParams(window.location.search);
+    const globalPhone = urlParams.get('phone');
+    const phoneParam = globalPhone ? encodeURIComponent(globalPhone) : "";
+
+    // 2. बैलेंस लोड करने वाला ग्लोबल फंक्शन
+    async function loadGlobalBalance() {
+        const balElement = document.getElementById('acc_bal');
+        if (!globalPhone) return;
+
+        try {
+            // आपकी API को कॉल करना
+            const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                // बैलेंस को 2 decimal पॉइंट्स तक दिखाना
+                balElement.innerText = parseFloat(result.balance).toFixed(2);
+                
+                // अगर UID भी डेटाबेस से आ रहा है तो उसे यहाँ अपडेट करें
+                if(result.uid) {
+                    document.getElementById('acc_uid').innerText = result.uid;
+                }
             }
+        } catch (error) {
+            console.error("Balance Load Error:", error);
         }
-    </script>
+    }
+
+    // 3. नेविगेशन को ग्लोबल बनाना (ताकि हर बटन के साथ फोन नंबर ट्रांसफर हो)
+    function setupGlobalLinks() {
+        if (!globalPhone) return;
+
+        // बॉटम नेविगेशन और अन्य लिंक्स में फोन नंबर जोड़ना
+        const links = document.querySelectorAll('.nav-item, .sub-item, .history-card, .enter-wallet');
+        
+        links.forEach(link => {
+            link.onclick = (e) => {
+                e.preventDefault();
+                // जो भी लिंक है उसे निकालें या मैन्युअली हैंडल करें
+                let targetHref = link.getAttribute('href') || link.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+
+                   if (targetHref && !targetHref.includes('logout')) {
+                    const separator = targetHref.includes('?') ? '&' : '?';
+                    window.location.href = `${targetHref}${separator}phone=${phoneParam}`;
+                }
+            };
+        });
+    }
+
+    // 4. Logout फंक्शन
+    function logoutUser() {
+        if(confirm("Do you want to logout?")) {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    }
+
+    // पेज लोड होते ही सब शुरू करें
+    window.addEventListener('DOMContentLoaded', () => {
+        loadGlobalBalance();
+        setupGlobalLinks();
+    });
+</script>
 </body>
 </html>
