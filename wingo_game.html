@@ -1661,30 +1661,20 @@ async function fetchFromDB() {
         const dateStr = now.getFullYear().toString() + 
                        (now.getMonth() + 1).toString().padStart(2, '0') + 
                        now.getDate().toString().padStart(2, '0');
-        const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
+        const currentPeriodNumber = Math.floor(total / currentMode);
+        const currentPeriod = dateStr + currentPeriodNumber.toString().padStart(4, '0');
         
-        try {
-            const saveRes = await fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'generateResult',
-                    period: currentPeriod, 
-                    mode: currentMode 
-                })
-            });
-            
-            const saveData = await saveRes.json();
-            console.log('📊 Result:', saveData.message);
-            
-        } catch(e) { 
-            console.log("Save error:", e.message); 
-        }
+        // DON'T generate result for current running period
+        // Backend will generate result only when period ends
         
         const res = await fetch(`/api/history?action=getHistory&mode=${currentMode}&page=${currentPage}`);
         if(res.ok) { 
             const data = await res.json();
             let historyData = data.results || [];
+            
+            // Filter out current period from display (it's still running)
+            historyData = historyData.filter(item => item.p !== currentPeriod);
+            
             renderHistory(historyData);
         }
 
@@ -1774,14 +1764,42 @@ function generateResultPills(number) {
 
 function closeResultPopup() {
     document.getElementById('resultOverlay').classList.remove('show');
+    // Clear any pending auto-close timeout
+    if (window.resultAutoCloseTimeout) {
+        clearTimeout(window.resultAutoCloseTimeout);
+        window.resultAutoCloseTimeout = null;
+    }
 }
 
 function toggleAutoClose() {
     const tickMark = document.getElementById('tickMark');
-    if (tickMark.style.display === 'none') {
+    
+    if (tickMark.style.display === 'none' || !tickMark.style.display) {
+        // Tick is hidden or first click - show it and start 3 second countdown
         tickMark.style.display = 'block';
+        
+        // Clear any existing timeout
+        if (window.resultAutoCloseTimeout) {
+            clearTimeout(window.resultAutoCloseTimeout);
+        }
+        
+        // Set 3 second auto-close
+        window.resultAutoCloseTimeout = setTimeout(() => {
+            closeResultPopup();
+        }, 3000);
+        
+        console.log('✅ Tick shown - 3 second auto-close started');
     } else {
+        // Tick is visible - hide it and cancel auto-close
         tickMark.style.display = 'none';
+        
+        // Clear the timeout
+        if (window.resultAutoCloseTimeout) {
+            clearTimeout(window.resultAutoCloseTimeout);
+            window.resultAutoCloseTimeout = null;
+        }
+        
+        console.log('❌ Tick hidden - auto-close cancelled, popup stays open');
     }
 }
 
@@ -1824,6 +1842,22 @@ function openBet(val) {
         return;
     }
     selectedBetValue = val;
+    
+    // Reset to default values every time
+    baseAmount = 1;
+    multiplier = 1;
+    
+    // Reset chip selection to ₹1
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.chip')[0].classList.add('active'); // First chip (₹1)
+    
+    // Reset multiplier to X1
+    document.querySelectorAll('.x-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.x-btn')[0].classList.add('active'); // First X button (X1)
+    
+    // Reset quantity to 1
+    document.getElementById('qtyInput').value = 1;
+    
     document.getElementById('selType').innerText = "Select " + val;
     document.getElementById('popHeader').innerText = document.getElementById('modeName').innerText;
     document.getElementById('betModalOverlay').style.display = 'flex';
