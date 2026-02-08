@@ -32,116 +32,112 @@ export default async function handler(req, res) {
 
         try {
             // ===== ACTION: CHECK BET RESULT (Win/Loss) =====
-            if (action === 'checkResult' && phone && period) {
-                console.log(`\n🔍 Checking result for: ${phone}, Period: ${period}`);
-                
-                const result = await Result.findOne({ 
-                    period: period, 
-                    mode: parseInt(mode) 
-                });
+if (action === 'checkResult' && phone && period) {
+    console.log(`\n🔍 Checking result for: ${phone}, Period: ${period}`);
+    
+    // 1. रिजल्ट ढूंढें
+    const result = await Result.findOne({ 
+        period: period, 
+        mode: parseInt(mode) 
+    });
 
-                if (!result) {
-                    console.log("⏳ Result not generated yet");
-                    return res.json({ status: 'pending' });
-                }
+    if (!result) {
+        return res.json({ status: 'pending' });
+    }
 
-                console.log(`✅ Result found: ${result.number}`);
+    // 2. पेंडिंग बेट ढूंढें
+    // यहाँ हमने status: 'pending' रखा है ताकि एक ही बेट पर बार-बार पैसा न मिले
+    const bet = await Bet.findOne({ 
+        phoneNumber: phone, 
+        period, 
+        status: 'pending' 
+    });
 
-                const bet = await Bet.findOne({ 
-                    phoneNumber: phone, 
-                    period, 
-                    status: 'pending' 
-                });
+    if (!bet) {
+        // अगर पेंडिंग नहीं है, तो चेक करें कि क्या वो पहले ही प्रोसेस हो चुकी है
+        const processedBet = await Bet.findOne({ phoneNumber: phone, period });
+        return res.json({ 
+            status: processedBet ? processedBet.status : 'no_bet', 
+            resultNumber: result.number,
+            winAmount: processedBet ? processedBet.winAmount : 0
+        });
+    }
 
-                if (!bet) {
-                    const alreadyChecked = await Bet.findOne({ phoneNumber: phone, period });
-                    return res.json({ 
-                        status: alreadyChecked ? alreadyChecked.status : 'no_bet', 
-                        resultNumber: result.number 
-                    });
-                }
+    // 3. WINNING LOGIC (बिल्कुल सटीक)
+    const finalNum = result.number;
+    let isWin = false;
+    let mult = 0;
 
-                console.log(`💰 Processing bet: ${bet.betOn}, Amount: ₹${bet.amount}`);
+    const winSize = finalNum >= 5 ? 'Big' : 'Small';
+    
+    // कलर्स को lowercase में बदलें ताकि मैचिंग में गलती न हो
+    const winColors = result.color.map(c => c.toLowerCase());
+    const userBetOn = bet.betOn.toLowerCase();
 
-                // ===== WINNING LOGIC =====
-                const finalNum = result.number;
-                let isWin = false;
-                let mult = 0;
+    // Number match (9x)
+    if (bet.betOn == finalNum) { 
+        isWin = true; 
+        mult = 9;
+    }
+    // Size match (2x)
+    else if (bet.betOn === winSize) { 
+        isWin = true; 
+        mult = 2;
+    }
+    // Color match
+    else if (winColors.includes(userBetOn)) {
+        isWin = true;
+        if (userBetOn === 'violet') {
+            mult = 4.5;
+        } else if (finalNum === 0 || finalNum === 5) {
+            mult = 1.5;
+        } else {
+            mult = 2;
+        }
+    }
 
-                const winSize = finalNum >= 5 ? 'Big' : 'Small';
-                const winColors = (finalNum === 0) ? ['Red', 'Violet'] : 
-                                  (finalNum === 5) ? ['Green', 'Violet'] : 
-                                  (finalNum % 2 === 0) ? ['Red'] : ['Green'];
+    // 4. पैसा देने का प्रोसेस (बैलेंस पहले अपडेट होगा)
+    if (isWin) {
+        const winAmount = bet.amount * mult;
+        
+        // सबसे पहले यूजर का बैलेंस बढ़ाओ
+        const updateResult = await User.updateOne(
+            { phoneNumber: phone }, 
+            { $inc: { balance: winAmount } }
+        );
 
-                // Number match (9x)
-                if (bet.betOn == finalNum) { 
-                    isWin = true; 
-                    mult = 9;
-                    console.log(`✅ NUMBER WIN! ${bet.betOn} = ${finalNum} → 9x`);
-                }
-                // Size match (2x)
-                else if (bet.betOn === winSize) { 
-                    isWin = true; 
-                    mult = 2;
-                    console.log(`✅ SIZE WIN! ${bet.betOn} = ${winSize} → 2x`);
-                }
-                // Color match
-                else if (winColors.includes(bet.betOn)) {
-                    isWin = true;
-                    if (bet.betOn === 'Violet') {
-                        mult = 4.5;
-                        console.log(`✅ VIOLET WIN! → 4.5x`);
-                    } else if (finalNum === 0 || finalNum === 5) {
-                        mult = 1.5;
-                        console.log(`✅ DUAL COLOR WIN! ${bet.betOn} → 1.5x`);
-                    } else {
-                        mult = 2;
-                        console.log(`✅ COLOR WIN! ${bet.betOn} → 2x`);
-                    }
-                }
+        if (updateResult.modifiedCount > 0) {
+            // बैलेंस बढ़ने के बाद ही बेट का स्टेटस 'won' करो
+            await Bet.updateOne(
+                { _id: bet._id }, 
+                { $set: { status: 'won', winAmount, result: finalNum } }
+            );
 
-                // Process WIN
-                if (isWin) {
-                    const winAmount = bet.amount * mult;
-                    console.log(`💵 Win Amount: ₹${winAmount} (${bet.amount} × ${mult})`);
-                    
-                    // ✅ ADD WIN AMOUNT TO USER BALANCE
-                    const userUpdate = await User.updateOne(
-                        { phoneNumber: phone }, 
-                        { $inc: { balance: winAmount } }
-                    );
+            const updatedUser = await User.findOne({ phoneNumber: phone });
+            return res.json({ 
+                status: 'won', 
+                winAmount, 
+                resultNumber: finalNum,
+                newBalance: updatedUser.balance
+            });
+        } else {
+            // अगर बैलेंस अपडेट फेल हुआ
+            return res.status(500).json({ status: 'error', message: 'Balance update failed' });
+        }
+    } else {
+        // LOSS - सिर्फ स्टेटस अपडेट करो
+        await Bet.updateOne(
+            { _id: bet._id }, 
+            { $set: { status: 'lost', winAmount: 0, result: finalNum } }
+        );
+        
+        return res.json({ 
+            status: 'lost', 
+            resultNumber: finalNum 
+        });
+    }
+}
 
-                    console.log(`💳 Balance Update: ${userUpdate.modifiedCount > 0 ? '✅ SUCCESS' : '❌ FAILED'}`);
-                    
-                    // Update bet status
-                    await Bet.updateOne(
-                        { _id: bet._id }, 
-                        { $set: { status: 'won', winAmount, result: finalNum } }
-                    );
-
-                    const updatedUser = await User.findOne({ phoneNumber: phone });
-                    console.log(`📊 New Balance: ₹${updatedUser.balance}\n`);
-                    
-                    return res.json({ 
-                        status: 'won', 
-                        winAmount, 
-                        resultNumber: finalNum,
-                        newBalance: updatedUser.balance
-                    });
-                } else {
-                    console.log(`❌ LOSS - Bet: ${bet.betOn} doesn't match\n`);
-                    
-                    await Bet.updateOne(
-                        { _id: bet._id }, 
-                        { $set: { status: 'lost', winAmount: 0, result: finalNum } }
-                    );
-                    
-                    return res.json({ 
-                        status: 'lost', 
-                        resultNumber: finalNum 
-                    });
-                }
-            }
 
             // ===== ACTION: GET HISTORY =====
             if (!action || action === 'getHistory') {
