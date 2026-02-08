@@ -1389,88 +1389,308 @@ function buildAdminNumGrid() {
         grid.innerHTML += `<div class="admin-num-item"><div class="admin-num-ball" style="background:${col}">${i}</div><span class="admin-num-amt" id="admin-sum-Num${i}">₹0</span></div>`;
     }
 }
+// ============================================
+// UPDATED JAVASCRIPT FUNCTIONS
+// Ye functions tumhare wingo_game.html mein replace karne hain
+// ============================================
 
+// ========================================
+// 1. ADMIN SAVE FORCE FUNCTION
+// ========================================
+async function adminSaveForce() {
+    const val = document.getElementById('adminForceInp').value;
+    const period = document.getElementById('periodDisplay').innerText.trim();
+
+    if (val === '' || val < 0 || val > 9) {
+        alert('⚠️ Enter number 0-9');
+        return;
+    }
+
+    console.log("🔧 Admin forcing:", val, "for period:", period);
+
+    try {
+        const res = await fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                action: 'generateResult',
+                number: parseInt(val), 
+                mode: parseInt(currentMode), 
+                period: period,
+                isAdmin: true
+            })
+        });
+        
+        const data = await res.json();
+        console.log("📊 Response:", data);
+        
+        if (data.success) { 
+            alert(`✅ Result ${val} saved for ${period}`);
+            document.getElementById('adminForceInp').value = '';
+            syncAdminData();
+            fetchFromDB();
+        } else {
+            alert('❌ Error: ' + (data.message || 'Failed'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('❌ Error: ' + err.message);
+    }
+}
+
+// ========================================
+// 2. SYNC ADMIN DATA FUNCTION
+// ========================================
 async function syncAdminData() {
     const period = document.getElementById('periodDisplay').innerText.trim();
     
     try {
-        // Get admin summary from bet.js API
-        const res = await fetch(`/api/bet?period=${period}&mode=${currentMode}`);
+        const res = await fetch(`/api/history?action=adminSummary&period=${period}&mode=${currentMode}`);
         const data = await res.json();
         
         if (data.success) {
-            // Update color sums
             document.getElementById('admin-sum-Green').innerText = '₹' + (data.colorSums.Green || 0);
             document.getElementById('admin-sum-Violet').innerText = '₹' + (data.colorSums.Violet || 0);
             document.getElementById('admin-sum-Red').innerText = '₹' + (data.colorSums.Red || 0);
             
-            // Update number sums
             for (let i = 0; i <= 9; i++) {
                 document.getElementById('admin-sum-Num' + i).innerText = '₹' + (data.numberSums[i] || 0);
             }
             
-            // Update user list
             if (data.userList && data.userList.length > 0) {
                 const tbody = document.getElementById('adminUsersBody');
                 tbody.innerHTML = data.userList.map((u, idx) => `
                     <tr>
                         <td>${idx + 1}</td>
-                        <td>${u.phoneNumber.substring(0, 8)}...</td>
+                        <td>${u.phoneNumber.substring(0, 10)}...</td>
                         <td class="${u.balance > 0 ? 'bal-positive' : 'bal-zero'}">₹${u.balance.toFixed(2)}</td>
                         <td>${u.activeBets}</td>
                     </tr>
                 `).join('');
             }
         }
-        
-        // Check if there's a forced result
-        const txt = document.getElementById('adminStatusTxt');
-        const histRes = await fetch(`/api/history?mode=${currentMode}&limit=1`);
-        const histData = await histRes.json();
-        
-        if (histData.success && histData.results && histData.results.length > 0) {
-            txt.innerText = 'LAST RESULT: ' + histData.results[0].n;
-            txt.style.color = '#fff';
-        }
     } catch (e) {
-        console.error("Admin sync error:", e);
+        console.error("Sync error:", e);
     }
 }
 
-async function adminSaveForce() {
-    const val = document.getElementById('adminForceInp').value;
-    const period = document.getElementById('periodDisplay').innerText.trim();
-
-    if (val !== '' && val >= 0 && val <= 9) {
+// ========================================
+// 3. CHECK BET RESULT FUNCTION
+// ========================================
+async function checkBetResult(betData) {
+    const checkKey = `${betData.phone}_${betData.period}`;
+    
+    if (activeBetChecks[checkKey]) {
+        return;
+    }
+    
+    activeBetChecks[checkKey] = true;
+    console.log(`🔍 Checking result for ${betData.betOn} - ${betData.period}`);
+    
+    const checkInterval = setInterval(async () => {
         try {
-            const res = await fetch('/api/history', {
+            const res = await fetch(`/api/history?action=checkResult&phone=${betData.phone}&period=${betData.period}&mode=${betData.mode}`);
+            const data = await res.json();
+            
+            console.log(`📊 Status:`, data.status);
+            
+            if (data.status !== 'pending') {
+                clearInterval(checkInterval);
+                delete activeBetChecks[checkKey];
+                
+                if (data.status === 'won') {
+                    console.log(`🎉 WIN! ₹${data.winAmount}`);
+                    showResultPopup('win', data.winAmount, betData.period, data.resultNumber, betData.betOn);
+                    
+                    if (data.newBalance !== undefined) {
+                        currentBalance = data.newBalance;
+                        document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
+                    }
+                } else if (data.status === 'lost') {
+                    console.log(`😢 LOSS`);
+                    showResultPopup('lose', 0, betData.period, data.resultNumber, betData.betOn);
+                }
+                
+                setTimeout(() => {
+                    loadBalance();
+                    loadMyHistory();
+                }, 1000);
+            }
+        } catch(e) {
+            console.error('Check error:', e);
+        }
+    }, 3000);
+    
+    setTimeout(() => {
+        clearInterval(checkInterval);
+        delete activeBetChecks[checkKey];
+    }, 300000);
+}
+
+// ========================================
+// 4. CONFIRM BET FUNCTION
+// ========================================
+async function confirmBet() {
+    const phone = getCurrentUserPhone();
+    if (!phone) { 
+        alert('❌ Please login first!'); 
+        return; 
+    }
+
+    const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
+    const period = document.getElementById('periodDisplay').innerText;
+    
+    console.log(`\n💰 PLACING BET`);
+    console.log(`Phone: ${phone}`);
+    console.log(`Bet: ${selectedBetValue}, Amount: ₹${totalAmt}`);
+    
+    if (currentBalance < totalAmt) {
+        alert(`❌ Insufficient Balance!\n\nYour Balance: ₹${currentBalance.toFixed(2)}\nBet Amount: ₹${totalAmt.toFixed(2)}`);
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmBtn');
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = 'Processing...<span class="spinner"></span>';
+    confirmBtn.disabled = true;
+
+    try {
+        const betRes = await fetch(`/api/history`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'placeBet',
+                phone: phone,
+                period: period,
+                mode: currentMode,
+                betOn: selectedBetValue,
+                amount: totalAmt
+            })
+        });
+
+        const betResult = await betRes.json();
+        console.log('📊 Response:', betResult);
+        
+        if (!betResult.success) {
+            alert('❌ ' + (betResult.message || 'Bet failed!'));
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+            return;
+        }
+
+        currentBalance = parseFloat(betResult.newBalance);
+        document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
+        
+        console.log(`✅ Bet placed! Balance: ₹${currentBalance}`);
+        
+        alert(`✅ Bet Placed!\n\nAmount: ₹${totalAmt}\nBet: ${selectedBetValue}\nNew Balance: ₹${currentBalance.toFixed(2)}`);
+        
+        closeBetPopup();
+        loadMyHistory();
+        
+        const betData = { phone, period, mode: currentMode, betOn: selectedBetValue, amount: totalAmt };
+        checkBetResult(betData);
+        
+    } catch(e) {
+        console.error('❌ Error:', e);
+        alert('❌ Server Error!');
+    } finally {
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+    }
+}
+
+// ========================================
+// 5. LOAD MY HISTORY FUNCTION
+// ========================================
+async function loadMyHistory() {
+    const phone = getCurrentUserPhone();
+    if (!phone) return;
+    
+    try {
+        const res = await fetch(`/api/bet?phone=${phone}&mode=${currentMode}`);
+        const data = await res.json();
+        
+        if (data.success && data.bets && data.bets.length > 0) {
+            userBets = data.bets;
+            document.getElementById('myHistoryTable').style.display = 'table';
+            document.getElementById('myHistoryEmpty').style.display = 'none';
+            
+            const html = userBets.slice(0, 20).map(bet => {
+                let statusColor = '#f59e0b', statusIcon = '⏳', statusText = 'Pending';
+                if (bet.status === 'won') { 
+                    statusColor = '#10b981'; 
+                    statusIcon = '✅'; 
+                    statusText = `+₹${(bet.winAmount || 0).toFixed(2)}`; 
+                }
+                else if (bet.status === 'lost') { 
+                    statusColor = '#ef4444'; 
+                    statusIcon = '❌'; 
+                    statusText = `-₹${bet.amount.toFixed(2)}`; 
+                }
+                
+                return `<tr>
+                    <td class="p-period">${bet.period}</td>
+                    <td style="color:#4fa1f9; font-weight:700;">${bet.betOn}</td>
+                    <td style="color:#f59e0b; font-weight:700;">₹${bet.amount.toFixed(2)}</td>
+                    <td><span style="color:${statusColor}; font-size:16px;">${statusIcon} ${statusText}</span></td>
+                </tr>`;
+            }).join('');
+            
+            document.getElementById('myHistoryBody').innerHTML = html;
+        } else {
+            document.getElementById('myHistoryTable').style.display = 'none';
+            document.getElementById('myHistoryEmpty').innerText = 'No bets yet';
+            document.getElementById('myHistoryEmpty').style.display = 'block';
+        }
+    } catch (e) {
+        console.error("History error:", e);
+    }
+}
+
+// ========================================
+// 6. FETCH FROM DB FUNCTION
+// ========================================
+async function fetchFromDB() {
+    try {
+        const now = new Date();
+        const total = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+        const dateStr = now.getFullYear().toString() + 
+                       (now.getMonth() + 1).toString().padStart(2, '0') + 
+                       now.getDate().toString().padStart(2, '0');
+        const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
+        
+        try {
+            const saveRes = await fetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    number: parseInt(val), 
-                    mode: parseInt(currentMode), 
-                    period: period,
-                    isAdmin: true
+                    action: 'generateResult',
+                    period: currentPeriod, 
+                    mode: currentMode 
                 })
             });
             
-            const data = await res.json();
+            const saveData = await saveRes.json();
+            console.log('📊 Result:', saveData.message);
             
-            if (data.success) { 
-                alert('✅ Success! Result set for ' + period); 
-                syncAdminData();
-            } else {
-                alert('❌ Error: ' + data.message);
-            }
-        } catch (err) {
-            console.error(err);
-            alert('❌ Connection Error: ' + err.message);
+        } catch(e) { 
+            console.log("Save error:", e.message); 
         }
-    } else { 
-        alert('⚠️ Please enter a number 0-9'); 
+        
+        const res = await fetch(`/api/history?action=getHistory&mode=${currentMode}&page=${currentPage}`);
+        if(res.ok) { 
+            const data = await res.json();
+            let historyData = data.results || [];
+            renderHistory(historyData);
+        }
+
+        loadBalance(); 
+    } catch (e) {
+        console.error("Error:", e);
     }
 }
-
+    
 // ========================================
 // BALANCE MANAGEMENT
 // ========================================
@@ -1570,48 +1790,6 @@ function createConfetti() {
         container.appendChild(confetti);
     }
 }
-
-// ========================================
-// BET RESULT CHECKING
-// ========================================
-async function checkBetResult(betData) {
-    const checkKey = `${betData.phone}_${betData.period}`;
-    
-    if (activeBetChecks[checkKey]) {
-        return;
-    }
-    
-    activeBetChecks[checkKey] = true;
-    
-    const checkInterval = setInterval(async () => {
-        try {
-            const res = await fetch(`/api/bet?phone=${betData.phone}&period=${betData.period}&mode=${betData.mode}`);
-            const data = await res.json();
-            
-            if (data.status !== 'pending') {
-                clearInterval(checkInterval);
-                delete activeBetChecks[checkKey];
-                
-                if (data.status === 'won') {
-                    showResultPopup('win', data.winAmount, betData.period, data.resultNumber, betData.betOn);
-                } else if (data.status === 'lost') {
-                    showResultPopup('lose', 0, betData.period, data.resultNumber, betData.betOn);
-                }
-                
-                loadBalance();
-                loadMyHistory();
-            }
-        } catch(e) {
-            console.error('Result check error:', e);
-        }
-    }, 2000);
-    
-    setTimeout(() => {
-        clearInterval(checkInterval);
-        delete activeBetChecks[checkKey];
-    }, 300000);
-}
-
 // ========================================
 // BETTING FUNCTIONS
 // ========================================
@@ -1685,79 +1863,6 @@ function getBetType(betValue) {
     if (betValue === 'Random') return 'random';
     return 'number';
 }
-
-// ========================================
-// CONFIRM BET (MODIFIED WITH RESULT CHECK)
-// ========================================
-async function confirmBet() {
-    const phone = getCurrentUserPhone();
-    if (!phone) { 
-        alert('❌ Please login first!'); 
-        return; 
-    }
-
-    const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
-    const period = document.getElementById('periodDisplay').innerText;
-    
-    if (currentBalance < totalAmt) {
-        alert(`❌ Insufficient Balance!\n\nYour Balance: ₹${currentBalance.toFixed(2)}\nBet Amount: ₹${totalAmt.toFixed(2)}\n\nPlease deposit money first.`);
-        return;
-    }
-    
-    const confirmBtn = document.getElementById('confirmBtn');
-    const originalText = confirmBtn.innerHTML;
-    confirmBtn.innerHTML = 'Processing...<span class="spinner"></span>';
-    confirmBtn.disabled = true;
-
-    try {
-        const betData = {
-            phone: phone,
-            period: period,
-            mode: currentMode,
-            betOn: selectedBetValue,
-            amount: totalAmt,
-            status: 'pending',
-            timestamp: new Date().toISOString(),
-            betType: getBetType(selectedBetValue),
-            multiplier: multiplier
-        };
-
-        const betRes = await fetch(`/api/bet`, { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(betData)
-        });
-
-        const betResult = await betRes.json();
-        
-        if (!betResult.success) {
-            alert('❌ ' + (betResult.message || 'Bet failed!'));
-            confirmBtn.innerHTML = originalText;
-            confirmBtn.disabled = false;
-            return;
-        }
-
-        currentBalance = parseFloat(betResult.newBalance);
-        document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
-        
-        userBets.unshift(betData);
-        
-        alert(`✅ Bet Placed Successfully!\n\nAmount: ₹${totalAmt}\nBet: ${selectedBetValue}\nPeriod: ${period}\nNew Balance: ₹${currentBalance.toFixed(2)}`);
-        
-        closeBetPopup();
-        loadMyHistory();
-        
-        checkBetResult(betData);
-        
-    } catch(e) {
-        console.error('Bet error:', e);
-        alert('❌ Server Error! Please try again.');
-    } finally {
-        confirmBtn.innerHTML = originalText;
-        confirmBtn.disabled = false;
-    }
-}
-
 // ========================================
 // HISTORY FUNCTIONS
 // ========================================
@@ -1811,90 +1916,6 @@ function renderHistory(history) {
     }).join('');
     
     document.getElementById('historyBody').innerHTML = html;
-}
-
-async function loadMyHistory() {
-    const phone = getCurrentUserPhone();
-    if (!phone) return;
-    
-    try {
-        const res = await fetch(`/api/myhistory?phone=${phone}&mode=${currentMode}`);
-        const data = await res.json();
-        
-        if (data.success && data.bets && data.bets.length > 0) {
-            userBets = data.bets;
-            document.getElementById('myHistoryTable').style.display = 'table';
-            document.getElementById('myHistoryEmpty').style.display = 'none';
-            
-            const html = userBets.slice(0, 20).map(bet => {
-                let statusColor = '#f59e0b', statusIcon = '⏳', statusText = 'Pending';
-                if (bet.status === 'won') { 
-                    statusColor = '#10b981'; 
-                    statusIcon = '✅'; 
-                    statusText = `+₹${(bet.winAmount || 0).toFixed(2)}`; 
-                }
-                else if (bet.status === 'lost') { 
-                    statusColor = '#ef4444'; 
-                    statusIcon = '❌'; 
-                    statusText = `-₹${bet.amount.toFixed(2)}`; 
-                }
-                
-                return `<tr>
-                    <td class="p-period">${bet.period}</td>
-                    <td style="color:#4fa1f9; font-weight:700;">${bet.betOn}</td>
-                    <td style="color:#f59e0b; font-weight:700;">₹${bet.amount.toFixed(2)}</td>
-                    <td><span style="color:${statusColor}; font-size:16px;">${statusIcon} ${statusText}</span></td>
-                </tr>`;
-            }).join('');
-            
-            document.getElementById('myHistoryBody').innerHTML = html;
-        } else {
-            document.getElementById('myHistoryTable').style.display = 'none';
-            document.getElementById('myHistoryEmpty').innerText = 'No bets placed yet';
-            document.getElementById('myHistoryEmpty').style.display = 'block';
-        }
-    } catch (e) {
-        console.error("My history error:", e);
-        document.getElementById('myHistoryEmpty').innerText = 'Error loading history';
-        document.getElementById('myHistoryEmpty').style.display = 'block';
-    }
-}
-
-async function fetchFromDB() {
-    try {
-        const now = new Date();
-        const total = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-        const dateStr = now.getFullYear().toString() + 
-                       (now.getMonth() + 1).toString().padStart(2, '0') + 
-                       now.getDate().toString().padStart(2, '0');
-        const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
-        
-        // Auto-save result when timer hits 0
-        try {
-            await fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    period: currentPeriod, 
-                    mode: currentMode 
-                })
-            });
-        } catch(e) { 
-            console.log("Save result info:", e.message); 
-        }
-        
-        // Fetch history
-        const res = await fetch(`/api/history?mode=${currentMode}&page=${currentPage}`);
-        if(res.ok) { 
-            const data = await res.json();
-            let historyData = data.results || [];
-            renderHistory(historyData);
-        }
-
-        loadBalance(); 
-    } catch (e) {
-        console.error("Fetch DB Error:", e);
-    }
 }
 
 // Timer and Period Logic
