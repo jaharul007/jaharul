@@ -78,7 +78,7 @@ export default async function handler(req, res) {
                 if (isWin) {
                     const winAmount = parseFloat(bet.amount) * mult;
                     
-                    // 1. बैलेंस बढ़ाओ
+                    // 1. बैलेंस बढ़ाओ
                     const updateBal = await User.updateOne(
                         { phoneNumber: searchPhone }, 
                         { $inc: { balance: winAmount } }
@@ -103,10 +103,74 @@ export default async function handler(req, res) {
                 }
             }
 
-            // Get History Logic (Same as before)
+            // Get History Logic
             if (!action || action === 'getHistory') {
-                const historyData = await Result.find({ mode: parseInt(mode) }).sort({ period: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).lean();
-                return res.json({ success: true, results: historyData.map(i => ({ p: i.period, n: i.number, c: i.color, s: i.size })) });
+                const historyData = await Result.find({ mode: parseInt(mode) })
+                    .sort({ period: -1 })
+                    .skip((page - 1) * limit)
+                    .limit(parseInt(limit))
+                    .lean();
+                    
+                return res.json({ 
+                    success: true, 
+                    results: historyData.map(i => ({ 
+                        p: i.period, 
+                        n: i.number, 
+                        c: i.color, 
+                        s: i.size 
+                    })) 
+                });
+            }
+
+            // Admin Summary Logic
+            if (action === 'adminSummary') {
+                const targetPeriod = String(period).trim();
+                const targetMode = parseInt(mode);
+
+                // Get all pending bets for this period
+                const bets = await Bet.find({ 
+                    period: targetPeriod, 
+                    mode: targetMode,
+                    status: 'pending' 
+                }).lean();
+
+                // Color sums
+                const colorSums = { Green: 0, Violet: 0, Red: 0 };
+                const numberSums = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0 };
+
+                bets.forEach(b => {
+                    const betOn = String(b.betOn).trim();
+                    const amt = parseFloat(b.amount);
+
+                    if (betOn === 'Green' || betOn === 'Red' || betOn === 'Violet') {
+                        colorSums[betOn] = (colorSums[betOn] || 0) + amt;
+                    }
+
+                    if (!isNaN(parseInt(betOn)) && parseInt(betOn) >= 0 && parseInt(betOn) <= 9) {
+                        numberSums[parseInt(betOn)] += amt;
+                    }
+                });
+
+                // User list
+                const users = await User.find({}).select('phoneNumber balance').lean();
+                const userList = await Promise.all(users.map(async (u) => {
+                    const activeBets = await Bet.countDocuments({ 
+                        phoneNumber: u.phoneNumber, 
+                        status: 'pending' 
+                    });
+                    return {
+                        phoneNumber: u.phoneNumber,
+                        balance: u.balance,
+                        activeBets
+                    };
+                }));
+
+                return res.json({ 
+                    success: true, 
+                    colorSums, 
+                    numberSums, 
+                    userList 
+                });
             }
 
         } catch (e) {
@@ -122,7 +186,7 @@ export default async function handler(req, res) {
             const { action, phone, period, mode, betOn, amount, number, isAdmin } = req.body;
 
             if (action === 'placeBet') {
-                const searchPhone = formatPhone(phone); // यहाँ भी +91 पक्का किया
+                const searchPhone = formatPhone(phone);
                 const betAmount = parseFloat(amount);
 
                 const user = await User.findOne({ phoneNumber: searchPhone });
@@ -147,19 +211,97 @@ export default async function handler(req, res) {
                 return res.json({ success: true, newBalance: updated.balance });
             }
 
-            // Generate Result Logic (Same as before)
+            // ========================================
+            // ✅ FIXED: Generate Result with ADMIN FORCE
+            // ========================================
             if (action === 'generateResult') {
-                let finalNum = (isAdmin && number !== undefined) ? parseInt(number) : Math.floor(Math.random() * 10);
-                const color = (finalNum === 0) ? ['red', 'violet'] : (finalNum === 5) ? ['green', 'violet'] : (finalNum % 2 === 0) ? ['red'] : ['green'];
-                const size = (finalNum >= 5) ? 'Big' : 'Small';
+                const targetPeriod = String(period).trim();
+                const targetMode = parseInt(mode);
 
-                await Result.deleteOne({ period, mode: parseInt(mode) }); // Admin force handle
-                const saved = await Result.create({ period, mode: parseInt(mode), number: finalNum, color, size, timestamp: new Date() });
-                return res.json({ success: true, number: finalNum, data: saved });
+                // Check if result already exists
+                const existingResult = await Result.findOne({ 
+                    period: targetPeriod, 
+                    mode: targetMode 
+                });
+
+                // ========================================
+                // ADMIN FORCE MODE - Always Override
+                // ========================================
+                if (isAdmin && number !== undefined) {
+                    const forcedNum = parseInt(number);
+                    
+                    console.log(`🔧 ADMIN FORCE: Setting ${forcedNum} for period ${targetPeriod}`);
+
+                    // Calculate color and size
+                    const color = (forcedNum === 0) ? ['red', 'violet'] 
+                                : (forcedNum === 5) ? ['green', 'violet'] 
+                                : (forcedNum % 2 === 0) ? ['red'] 
+                                : ['green'];
+                    const size = (forcedNum >= 5) ? 'Big' : 'Small';
+
+                    // Delete existing and create new
+                    await Result.deleteOne({ period: targetPeriod, mode: targetMode });
+                    
+                    const saved = await Result.create({ 
+                        period: targetPeriod, 
+                        mode: targetMode, 
+                        number: forcedNum, 
+                        color, 
+                        size, 
+                        timestamp: new Date(),
+                        isAdminForced: true  // Mark as admin forced
+                    });
+
+                    return res.json({ 
+                        success: true, 
+                        number: forcedNum, 
+                        message: `Admin forced result ${forcedNum} for ${targetPeriod}`,
+                        data: saved 
+                    });
+                }
+
+                // ========================================
+                // AUTO MODE - Only create if doesn't exist
+                // ========================================
+                if (existingResult) {
+                    return res.json({ 
+                        success: true, 
+                        number: existingResult.number,
+                        message: 'Result already exists',
+                        existing: true
+                    });
+                }
+
+                // Generate random result
+                const randomNum = Math.floor(Math.random() * 10);
+                const color = (randomNum === 0) ? ['red', 'violet'] 
+                            : (randomNum === 5) ? ['green', 'violet'] 
+                            : (randomNum % 2 === 0) ? ['red'] 
+                            : ['green'];
+                const size = (randomNum >= 5) ? 'Big' : 'Small';
+
+                const saved = await Result.create({ 
+                    period: targetPeriod, 
+                    mode: targetMode, 
+                    number: randomNum, 
+                    color, 
+                    size, 
+                    timestamp: new Date(),
+                    isAdminForced: false
+                });
+
+                return res.json({ 
+                    success: true, 
+                    number: randomNum, 
+                    message: 'Auto result generated',
+                    data: saved 
+                });
             }
 
         } catch (e) {
             return res.status(500).json({ success: false, error: e.message });
         }
     }
+
+    return res.status(405).json({ error: 'Method not allowed' });
 }
