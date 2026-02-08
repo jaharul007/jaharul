@@ -1,13 +1,15 @@
-limport mongoose from 'mongoose';
+import mongoose from 'mongoose';
+import User from '../models/User.js';
+import Bet from '../models/Bet.js';
 import Result from '../models/Result.js';
-import Bet from '../models/Bet.js';   
-import User from '../models/User.js'; 
 
 const connectDB = async () => {
-    if (mongoose.connections && mongoose.connections[0].readyState) return;
+    if (mongoose.connections && mongoose.connections[0].readyState) {
+        return;
+    }
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log("✅ MongoDB Connected");
+        console.log("✅ MongoDB Connected - Database: test");
     } catch (error) {
         console.error("❌ MongoDB Error:", error);
     }
@@ -22,120 +24,389 @@ export default async function handler(req, res) {
 
     await connectDB();
 
-    if (req.method === 'POST') {
+    // ========================================
+    // GET REQUESTS
+    // ========================================
+    if (req.method === 'GET') {
+        const { action, phone, period, mode, page = 1, limit = 10 } = req.query;
+
         try {
-            const { period, mode, number, isAdmin } = req.body;
+            // ===== ACTION: CHECK BET RESULT (Win/Loss) =====
+            if (action === 'checkResult' && phone && period) {
+                console.log(`\n🔍 Checking result for: ${phone}, Period: ${period}`);
+                
+                const result = await Result.findOne({ 
+                    period: period, 
+                    mode: parseInt(mode) 
+                });
 
-            if (!period || mode === undefined) {
-                return res.status(400).json({ success: false, message: "Period or Mode missing" });
-            }
+                if (!result) {
+                    console.log("⏳ Result not generated yet");
+                    return res.json({ status: 'pending' });
+                }
 
-            // 1. रिज़ल्ट चेक और सेट करना
-            let existing = await Result.findOne({ period: period.toString(), mode: parseInt(mode) });
-            if (existing && !isAdmin) {
-                return res.json({ success: true, message: "Result already exists", number: existing.number });
-            }
-            if (existing && isAdmin) {
-                await Result.deleteOne({ period: period.toString(), mode: parseInt(mode) });
-            }
+                console.log(`✅ Result found: ${result.number}`);
 
-            let finalNum;
-            if (isAdmin === true && (number !== undefined && number !== null && number !== '')) {
-                finalNum = parseInt(number);
-            } else {
-                finalNum = Math.floor(Math.random() * 10);
-            }
+                const bet = await Bet.findOne({ 
+                    phoneNumber: phone, 
+                    period, 
+                    status: 'pending' 
+                });
 
-            const winSize = (finalNum >= 5) ? 'Big' : 'Small';
-            let winColors = (finalNum === 0) ? ['Red', 'Violet'] : 
-                            (finalNum === 5) ? ['Green', 'Violet'] : 
-                            (finalNum % 2 === 0) ? ['Red'] : ['Green'];
+                if (!bet) {
+                    const alreadyChecked = await Bet.findOne({ phoneNumber: phone, period });
+                    return res.json({ 
+                        status: alreadyChecked ? alreadyChecked.status : 'no_bet', 
+                        resultNumber: result.number 
+                    });
+                }
 
-            // 2. रिज़ल्ट सेव करना
-            await Result.create({
-                period: period.toString(),
-                mode: parseInt(mode),
-                number: finalNum,
-                color: winColors,
-                size: winSize,
-                timestamp: new Date()
-            });
+                console.log(`💰 Processing bet: ${bet.betOn}, Amount: ₹${bet.amount}`);
 
-            // 3. 💰 ऑटो-पेमेंट लॉजिक
-            const pendingBets = await Bet.find({ 
-                period: period.toString(), 
-                mode: parseInt(mode), 
-                status: 'pending' 
-            });
-
-            console.log(`🔎 Period ${period}: Found ${pendingBets.length} bets.`);
-
-            for (let bet of pendingBets) {
+                // ===== WINNING LOGIC =====
+                const finalNum = result.number;
                 let isWin = false;
                 let mult = 0;
 
-                // ✅ सेफ्टी: 'betOn' और 'beton' दोनों चेक करेगा ताकि कोड कभी फेल न हो
-                const userChoice = bet.betOn || bet.beton;
+                const winSize = finalNum >= 5 ? 'Big' : 'Small';
+                const winColors = (finalNum === 0) ? ['Red', 'Violet'] : 
+                                  (finalNum === 5) ? ['Green', 'Violet'] : 
+                                  (finalNum % 2 === 0) ? ['Red'] : ['Green'];
 
-                if (userChoice == finalNum) { isWin = true; mult = 9; }
-                else if (userChoice === winSize) { isWin = true; mult = 2; }
-                else if (winColors.includes(userChoice)) {
+                // Number match (9x)
+                if (bet.betOn == finalNum) { 
+                    isWin = true; 
+                    mult = 9;
+                    console.log(`✅ NUMBER WIN! ${bet.betOn} = ${finalNum} → 9x`);
+                }
+                // Size match (2x)
+                else if (bet.betOn === winSize) { 
+                    isWin = true; 
+                    mult = 2;
+                    console.log(`✅ SIZE WIN! ${bet.betOn} = ${winSize} → 2x`);
+                }
+                // Color match
+                else if (winColors.includes(bet.betOn)) {
                     isWin = true;
-                    mult = (userChoice === 'Violet') ? 4.5 : (finalNum === 0 || finalNum === 5 ? 1.5 : 2);
+                    if (bet.betOn === 'Violet') {
+                        mult = 4.5;
+                        console.log(`✅ VIOLET WIN! → 4.5x`);
+                    } else if (finalNum === 0 || finalNum === 5) {
+                        mult = 1.5;
+                        console.log(`✅ DUAL COLOR WIN! ${bet.betOn} → 1.5x`);
+                    } else {
+                        mult = 2;
+                        console.log(`✅ COLOR WIN! ${bet.betOn} → 2x`);
+                    }
                 }
 
-                // ✅ नंबर को String में बदल कर Trim करना (स्पेस की समस्या खत्म)
-                const userPhone = (bet.phoneNumber || bet.phone).toString().trim();
-
+                // Process WIN
                 if (isWin) {
                     const winAmount = bet.amount * mult;
+                    console.log(`💵 Win Amount: ₹${winAmount} (${bet.amount} × ${mult})`);
                     
-                    // 💸 यहाँ पैसा बढ़ेगा (updateOne की जगह findOneAndUpdate use किया ताकि Log मिल सके)
-                    const updated = await User.findOneAndUpdate(
-                        { phoneNumber: userPhone }, 
-                        { $inc: { balance: winAmount } },
-                        { new: true }
+                    // ✅ ADD WIN AMOUNT TO USER BALANCE
+                    const userUpdate = await User.updateOne(
+                        { phoneNumber: phone }, 
+                        { $inc: { balance: winAmount } }
                     );
 
-                    if (updated) {
-                        console.log(`✅ Paid ₹${winAmount} to ${userPhone}. New Bal: ${updated.balance}`);
-                    } else {
-                        console.log(`❌ User NOT FOUND: Could not pay ${userPhone}`);
-                    }
+                    console.log(`💳 Balance Update: ${userUpdate.modifiedCount > 0 ? '✅ SUCCESS' : '❌ FAILED'}`);
+                    
+                    // Update bet status
+                    await Bet.updateOne(
+                        { _id: bet._id }, 
+                        { $set: { status: 'won', winAmount, result: finalNum } }
+                    );
 
-                    await Bet.updateOne({ _id: bet._id }, { 
-                        $set: { status: 'won', winAmount: winAmount, result: finalNum } 
+                    const updatedUser = await User.findOne({ phoneNumber: phone });
+                    console.log(`📊 New Balance: ₹${updatedUser.balance}\n`);
+                    
+                    return res.json({ 
+                        status: 'won', 
+                        winAmount, 
+                        resultNumber: finalNum,
+                        newBalance: updatedUser.balance
                     });
                 } else {
-                    await Bet.updateOne({ _id: bet._id }, { 
-                        $set: { status: 'lost', winAmount: 0, result: finalNum } 
+                    console.log(`❌ LOSS - Bet: ${bet.betOn} doesn't match\n`);
+                    
+                    await Bet.updateOne(
+                        { _id: bet._id }, 
+                        { $set: { status: 'lost', winAmount: 0, result: finalNum } }
+                    );
+                    
+                    return res.json({ 
+                        status: 'lost', 
+                        resultNumber: finalNum 
                     });
                 }
             }
 
-            return res.status(200).json({ success: true, number: finalNum });
+            // ===== ACTION: GET HISTORY =====
+            if (!action || action === 'getHistory') {
+                if (mode === undefined) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: "Mode is required" 
+                    });
+                }
+
+                const pageLimit = parseInt(limit);
+                const skip = (parseInt(page) - 1) * pageLimit;
+
+                const historyData = await Result
+                    .find({ mode: parseInt(mode) })
+                    .sort({ period: -1 })
+                    .skip(skip)
+                    .limit(pageLimit)
+                    .lean();
+
+                const total = await Result.countDocuments({ mode: parseInt(mode) });
+
+                const formattedData = historyData.map(item => ({
+                    p: item.period,
+                    n: item.number,
+                    c: item.color,
+                    s: item.size,
+                    t: item.timestamp
+                }));
+
+                return res.status(200).json({
+                    success: true,
+                    mode: parseInt(mode),
+                    results: formattedData,
+                    total: total,
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(total / pageLimit)
+                });
+            }
+
+            // ===== ACTION: ADMIN SUMMARY =====
+            if (action === 'adminSummary' && period && mode) {
+                const pendingBets = await Bet.find({ 
+                    period: period, 
+                    mode: parseInt(mode) 
+                }).lean();
+
+                const colorSums = { Green: 0, Violet: 0, Red: 0 };
+                const numberSums = {};
+                
+                for (let i = 0; i <= 9; i++) {
+                    numberSums[i] = 0;
+                }
+
+                pendingBets.forEach(bet => {
+                    if (['Green', 'Violet', 'Red'].includes(bet.betOn)) {
+                        colorSums[bet.betOn] += bet.amount;
+                    }
+                    if (!isNaN(bet.betOn) && bet.betOn >= 0 && bet.betOn <= 9) {
+                        numberSums[bet.betOn] += bet.amount;
+                    }
+                });
+
+                const users = await User.find({}).lean();
+                const userBetCounts = {};
+                
+                pendingBets.forEach(bet => {
+                    userBetCounts[bet.phoneNumber] = (userBetCounts[bet.phoneNumber] || 0) + 1;
+                });
+
+                const userList = users.map(u => ({
+                    phoneNumber: u.phoneNumber,
+                    balance: u.balance,
+                    activeBets: userBetCounts[u.phoneNumber] || 0
+                }));
+
+                return res.json({ 
+                    success: true, 
+                    bets: pendingBets,
+                    colorSums,
+                    numberSums,
+                    userList
+                });
+            }
+
+        } catch (e) {
+            console.error("❌ GET Error:", e);
+            return res.status(500).json({ error: e.message });
+        }
+    }
+
+    // ========================================
+    // POST REQUESTS
+    // ========================================
+    if (req.method === 'POST') {
+        try {
+            const { action, phone, period, mode, betOn, amount, number, isAdmin } = req.body;
+
+            // ===== ACTION: PLACE BET =====
+            if (action === 'placeBet' && phone && period && betOn && amount) {
+                const betAmount = parseFloat(amount);
+
+                console.log(`\n📝 NEW BET`);
+                console.log(`User: ${phone}`);
+                console.log(`Period: ${period}`);
+                console.log(`Bet On: ${betOn}`);
+                console.log(`Amount: ₹${betAmount}`);
+
+                const user = await User.findOne({ phoneNumber: phone });
+                
+                if (!user) {
+                    console.log(`❌ User not found: ${phone}`);
+                    return res.status(404).json({ 
+                        success: false, 
+                        message: 'User not found!' 
+                    });
+                }
+
+                console.log(`Current Balance: ₹${user.balance}`);
+
+                if (user.balance < betAmount) {
+                    console.log(`❌ Insufficient balance`);
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Insufficient balance!' 
+                    });
+                }
+
+                // ✅ DEDUCT BALANCE
+                await User.updateOne(
+                    { phoneNumber: phone },
+                    { $inc: { balance: -betAmount } }
+                );
+
+                console.log(`✅ Deducted: ₹${betAmount}`);
+
+                // Create bet
+                await Bet.create({
+                    phoneNumber: phone,
+                    period,
+                    mode: parseInt(mode),
+                    betOn: String(betOn),
+                    amount: betAmount,
+                    status: 'pending',
+                    timestamp: new Date()
+                });
+
+                const updatedUser = await User.findOne({ phoneNumber: phone });
+                console.log(`New Balance: ₹${updatedUser.balance}\n`);
+
+                return res.status(200).json({ 
+                    success: true, 
+                    newBalance: updatedUser.balance,
+                    message: 'Bet placed successfully'
+                });
+            }
+
+            // ===== ACTION: GENERATE/FORCE RESULT =====
+            if (action === 'generateResult' || !action) {
+                if (!period || mode === undefined) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: "Period or Mode missing" 
+                    });
+                }
+
+                console.log(`\n🎲 RESULT REQUEST`);
+                console.log(`Period: ${period}`);
+                console.log(`Mode: ${mode}`);
+                console.log(`Admin: ${isAdmin || false}`);
+                console.log(`Number: ${number !== undefined ? number : 'Auto'}`);
+
+                // Check existing result
+                const existing = await Result.findOne({ 
+                    period: period, 
+                    mode: parseInt(mode) 
+                });
+
+                // ✅ ADMIN FORCE: Delete old result first
+                if (existing && isAdmin === true && number !== undefined) {
+                    console.log(`🔧 ADMIN FORCING - Deleting old result: ${existing.number}`);
+                    await Result.deleteOne({ 
+                        period: period, 
+                        mode: parseInt(mode) 
+                    });
+                } else if (existing) {
+                    console.log(`ℹ️ Result already exists: ${existing.number}`);
+                    return res.json({ 
+                        success: true, 
+                        message: "Result already exists", 
+                        number: existing.number,
+                        data: existing
+                    });
+                }
+
+                // Determine result number
+                let finalNum;
+                let isForced = false;
+
+                if (isAdmin === true && number !== undefined && number !== null && number !== '') {
+                    finalNum = parseInt(number);
+                    isForced = true;
+                    console.log(`🔧 ADMIN RESULT: ${finalNum}`);
+                } else {
+                    finalNum = Math.floor(Math.random() * 10);
+                    console.log(`🎰 AUTO RESULT: ${finalNum}`);
+                }
+
+                // Validate
+                if (finalNum < 0 || finalNum > 9 || isNaN(finalNum)) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: "Invalid number (0-9 only)" 
+                    });
+                }
+
+                // Calculate color and size
+                let color;
+                if (finalNum === 0) {
+                    color = ['red', 'violet'];
+                } else if (finalNum === 5) {
+                    color = ['green', 'violet'];
+                } else if (finalNum % 2 === 0) {
+                    color = ['red'];
+                } else {
+                    color = ['green'];
+                }
+                
+                const size = (finalNum >= 5) ? 'Big' : 'Small';
+
+                // Save result
+                const resultDoc = {
+                    period: period,
+                    mode: parseInt(mode),
+                    number: finalNum,
+                    color: color,
+                    size: size,
+                    isForced: isForced,
+                    timestamp: new Date()
+                };
+
+                const savedResult = await Result.create(resultDoc);
+
+                console.log(`✅ Result Saved!`);
+                console.log(`   Number: ${finalNum}`);
+                console.log(`   Color: ${color.join(', ')}`);
+                console.log(`   Size: ${size}`);
+                console.log(`   Forced: ${isForced}\n`);
+
+                return res.status(200).json({ 
+                    success: true, 
+                    message: isForced ? "Admin result saved" : "Auto result generated",
+                    number: finalNum,
+                    data: savedResult
+                });
+            }
 
         } catch (e) {
             console.error("❌ POST Error:", e);
-            return res.status(500).json({ success: false, error: e.message });
+            return res.status(500).json({ 
+                success: false, 
+                error: e.message 
+            });
         }
     }
 
-    // GET logic remains same...
-    if (req.method === 'GET') {
-        try {
-            const { mode, page = 1, limit = 10 } = req.query;
-            const skip = (parseInt(page) - 1) * parseInt(limit);
-            const historyData = await Result.find({ mode: parseInt(mode) }).sort({ timestamp: -1 }).skip(skip).limit(parseInt(limit)).lean();
-            const total = await Result.countDocuments({ mode: parseInt(mode) });
-            return res.status(200).json({
-                success: true,
-                results: historyData.map(i => ({ p: i.period, n: i.number, c: i.color, s: i.size })),
-                total,
-                totalPages: Math.ceil(total / parseInt(limit))
-            });
-        } catch (e) {
-            return res.status(500).json({ success: false, error: e.message });
-        }
-    }
+    return res.status(405).json({ message: 'Method not allowed' });
 }
