@@ -1286,6 +1286,7 @@
             <!-- Force Result -->
             <div class="admin-box" style="text-align: center;">
                 <div class="admin-box-title">Force Next Winner</div>
+                <p style="color:#fff; font-weight:700; margin-bottom:8px;">Next Period: <span id="adminNextPeriod">---</span></p>
                 <input type="number" id="adminForceInp" class="force-input" placeholder="0-9" min="0" max="9">
                 <button class="force-save-btn" onclick="adminSaveForce()">SAVE RESULT NOW</button>
                 <div class="admin-status-txt" id="adminStatusTxt">STATUS: AUTO MODE</div>
@@ -1379,6 +1380,7 @@ document.getElementById('navHeader').addEventListener('click', (e) => {
 function openAdmin() {
     document.getElementById('adminOverlay').classList.add('show');
     buildAdminNumGrid();
+    updateAdminNextPeriod();
     syncAdminData();
 }
 
@@ -1394,24 +1396,42 @@ function buildAdminNumGrid() {
         grid.innerHTML += `<div class="admin-num-item"><div class="admin-num-ball" style="background:${col}">${i}</div><span class="admin-num-amt" id="admin-sum-Num${i}">₹0</span></div>`;
     }
 }
-// ============================================
-// UPDATED JAVASCRIPT FUNCTIONS
-// Ye functions tumhare wingo_game.html mein replace karne hain
-// ============================================
 
 // ========================================
-// 1. ADMIN SAVE FORCE FUNCTION
+// ADMIN NEXT PERIOD DISPLAY
+// ========================================
+function updateAdminNextPeriod() {
+    const now = new Date();
+    const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    const dateStr = now.getFullYear().toString() + 
+                   (now.getMonth() + 1).toString().padStart(2, '0') + 
+                   now.getDate().toString().padStart(2, '0');
+    const nextPeriodNum = Math.floor(totalSeconds / currentMode) + 1;
+    const nextPeriod = dateStr + nextPeriodNum.toString().padStart(4, '0');
+    document.getElementById('adminNextPeriod').innerText = nextPeriod;
+}
+
+// ========================================
+// ADMIN SAVE FORCE FUNCTION (FIXED)
 // ========================================
 async function adminSaveForce() {
     const val = document.getElementById('adminForceInp').value;
-    const period = document.getElementById('periodDisplay').innerText.trim();
-
+    
     if (val === '' || val < 0 || val > 9) {
         alert('⚠️ Enter number 0-9');
         return;
     }
 
-    console.log("🔧 Admin forcing:", val, "for period:", period);
+    // NEXT PERIOD calculate karo
+    const now = new Date();
+    const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    const dateStr = now.getFullYear().toString() + 
+                   (now.getMonth() + 1).toString().padStart(2, '0') + 
+                   now.getDate().toString().padStart(2, '0');
+    const nextPeriodNum = Math.floor(totalSeconds / currentMode) + 1;
+    const nextPeriod = dateStr + nextPeriodNum.toString().padStart(4, '0');
+
+    console.log("🔧 Admin forcing:", val, "for NEXT period:", nextPeriod);
 
     try {
         const res = await fetch('/api/history', {
@@ -1421,7 +1441,7 @@ async function adminSaveForce() {
                 action: 'generateResult',
                 number: parseInt(val), 
                 mode: parseInt(currentMode), 
-                period: period,
+                period: nextPeriod,
                 isAdmin: true
             })
         });
@@ -1430,10 +1450,10 @@ async function adminSaveForce() {
         console.log("📊 Response:", data);
         
         if (data.success) { 
-            alert(`✅ Result ${val} saved for ${period}`);
+            alert(`✅ Result ${val} saved for NEXT PERIOD ${nextPeriod}`);
             document.getElementById('adminForceInp').value = '';
+            document.getElementById('adminStatusTxt').innerText = `FORCED: ${val} for ${nextPeriod}`;
             syncAdminData();
-            fetchFromDB();
         } else {
             alert('❌ Error: ' + (data.message || 'Failed'));
         }
@@ -1444,7 +1464,7 @@ async function adminSaveForce() {
 }
 
 // ========================================
-// 2. SYNC ADMIN DATA FUNCTION
+// SYNC ADMIN DATA FUNCTION
 // ========================================
 async function syncAdminData() {
     const period = document.getElementById('periodDisplay').innerText.trim();
@@ -1480,7 +1500,7 @@ async function syncAdminData() {
 }
 
 // ========================================
-// 3. CHECK BET RESULT FUNCTION
+// CHECK BET RESULT FUNCTION
 // ========================================
 async function checkBetResult(betData) {
     const checkKey = `${betData.phone}_${betData.period}`;
@@ -1533,7 +1553,7 @@ async function checkBetResult(betData) {
 }
 
 // ========================================
-// 4. CONFIRM BET FUNCTION
+// CONFIRM BET FUNCTION (FIXED - NEXT PERIOD)
 // ========================================
 async function confirmBet() {
     const phone = getCurrentUserPhone();
@@ -1543,11 +1563,20 @@ async function confirmBet() {
     }
 
     const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
-    const period = document.getElementById('periodDisplay').innerText;
+    
+    // NEXT PERIOD calculate karo
+    const now = new Date();
+    const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    const dateStr = now.getFullYear().toString() + 
+                   (now.getMonth() + 1).toString().padStart(2, '0') + 
+                   now.getDate().toString().padStart(2, '0');
+    const nextPeriodNum = Math.floor(totalSeconds / currentMode) + 1;
+    const nextPeriod = dateStr + nextPeriodNum.toString().padStart(4, '0');
     
     console.log(`\n💰 PLACING BET`);
     console.log(`Phone: ${phone}`);
     console.log(`Bet: ${selectedBetValue}, Amount: ₹${totalAmt}`);
+    console.log(`For NEXT PERIOD: ${nextPeriod}`);
     
     if (currentBalance < totalAmt) {
         alert(`❌ Insufficient Balance!\n\nYour Balance: ₹${currentBalance.toFixed(2)}\nBet Amount: ₹${totalAmt.toFixed(2)}`);
@@ -1566,7 +1595,7 @@ async function confirmBet() {
             body: JSON.stringify({
                 action: 'placeBet',
                 phone: phone,
-                period: period,
+                period: nextPeriod,  // ✅ YE FIX HAI - Next period use karo
                 mode: currentMode,
                 betOn: selectedBetValue,
                 amount: totalAmt
@@ -1591,7 +1620,7 @@ async function confirmBet() {
         closeBetPopup();
         loadMyHistory();
         
-        const betData = { phone, period, mode: currentMode, betOn: selectedBetValue, amount: totalAmt };
+        const betData = { phone, period: nextPeriod, mode: currentMode, betOn: selectedBetValue, amount: totalAmt };
         checkBetResult(betData);
         
     } catch(e) {
@@ -1604,7 +1633,7 @@ async function confirmBet() {
 }
 
 // ========================================
-// 5. LOAD MY HISTORY FUNCTION
+// LOAD MY HISTORY FUNCTION
 // ========================================
 async function loadMyHistory() {
     const phone = getCurrentUserPhone();
@@ -1652,7 +1681,7 @@ async function loadMyHistory() {
 }
 
 // ========================================
-// 6. FETCH FROM DB FUNCTION
+// FETCH FROM DB FUNCTION
 // ========================================
 async function fetchFromDB() {
     try {
@@ -1661,20 +1690,30 @@ async function fetchFromDB() {
         const dateStr = now.getFullYear().toString() + 
                        (now.getMonth() + 1).toString().padStart(2, '0') + 
                        now.getDate().toString().padStart(2, '0');
-        const currentPeriodNumber = Math.floor(total / currentMode);
-        const currentPeriod = dateStr + currentPeriodNumber.toString().padStart(4, '0');
+        const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
         
-        // DON'T generate result for current running period
-        // Backend will generate result only when period ends
+        try {
+            const saveRes = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'generateResult',
+                    period: currentPeriod, 
+                    mode: currentMode 
+                })
+            });
+            
+            const saveData = await saveRes.json();
+            console.log('📊 Result:', saveData.message);
+            
+        } catch(e) { 
+            console.log("Save error:", e.message); 
+        }
         
         const res = await fetch(`/api/history?action=getHistory&mode=${currentMode}&page=${currentPage}`);
         if(res.ok) { 
             const data = await res.json();
             let historyData = data.results || [];
-            
-            // Filter out current period from display (it's still running)
-            historyData = historyData.filter(item => item.p !== currentPeriod);
-            
             renderHistory(historyData);
         }
 
@@ -1739,7 +1778,6 @@ function showResultPopup(type, amount, period, resultNumber, betOn) {
     
     overlay.classList.add('show');
     
-    // Show tick mark initially
     document.getElementById('tickMark').style.display = 'block';
 }
 
@@ -1764,42 +1802,14 @@ function generateResultPills(number) {
 
 function closeResultPopup() {
     document.getElementById('resultOverlay').classList.remove('show');
-    // Clear any pending auto-close timeout
-    if (window.resultAutoCloseTimeout) {
-        clearTimeout(window.resultAutoCloseTimeout);
-        window.resultAutoCloseTimeout = null;
-    }
 }
 
 function toggleAutoClose() {
     const tickMark = document.getElementById('tickMark');
-    
-    if (tickMark.style.display === 'none' || !tickMark.style.display) {
-        // Tick is hidden or first click - show it and start 3 second countdown
+    if (tickMark.style.display === 'none') {
         tickMark.style.display = 'block';
-        
-        // Clear any existing timeout
-        if (window.resultAutoCloseTimeout) {
-            clearTimeout(window.resultAutoCloseTimeout);
-        }
-        
-        // Set 3 second auto-close
-        window.resultAutoCloseTimeout = setTimeout(() => {
-            closeResultPopup();
-        }, 3000);
-        
-        console.log('✅ Tick shown - 3 second auto-close started');
     } else {
-        // Tick is visible - hide it and cancel auto-close
         tickMark.style.display = 'none';
-        
-        // Clear the timeout
-        if (window.resultAutoCloseTimeout) {
-            clearTimeout(window.resultAutoCloseTimeout);
-            window.resultAutoCloseTimeout = null;
-        }
-        
-        console.log('❌ Tick hidden - auto-close cancelled, popup stays open');
     }
 }
 
@@ -1819,8 +1829,9 @@ function createConfetti() {
         container.appendChild(confetti);
     }
 }
+
 // ========================================
-// BETTING FUNCTIONS
+// BETTING FUNCTIONS (MODAL RESET FIXED)
 // ========================================
 function showRules() {
     alert(`🎮 WinGo Game Rules:
@@ -1841,27 +1852,26 @@ function openBet(val) {
         alert('❌ Unable to get user info. Please refresh the page.');
         return;
     }
-    selectedBetValue = val;
     
-    // Reset to default values every time
+    // ✅ RESET ALL VALUES TO DEFAULT
     baseAmount = 1;
     multiplier = 1;
+    selectedBetValue = val;
     
-    // Reset chip selection to ₹1
+    // Reset UI
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.chip')[0].classList.add('active'); // First chip (₹1)
+    document.querySelectorAll('.chip')[0].classList.add('active'); // First chip (1) active
     
-    // Reset multiplier to X1
     document.querySelectorAll('.x-btn').forEach(x => x.classList.remove('active'));
-    document.querySelectorAll('.x-btn')[0].classList.add('active'); // First X button (X1)
+    document.querySelectorAll('.x-btn')[0].classList.add('active'); // X1 active
     
-    // Reset quantity to 1
     document.getElementById('qtyInput').value = 1;
     
     document.getElementById('selType').innerText = "Select " + val;
     document.getElementById('popHeader').innerText = document.getElementById('modeName').innerText;
     document.getElementById('betModalOverlay').style.display = 'flex';
-    updateTotal();
+    
+    updateTotal(); // Total bhi update karo
 }
 
 function closeBetPopup() { 
@@ -1908,6 +1918,7 @@ function getBetType(betValue) {
     if (betValue === 'Random') return 'random';
     return 'number';
 }
+
 // ========================================
 // HISTORY FUNCTIONS
 // ========================================
@@ -1984,6 +1995,7 @@ function startTimer() {
         if (oldP !== "" && oldP !== currentP) {
             console.log("Period Changed! New:", currentP);
             fetchFromDB();
+            updateAdminNextPeriod();
         }
     }, 1000);
 }
@@ -1995,6 +2007,7 @@ function switchM(s, el) {
     document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
     currentPage = 1;
     document.getElementById('pageInfo').innerText = currentPage + '/' + totalPages;
+    updateAdminNextPeriod();
     fetchFromDB();
 }
 
