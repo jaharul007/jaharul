@@ -5,188 +5,567 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Withdraw</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: Arial, sans-serif; margin: 0; padding: 0; }
-        .header { display: flex; align-items: center; padding: 15px; background: #1a1a1a; position: sticky; top: 0; }
-        .back-btn { font-size: 20px; cursor: pointer; margin-right: 110px; text-decoration: none; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0e27; 
+            color: #fff; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+        }
         
-        .container { padding: 15px; }
-
-        /* बैलेंस कार्ड */
-        .balance-card { 
-            background: linear-gradient(135deg, #f3d078, #d4af37); 
-            border-radius: 15px; padding: 20px; color: #3d2a00; 
-            margin-bottom: 20px; position: relative;
+        /* Header */
+        .header {
+            background: #0a0e27;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #1a1f3a;
         }
-        .balance-title { font-size: 13px; display: flex; align-items: center; gap: 5px; }
-        .amount { font-size: 30px; font-weight: bold; margin: 10px 0; }
-        .chip { width: 45px; height: 35px; background: rgba(0,0,0,0.1); border-radius: 6px; margin-top: 5px; }
-        .card-dots { position: absolute; bottom: 20px; right: 20px; letter-spacing: 2px; opacity: 0.6; }
-
-        /* बैंक और UPI बटन */
-        .method-selector { display: flex; gap: 12px; margin-bottom: 20px; }
-        .method-btn { 
-            flex: 1; background: #2a2a2a; border-radius: 12px; padding: 15px 5px;
-            text-align: center; cursor: pointer; border: 1px solid transparent;
-            transition: 0.3s; color: #888;
+        .back-btn {
+            font-size: 24px;
+            color: #fff;
+            cursor: pointer;
+            text-decoration: none;
         }
-        .method-btn img { width: 30px; display: block; margin: 0 auto 8px; opacity: 0.6; }
-        .method-btn.active { background: #f3d078; color: #3d2a00; border: none; }
-        .method-btn.active img { opacity: 1; filter: brightness(0.2); }
-
-        /* एड बटन (जब डेटा न हो) */
-        .action-box { 
-            background: #222; border: 1px dashed #444; border-radius: 12px; 
-            padding: 35px; text-align: center; cursor: pointer; color: #777;
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
         }
-        .action-box span { font-size: 40px; display: block; margin-bottom: 5px; }
+        .history-link {
+            color: #fff;
+            font-size: 14px;
+            text-decoration: none;
+        }
         
-        /* डेटा कार्ड (फोटो की तरह गहरा डिजाइन) */
-        .saved-card { 
-            background: #2a2a2a; border-radius: 12px; padding: 18px 20px; 
-            display: none; cursor: pointer; position: relative; border: 1px solid #333;
+        /* Container */
+        .container {
+            padding: 20px;
         }
-        .saved-card::after { content: '❯'; position: absolute; right: 20px; top: 40%; color: #666; font-size: 14px; }
-        .upi-tag { 
-            background: #666; color: white; font-size: 10px; font-weight: bold; 
-            padding: 2px 5px; border-radius: 3px; font-style: italic; margin-right: 8px;
+        
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #5ce1b8 0%, #4ecdc4 100%);
+            border-radius: 15px;
+            padding: 8px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(76, 205, 196, 0.3);
         }
-        #name_txt { font-size: 16px; font-weight: 500; display: flex; align-items: center; color: #ddd; }
-        #upi_txt { color: #888; font-size: 14px; margin-top: 8px; }
+        .balance-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            color: #0a0e27;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        .balance-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0a0e27;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .refresh-btn {
+            font-size: 24px;
+            cursor: pointer;
+            display: inline-block;
+            animation: none;
+        }
+        .refresh-btn:active {
+            animation: rotate 0.5s ease;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .card-chip {
+            width: 45px;
+            height: 35px;
+            background: rgba(10, 14, 39, 0.15);
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .card-numbers {
+            font-size: 18px;
+            letter-spacing: 3px;
+            color: #0a0e27;
+            opacity: 0.7;
+            font-weight: 600;
+        }
+        
+        /* ARPay Section */
+        .arpay-section {
+            background: #1a1f3a;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .arpay-icon {
+            width: 50px;
+            height: 50px;
+            background: #f3c34d;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #0a0e27;
+        }
+        .arpay-text h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .arpay-text p {
+            font-size: 13px;
+            color: #8b92b0;
+        }
+        
+        /* Payment Methods */
+                /* Payment Methods Update as per photo */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+                .method-card {
+            background: #161b36; 
+            border-radius: 8px;
+            padding: 12px 5px;
+            text-align: center;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+        }
+        .method-card.active {
+            border-color: #5ce1b8;
+            background: rgba(92, 225, 184, 0.05);
+        }
+        .method-icon-wrapper {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        .method-label {
+            font-size: 11px;
+            color: #535b7e;
+            font-weight: bold;
+        }
+        .method-card.active .method-label {
+            color: #5ce1b8;
+        }
 
-        /* अमाउंट इनपुट */
-        .input-area { 
-            background: #1e1e1e; border-radius: 30px; padding: 18px 25px; 
-            margin-top: 25px; display: flex; align-items: center; gap: 15px; border: 1px solid #2a2a2a;
-        }
-        .input-area span { color: #f3d078; font-weight: bold; font-size: 20px; }
-        .input-area input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 16px; }
 
-        /* विथड्रॉ बटन (गहरा रंग) */
-        .withdraw-submit { 
-            width: 100%; background: #333333; color: #f3d078; 
-            padding: 16px; border-radius: 30px; border: none; 
-            font-size: 16px; font-weight: bold; margin-top: 30px; cursor: pointer;
+        
+        /* Saved Account */
+        .saved-account {
+            background: #1a1f3a;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .saved-account:hover {
+            background: #222847;
+        }
+        .account-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        .account-icon {
+            font-size: 36px;
+        }
+        .account-details {
+            flex: 1;
+        }
+        .account-details h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .account-details p {
+            font-size: 14px;
+            color: #8b92b0;
+        }
+        .add-account-btn {
+            width: 45px;
+            height: 45px;
+            background: #5ce1b8;
+            border: none;
+            border-radius: 50%;
+            font-size: 28px;
+            color: #0a0e27;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+        .add-account-btn:active {
+            transform: scale(0.9);
+        }
+        .arrow-icon {
+            font-size: 20px;
+            color: #8b92b0;
+            margin-left: 10px;
+        }
+        
+        /* Amount Input */
+        .amount-input {
+            background: #0a0e27;
+            border-radius: 15px;
+            padding: 20px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid #1a1f3a;
+        }
+        .rupee-icon {
+            font-size: 24px;
+            color: #5ce1b8;
+            font-weight: 700;
+        }
+        .amount-input input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 18px;
+            width: 100%;
+        }
+        .amount-input input::placeholder {
+            color: #4a5073;
+        }
+        
+        /* Info Section */
+        .info-section {
+            margin-bottom: 25px;
+        }
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #8b92b0;
+        }
+        .info-item .bullet {
+            color: #5ce1b8;
+            font-size: 16px;
+            font-weight: 900;
+            margin-top: 2px;
+        }
+        .info-item.highlight {
+            color: #ff6b6b;
+        }
+        .info-item.highlight .bullet {
+            color: #ff6b6b;
+        }
+        .info-item .amount-text {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+        
+        /* All Button */
+        .all-button {
+            background: transparent;
+            border: 2px solid #5ce1b8;
+            color: #5ce1b8;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+            float: right;
+            margin-top: -60px;
+        }
+        
+        /* Withdraw Button */
+        .withdraw-btn {
+            width: 100%;
+            background: #6c7a9b;
+            color: #fff;
+            border: none;
+            border-radius: 15px;
+            padding: 18px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 25px;
+            margin-bottom: 25px;
+        }
+        .withdraw-btn:active {
+            transform: scale(0.98);
+        }
+        .withdraw-btn.active {
+            background: #5ce1b8;
+            color: #0a0e27;
         }
     </style>
 </head>
 <body>
-
+    <!-- Header -->
     <div class="header">
-        <a href="index.html" class="back-btn">❮</a>
-        <span style="font-weight: bold;">Withdraw</span>
+        <a href="javascript:history.back()" class="back-btn">‹</a>
+        <span class="header-title">Withdraw</span>
+        <a href="withdraw-history.html" class="history-link">Withdrawal history</a>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Balance Card -->
+        <div class="balance-card">
+            <div class="balance-label">
+                👜 Available balance
+            </div>
+            <div class="balance-amount">
+                ₹<span id="balanceDisplay">0.00</span>
+                <span class="refresh-btn" onclick="loadBalance()">🔄</span>
+            </div>
+            <div class="card-chip"></div>
+            <div class="card-numbers">****   ****</div>
+        </div>        
+        <!-- Payment Methods -->
+        <div class="payment-methods">
+            <div class="method-card active" onclick="selectMethod('bank', this)">
+                <div class="method-icon-wrapper">
+                    <svg width="35" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 7H5C3.89543 7 3 7.89543 3 9V18C3 19.1046 3.89543 20 5 20H19C20.1046 20 21 19.1046 21 18V9C21 7.89543 20.1046 7 19 7Z" stroke="#5ce1b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 12C16 13.1046 15.1046 14 14 14C12.8954 14 12 13.1046 12 12C12 10.8954 12.8954 10 14 10C15.1046 10 16 10.8954 16 12Z" fill="#5ce1b8"/>
+                        <path d="M3 11V9C3 7.89543 3.89543 7 5 7H17L14 3H5C3.89543 3 3 3.89543 3 5V11Z" fill="#5ce1b8" opacity="0.4"/>
+                    </svg>
+                </div>
+                <div class="method-label">BANK CARD</div>
+            </div>
+
+            <div class="method-card" onclick="selectMethod('upi', this)">
+                <div class="method-icon-wrapper">
+                    <div style="border: 1px solid #8b92b0; padding: 2px; border-radius: 2px; position: relative;">
+                         <span style="font-size: 10px; font-weight: bold; color: #8b92b0; letter-spacing: 0.5px;">UPI</span>
+                         <div style="position: absolute; top: -2px; left: -2px; width: 4px; height: 4px; border-top: 1.5px solid #8b92b0; border-left: 1.5px solid #8b92b0;"></div>
+                         <div style="position: absolute; top: -2px; right: -2px; width: 4px; height: 4px; border-top: 1.5px solid #8b92b0; border-right: 1.5px solid #8b92b0;"></div>
+                         <div style="position: absolute; bottom: -2px; left: -2px; width: 4px; height: 4px; border-bottom: 1.5px solid #8b92b0; border-left: 1.5px solid #8b92b0;"></div>
+                         <div style="position: absolute; bottom: -2px; right: -2px; width: 4px; height: 4px; border-bottom: 1.5px solid #8b92b0; border-right: 1.5px solid #8b92b0;"></div>
+                    </div>
+                </div>
+                <div class="method-label">UPI</div>
+            </div>
+
+            <div class="method-card" onclick="selectMethod('usdt', this)">
+                <div class="method-icon-wrapper">
+                    <div style="width: 24px; height: 24px; background: #5ce1b8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0a0e27; font-weight: bold; font-size: 14px;">₮</div>
+                </div>
+                <div class="method-label">USDT</div>
+            </div>
+        </div>
+
+        <div class="saved-account" id="savedAccount" style="display: flex; align-items: center; justify-content: center; min-height: 85px;">
+    
+    <div id="noAccount" style="display: block; text-align: center;">
+        <button class="add-account-btn" id="addAccountBtn" onclick="addAccount()" style="margin: 0 auto;">+</button>
     </div>
 
-    <div class="container">
-        <div class="balance-card">
-            <div class="balance-title">📂 Available balance</div>
-            <div class="amount">₹ <span id="with_bal">0.00</span> <span style="font-size: 18px; cursor:pointer;" onclick="syncOriginalBalance()">🔄</span></div>
-            <div class="chip"></div>
-            <div class="card-dots">**** ****</div>
-        </div>
-
-        <div class="method-selector">
-            <div class="method-btn" onclick="selectMethod('bank', this)">
-                <img src="https://cdn-icons-png.flaticon.com/512/633/633611.png"> BANK CARD
-            </div>
-            <div class="method-btn active" onclick="selectMethod('upi', this)">
-                <img src="https://cdn-icons-png.flaticon.com/512/732/732244.png"> UPI
+    <div id="hasAccount" style="display: none; width: 100%; align-items: center; justify-content: space-between; cursor: pointer;" onclick="addAccount()">
+        <div class="account-info" style="display: flex; align-items: center; gap: 15px;">
+            <span class="account-icon" id="displayIcon" style="font-size: 30px;">🔥</span>
+            <div class="account-details">
+                <h4 id="displayBankName" style="font-size: 16px; font-weight: 600;">Bank Name</h4>
+                <p id="displayAccNumber" style="font-size: 14px; color: #8b92b0;">**** **** 1234</p>
             </div>
         </div>
+        <span class="arrow-icon" style="font-size: 20px; color: #8b92b0;">›</span>
+    </div>
 
-        <div id="add_section">
-            <div id="add_btn" class="action-box" onclick="location.href='add_upi.html'">
-                <span>+</span>
-                <div>Add a bank account number</div>
-            </div>
-            
-            <div id="data_display" class="saved-card" onclick="location.href='add_upi.html'">
-                <div id="name_txt"></div>
-                <div id="upi_txt"></div>
-            </div>
-        </div>
+</div>
 
-        <div class="input-area">
-            <span>₹</span>
+        
+        <!-- Amount Input -->
+        <div class="amount-input">
+            <span class="rupee-icon">₹</span>
             <input type="number" id="withdrawAmount" placeholder="Please enter the amount">
         </div>
+                <button class="all-button" onclick="setMaxAmount()">All</button>
 
-        <button class="withdraw-submit" onclick="processWithdraw()">Withdraw</button>
+        <div style="clear: both; padding-top: 20px;">
+    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 14px; padding-left: 0px; margin-top: -5px;">
+    <span class="bullet" style="color: #5ce1b8; font-size: 16px; font-weight: 900; margin-top: 2px;">◆</span>
+    <div style="color: #8b92b0;">
+        <span>Withdrawal amount range </span>
+        <span style="color: #ff6b6b; font-weight: 600;">₹110.00-₹100,000.00</span>
     </div>
+</div>
+    <button class="withdraw-btn" id="withdrawBtn" onclick="processWithdraw()" style="margin-top: 0px;">Withdraw</button>
+</div>
 
-    <script>
-        // --- BALANCE SYNC LOGIC ---
-        async function syncOriginalBalance() {
-            const userPhone = localStorage.getItem('userPhone');
-            if (!userPhone) return;
 
-            try {
-                const response = await fetch(`/api/user?phone=${userPhone}`);
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('with_bal').innerText = data.balance.toFixed(2);
-                    localStorage.setItem('user_balance', data.balance);
-                }
-            } catch (err) { console.error("Balance Error:", err); }
+<div class="info-section">
+    <div class="info-item">
+        <span class="bullet">◆</span>
+        <span>Withdrawable balance <strong>₹<span id="withdrawableBalance">0.00</span></strong></span>
+    </div>
+    <div class="info-item">
+        <span class="bullet">◆</span>
+        <span>Withdrawal amount received <strong style="color: #5ce1b8;">₹<span id="receivedAmount">0.00</span></strong></span>
+    </div>
+    <div class="info-item highlight">
+        <span class="bullet">◆</span>
+        <span>Need to bet <span class="amount-text">₹0.00</span> to be able to withdraw</span>
+    </div>
+</div>
+
+        </div>
+    </div>
+<script>
+// 1. UI को अपडेट करने वाला फंक्शन
+function updateAccountUI(data) {
+    const noAccountDiv = document.getElementById('noAccount');
+    const hasAccountDiv = document.getElementById('hasAccount');
+
+    if (data && data.exists) {
+        noAccountDiv.style.display = 'none'; 
+        hasAccountDiv.style.display = 'flex'; 
+        
+        document.getElementById('displayBankName').innerText = data.bankName;
+        document.getElementById('displayAccNumber').innerText = data.accountNumber;
+        document.getElementById('displayIcon').innerText = (selectedMethod === 'bank') ? '🔥' : '📱';
+    } else {
+        noAccountDiv.style.display = 'block';
+        hasAccountDiv.style.display = 'none';
+    }
+}
+
+// 2. Global variables
+const urlParams = new URLSearchParams(window.location.search);
+const globalPhone = urlParams.get('phone');
+const phoneParam = globalPhone ? encodeURIComponent(globalPhone) : "";
+let currentBalance = 0;
+let selectedMethod = 'bank';
+// 3. डेटाबेस से बैंक या UPI डिटेल्स चेक करने वाला फंक्शन
+async function checkSavedAccount() {
+    if (!globalPhone) return;
+    try {
+        // हमने savedetail.js में GET /api/savedetail बनाया है
+        const response = await fetch(`/api/savedetail?phone=${phoneParam}&type=${selectedMethod}`);
+        const result = await response.json();
+        updateAccountUI(result); 
+    } catch (err) {
+        console.log("Details not found for this method");
+        updateAccountUI({ exists: false });
+    }
+}
+// 4. बैलेंस लोड करना
+async function loadBalance() {
+    if (!globalPhone) return;
+    try {
+        const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
+        const result = await response.json();
+        if (result.success) {
+            currentBalance = parseFloat(result.balance);
+            document.getElementById('balanceDisplay').innerText = currentBalance.toFixed(2);
+            document.getElementById('withdrawableBalance').innerText = currentBalance.toFixed(2);
         }
+    } catch (err) {
+        console.error("Balance load error:", err);
+    }
+}
 
-        // --- WITHDRAW PROCESS & REDIRECT ---
-        async function processWithdraw() {
-            const amount = document.getElementById('withdrawAmount').value;
-            const userPhone = localStorage.getItem('userPhone');
-            const savedUpi = localStorage.getItem('saved_upi_id');
-            const currentBal = parseFloat(localStorage.getItem('user_balance') || 0);
+// 5. मेथड सेलेक्ट करना
+function selectMethod(method, element) {
+    selectedMethod = method;
+    document.querySelectorAll('.method-card').forEach(card => card.classList.remove('active'));
+    element.classList.add('active');
+    
+    if (method === 'bank' || method === 'upi') {
+        document.getElementById('savedAccount').style.display = 'flex';
+        checkSavedAccount(); // अब यह फंक्शन काम करेगा
+    } else {
+        document.getElementById('savedAccount').style.display = 'none';
+    }
+}
 
-            if (!savedUpi) { alert("Please add UPI first!"); return; }
-            if (!amount || amount < 100) { alert("Minimum withdraw ₹100"); return; }
-            if (amount > currentBal) { alert("Insufficient balance!"); return; }
+function addAccount() {
+    // अगर BANK CARD सेलेक्ट है तो bankcard.html पर जाए, वरना add_upi.html पर
+    const targetPage = (selectedMethod === 'bank') ? 'bankcard.html' : 'add_upi.html';
+    window.location.href = `${targetPage}?phone=${phoneParam}`;
+}
 
-            try {
-                const res = await fetch('/api/withdraw', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: userPhone, amount: amount, upi: savedUpi })
-                });
-                const result = await res.json();
+function setMaxAmount() {
+    document.getElementById('withdrawAmount').value = currentBalance.toFixed(2);
+    updateReceivedAmount();
+}
 
-                if (result.success) {
-                    alert("Request Submitted!");
-                    // SUCCESS KE BAAD DUSRE PAGE PE JANA
-                    window.location.href = 'withdraw-history.html'; 
-                } else {
-                    alert(result.message);
-                }
-            } catch (e) { 
-                // Agar server API nahi bani toh bhi testing ke liye redirect kar sakte ho
-                console.log("Server API missing, redirecting anyway for UI test...");
-                window.location.href = 'withdraw-history.html';
-            }
+function updateReceivedAmount() {
+    const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+    document.getElementById('receivedAmount').innerText = amount.toFixed(2);
+    const btn = document.getElementById('withdrawBtn');
+    if (amount >= 110 && amount <= currentBalance) {
+        btn.classList.add('active');
+        btn.disabled = false;
+    } else {
+        btn.classList.remove('active');
+        btn.disabled = true;
+    }
+}
+
+async function processWithdraw() {
+    const amount = parseFloat(document.getElementById('withdrawAmount').value);
+    if (!amount || amount < 110) { alert('⚠️ Minimum withdrawal amount is ₹110.00'); return; }
+    
+    const btn = document.getElementById('withdrawBtn');
+    btn.disabled = true;
+    btn.innerText = 'Processing...';
+    
+    try {
+        const response = await fetch('/api/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: globalPhone, amount: amount, method: selectedMethod })
+        });
+        const result = await response.json();
+        if (result.success) {
+            alert('✅ Withdrawal request submitted successfully!');
+            window.location.href = `withdraw-history.html?phone=${phoneParam}`;
+        } else {
+            alert('❌ ' + (result.message || 'Withdrawal failed'));
+            btn.disabled = false;
+            btn.innerText = 'Withdraw';
         }
+    } catch (err) {
+        alert('❌ Server error.');
+        btn.disabled = false;
+        btn.innerText = 'Withdraw';
+    }
+}
 
-        function selectMethod(type, btn) {
-            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const addSec = document.getElementById('add_section');
-            if(type === 'upi') {
-                addSec.style.opacity = "1";
-                addSec.style.pointerEvents = "all";
-            } else {
-                addSec.style.opacity = "0.3";
-                addSec.style.pointerEvents = "none";
-            }
-        }
-
-        window.onload = function() {
-            syncOriginalBalance();
-            const savedName = localStorage.getItem('saved_upi_name');
-            const savedUpi = localStorage.getItem('saved_upi_id');
-            
-            if(savedName && savedUpi) {
-                document.getElementById('add_btn').style.display = 'none';
-                document.getElementById('data_display').style.display = 'block';
-                document.getElementById('name_txt').innerHTML = `<span class="upi-tag">UPI</span> ${savedName.toUpperCase()}`;
-                document.getElementById('upi_txt').innerText = savedUpi;
-            }
-        }
-    </script>
+window.onload = function() {
+    loadBalance();
+    document.getElementById('withdrawAmount').addEventListener('input', updateReceivedAmount);
+    selectMethod('bank', document.querySelector('.method-card.active'));
+};
+</script>
 </body>
 </html>
