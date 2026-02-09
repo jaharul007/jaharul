@@ -1,47 +1,61 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-// MongoDB Connection (Vercel के लिए ये बेस्ट तरीका है)
-if (!global.mongoose) {
-    global.mongoose = mongoose.connect(process.env.MONGO_URI || "mongodb+srv://your_id:password@cluster.mongodb.net/test");
+const MONGODB_URI = process.env.MONGO_URI;
+
+// Connection helper function
+async function dbConnect() {
+    if (mongoose.connection.readyState >= 1) return;
+    return mongoose.connect(MONGODB_URI);
 }
 
-// Schema Setup (Collection: upi bank detail)
 const DetailSchema = new mongoose.Schema({
-    phone: String,
+    phone: { type: String, required: true },
     name: String,
-    upi: String,        // UPI के लिए
-    bankName: String,   // Bank के लिए
-    accountNumber: String, // Bank के लिए
-    type: String        // 'bank' या 'upi'
-}, { collection: 'upi bank detail' });
+    upi: String,
+    bankName: String,
+    accountNumber: String,
+    type: { type: String, enum: ['bank', 'upi'] } // Sirf ye do options allow honge
+}, { collection: 'saved_details' }); // Collection name space bina rakhein toh behtar hai
 
-const DetailModel = mongoose.models.DetailModel || mongoose.model('DetailModel', DetailSchema);
+const DetailModel = mongoose.models.Detail || mongoose.model('Detail', DetailSchema);
 
 export default async function handler(req, res) {
     const { method } = req;
+    
+    // Database connect karein
+    try {
+        await dbConnect();
+    } catch (e) {
+        return res.status(500).json({ error: "Database connection failed" });
+    }
 
     try {
         if (method === 'POST') {
-            // डेटा सेव करने के लिए (Add Bank/UPI पेज से आएगा)
             const { phone, name, upi, bankName, accountNumber, type } = req.body;
             
+            // Validation: Agar phone ya type missing hai
+            if (!phone || !type) {
+                return res.status(400).json({ success: false, message: "Phone and Type are required" });
+            }
+
             await DetailModel.findOneAndUpdate(
-                { phone: phone, type: type }, // एक ही फोन पर अलग-अलग type (bank/upi) सेव होंगे
+                { phone: phone, type: type },
                 { name, upi, bankName, accountNumber, type },
                 { upsert: true, new: true }
             );
             return res.status(200).json({ success: true, message: "Saved Successfully" });
 
         } else if (method === 'GET') {
-            // डेटा दिखाने के लिए (Withdraw पेज से आएगा)
             const { phone, type } = req.query;
-            const data = await DetailModel.findOne({ phone: phone, type: type });
+            const data = await DetailModel.findOne({ phone, type });
 
             if (data) {
+                // Formatting for UI
                 return res.status(200).json({
                     exists: true,
                     bankName: type === 'bank' ? data.bankName : "UPI ID",
-                    accountNumber: type === 'bank' ? data.accountNumber : data.upi
+                    accountNumber: type === 'bank' ? data.accountNumber : data.upi,
+                    userName: data.name
                 });
             } else {
                 return res.status(200).json({ exists: false });
