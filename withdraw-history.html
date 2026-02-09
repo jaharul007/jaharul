@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdrawal History</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2a2a2a;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background-color: #3a3a3a;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 0;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .filter-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-button {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tab-button.active {
+            background-color: #d4a574;
+            color: #6b4423;
+        }
+
+        .tab-button:not(.active) {
+            background-color: #3a3a3a;
+            color: #999;
+        }
+
+        .tab-icon {
+            font-size: 18px;
+        }
+
+        .usdt-icon {
+            background-color: #00d4aa;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+        }
+
+        /* Dropdown Filters */
+        .dropdown-filters {
+            display: flex;
+            gap: 10px;
+            padding: 0 15px 15px;
+        }
+
+        .dropdown-select {
+            flex: 1;
+            background-color: #3a3a3a;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #999;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Withdrawal Cards */
+        .cards-container {
+            padding: 0 15px 15px;
+        }
+
+        .withdrawal-card {
+            background-color: #3a3a3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .withdraw-button {
+            background-color: #e74c3c;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 20px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .status-badge {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .status-completed {
+            color: #00d4aa;
+            background-color: rgba(0, 212, 170, 0.1);
+        }
+
+        .status-pending {
+            color: #f39c12;
+            background-color: rgba(243, 156, 18, 0.1);
+        }
+
+        .status-failed {
+            color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .card-details {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-label {
+            color: #999;
+        }
+
+        .detail-value {
+            color: #ccc;
+        }
+
+        .balance-value {
+            color: #f39c12;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .order-number-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 60%;
+        }
+
+        .order-number {
+            color: #ccc;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .copy-button {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .copy-button:hover {
+            color: #fff;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Status Editor Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #3a3a3a;
+            padding: 25px;
+            border-radius: 15px;
+            width: 85%;
+            max-width: 400px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-option {
+            background-color: #2a2a2a;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .status-option:hover {
+            transform: scale(1.02);
+        }
+
+        .status-option.completed {
+            color: #00d4aa;
+            border: 2px solid #00d4aa;
+        }
+
+        .status-option.pending {
+            color: #f39c12;
+            border: 2px solid #f39c12;
+        }
+
+        .status-option.failed {
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+        }
+
+        .modal-close {
+            background-color: #555;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #5ce1b8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <button class="back-button" onclick="goBack()">‹</button>
+        <h1 class="header-title">Withdrawal history</h1>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="tab-button active" onclick="filterByType('all')">
+            <span class="tab-icon">▦</span>
+            All
+        </button>
+        <button class="tab-button" onclick="filterByType('bank')">
+            <span class="tab-icon">💳</span>
+            BANK CARD
+        </button>
+        <button class="tab-button" onclick="filterByType('usdt')">
+            <span class="usdt-icon"></span>
+            USDT
+        </button>
+        <button class="tab-button" onclick="filterByType('upi')">
+            <span class="tab-icon">⟨⟩</span>
+            UPI
+        </button>
+    </div>
+
+    <!-- Dropdown Filters -->
+    <div class="dropdown-filters">
+        <select class="dropdown-select" id="statusFilter" onchange="applyFilters()">
+            <option value="all">All</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+        </select>
+        <select class="dropdown-select" id="dateFilter" onchange="applyFilters()">
+            <option value="all">Choose a date</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="week">Last 7 days</option>
+            <option value="month">Last 30 days</option>
+        </select>
+    </div>
+
+    <!-- Withdrawal Cards -->
+    <div class="cards-container" id="cardsContainer">
+        <div class="loading">Loading withdrawal history...</div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">Copied to clipboard!</div>
+
+    <!-- Status Editor Modal -->
+    <div class="modal" id="statusModal">
+        <div class="modal-content">
+            <div class="modal-title">Update Status</div>
+            <div class="status-option completed" onclick="updateStatus('completed')">
+                ✓ Completed
+            </div>
+            <div class="status-option pending" onclick="updateStatus('pending')">
+                ⏳ Pending
+            </div>
+            <div class="status-option failed" onclick="updateStatus('failed')">
+                ✗ Failed
+            </div>
+            <button class="modal-close" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        const urlParams = new URLSearchParams(window.location.search);
+        const userPhone = urlParams.get('phone');
+        let allWithdrawals = [];
+        let filteredWithdrawals = [];
+        let currentFilter = 'all';
+        let currentStatusFilter = 'all';
+        let currentDateFilter = 'all';
+        let editingWithdrawalId = null;
+        let longPressTimer = null;
+
+        // Check phone number
+        if (!userPhone) {
+            alert('Session expired! Please login again.');
+            window.location.href = 'withdraw.html';
+        }
+
+        function goBack() {
+            window.location.href = `withdraw.html?phone=${encodeURIComponent(userPhone)}`;
+        }
+
+        // Load withdrawal history from database
+        async function loadWithdrawals() {
+            try {
+                const response = await fetch(`/api/withdraw?phone=${encodeURIComponent(userPhone)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allWithdrawals = data.withdrawals;
+                    filteredWithdrawals = [...allWithdrawals];
+                    applyFilters();
+                } else {
+                    showNoData();
+                }
+            } catch (err) {
+                console.error('Error loading withdrawals:', err);
+                showNoData('Error loading data. Please try again.');
+            }
+        }
+
+        // Generate withdrawal cards
+        function generateCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+
+            if (filteredWithdrawals.length === 0) {
+                showNoData();
+                return;
+            }
+
+            filteredWithdrawals.forEach((withdrawal) => {
+                const card = document.createElement('div');
+                card.className = 'withdrawal-card';
+                
+                const statusClass = `status-${withdrawal.status}`;
+                const statusText = withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1);
+                const typeDisplay = withdrawal.type === 'bank' ? 'BANK CARD' : withdrawal.type.toUpperCase();
+                const formattedTime = new Date(withdrawal.time).toLocaleString('en-IN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).replace(/\//g, '-').replace(',', '');
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <button class="withdraw-button">Withdraw</button>
+                        <span class="status-badge ${statusClass}" 
+                              data-id="${withdrawal._id}"
+                              onmousedown="startLongPress('${withdrawal._id}')"
+                              onmouseup="cancelLongPress()"
+                              onmouseleave="cancelLongPress()"
+                              ontouchstart="startLongPress('${withdrawal._id}')"
+                              ontouchend="cancelLongPress()">
+                            ${statusText}
+                        </span>
+                    </div>
+                    <div class="card-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Balance</span>
+                            <span class="balance-value">₹${withdrawal.amount.toFixed(2)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Type</span>
+                            <span class="detail-value">${typeDisplay}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Time</span>
+                            <span class="detail-value">${formattedTime}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Order number</span>
+                            <div class="order-number-container">
+                                <span class="order-number">${withdrawal.orderNumber}</span>
+                                <button class="copy-button" onclick="copyToClipboard('${withdrawal.orderNumber}')">📋</button>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Remarks</span>
+                            <span class="detail-value">${withdrawal.remarks || '-'}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Filter functions
+        function filterByType(type) {
+            currentFilter = type;
+            
+            // Update active tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.tab-button').classList.add('active');
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            currentStatusFilter = document.getElementById('statusFilter').value;
+            currentDateFilter = document.getElementById('dateFilter').value;
+
+            filteredWithdrawals = allWithdrawals.filter(w => {
+                // Type filter
+                if (currentFilter !== 'all' && w.type !== currentFilter) return false;
+                
+                // Status filter
+                if (currentStatusFilter !== 'all' && w.status !== currentStatusFilter) return false;
+                
+                // Date filter
+                if (currentDateFilter !== 'all') {
+                    const wDate = new Date(w.time);
+                    const now = new Date();
+                    const diffTime = now - wDate;
+                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+                    if (currentDateFilter === 'today' && diffDays > 1) return false;
+                    if (currentDateFilter === 'yesterday' && (diffDays < 1 || diffDays > 2)) return false;
+                    if (currentDateFilter === 'week' && diffDays > 7) return false;
+                    if (currentDateFilter === 'month' && diffDays > 30) return false;
+                }
+
+                return true;
+            });
+
+            generateCards();
+        }
+
+        // Long press for status editing
+        function startLongPress(withdrawalId) {
+            longPressTimer = setTimeout(() => {
+                editingWithdrawalId = withdrawalId;
+                document.getElementById('statusModal').style.display = 'flex';
+            }, 1500); // 1.5 seconds hold
+        }
+
+        function cancelLongPress() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        }
+
+        // Update status
+        async function updateStatus(newStatus) {
+            if (!editingWithdrawalId) return;
+
+            try {
+                const response = await fetch('/api/withdraw', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        withdrawalId: editingWithdrawalId,
+                        status: newStatus
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Status updated successfully!');
+                    closeModal();
+                    loadWithdrawals(); // Reload data
+                } else {
+                    alert('❌ Failed to update status');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ Server error!');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('statusModal').style.display = 'none';
+            editingWithdrawalId = null;
+        }
+
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Show no data message
+        function showNoData(message = 'No withdrawal history found') {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = `<div class="no-data">${message}</div>`;
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', loadWithdrawals);
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('statusModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
