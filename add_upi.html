@@ -36,34 +36,44 @@
     </div>
 
     <button class="save-btn" onclick="sendToAdmin()">Save Details</button>
+<script>
+    function sendToAdmin() {
+        const name = document.getElementById('u_name').value;
+        const upi = document.getElementById('u_id').value;
+        
+        // URL से फोन नंबर निकाल रहे हैं
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get('phone'); 
 
-    <script>
-        function sendToAdmin() {
-            const name = document.getElementById('u_name').value;
-            const phone = document.getElementById('u_phone').value;
-            const upi = document.getElementById('u_id').value;
-
-            if(!name || !phone || !upi) { alert("Please fill all details"); return; }
-
-            // ब्राउज़र में दिखाने के लिए सेव करें
-            localStorage.setItem('saved_upi_name', name);
-            localStorage.setItem('saved_upi_id', upi);
-
-            // Node.js सर्वर (Admin) को भेजें
-            fetch('/save-upi', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, phone, upi })
-            })
-            .then(() => { 
-                alert("Data Saved Successfully!");
-                window.location.href = 'withdraw.html'; 
-            })
-            .catch(err => {
-                console.error(err);
-                window.location.href = 'withdraw.html';
-            });
+        if(!name || !upi || !phone) { 
+            alert("Details missing! Please ensure you came from the correct link."); 
+            return; 
         }
-    </script>
+
+        fetch('/api/savedetail', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                name: name, 
+                phone: phone, 
+                upi: upi, 
+                type: 'upi' 
+            })
+        })
+        .then(res => res.json())
+        .then(data => { 
+            if(data.success) {
+                alert("✅ UPI Details Saved!");
+                window.location.href = `withdraw.html?phone=${encodeURIComponent(phone)}`; 
+            } else {
+                alert("❌ Error saving details.");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Server Error!");
+        });
+    }
+</script>
 </body>
 </html>
