@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import User from '../models/User.js'; 
+import User from '../models/User.js'; // आपका दिया हुआ मॉडल
+
 const MONGODB_URI = process.env.MONGO_URI;
 
 async function dbConnect() {
@@ -21,24 +22,13 @@ const WithdrawalModel = mongoose.models.Withdrawal || mongoose.model('Withdrawal
 
 function generateOrderNumber() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const random = Math.random().toString(36).substring(2, 10);
-    return `WD${year}${month}${day}${hours}${minutes}${seconds}${random}`;
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `WD${now.getTime()}${random}`;
 }
 
 export default async function handler(req, res) {
     const { method } = req;
-
-    try {
-        await dbConnect();
-    } catch (e) {
-        return res.status(500).json({ error: "Database connection failed" });
-    }
+    await dbConnect();
 
     try {
         if (method === 'POST') {
@@ -46,83 +36,70 @@ export default async function handler(req, res) {
             const withdrawAmount = parseFloat(amount);
 
             if (!phone || !amount || !paymentMethod) {
-                return res.status(400).json({ success: false, message: "Phone, Amount and Method are required" });
+                return res.status(400).json({ success: false, message: "Details missing" });
             }
 
-            // Minimum amount check (अब यह सही जगह पर है)
             if (withdrawAmount < 110) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Minimum withdrawal amount is ₹110.00" 
-                });
+                return res.status(400).json({ success: false, message: "Minimum ₹110 required" });
             }
 
-            // 1. यूजर चेक और बैलेंस चेक
+            // --- बैलेंस काटने का असली लॉजिक यहाँ है ---
+            
+            // 1. आपके मॉडल के हिसाब से 'phoneNumber' फील्ड में सर्च कर रहे हैं
             const user = await User.findOne({ phoneNumber: phone });
+
             if (!user) {
-                return res.status(404).json({ success: false, message: "User not found" });
+                return res.status(404).json({ success: false, message: "User not found in database" });
             }
 
+            // 2. बैलेंस चेक
             if (user.balance < withdrawAmount) {
                 return res.status(400).json({ success: false, message: "Insufficient balance!" });
             }
 
-            // 2. बैलेंस काटना
-            user.balance -= withdrawAmount;
-            await user.save();
+            // 3. बैलेंस अपडेट (Deduction)
+            // हम direct update use कर रहे हैं ताकि कोई गलती न हो
+            const updatedUser = await User.findOneAndUpdate(
+                { phoneNumber: phone },
+                { $inc: { balance: -withdrawAmount } }, // बैलेंस घटाया
+                { new: true }
+            );
 
-            // 3. विड्रॉल हिस्ट्री सेव करना
+            // 4. विड्रॉल हिस्ट्री सेव करें
             const orderNumber = generateOrderNumber();
             const withdrawal = new WithdrawalModel({
-                phone,
+                phone: phone,
                 amount: withdrawAmount,
                 type: paymentMethod,
-                orderNumber,
-                status: 'pending',
-                time: new Date()
+                orderNumber: orderNumber,
+                status: 'pending'
             });
 
             await withdrawal.save();
 
             return res.status(200).json({ 
                 success: true, 
-                message: "Withdrawal successful and balance deducted",
-                orderNumber,
-                newBalance: user.balance 
+                message: "Balance deducted and request saved",
+                newBalance: updatedUser.balance,
+                orderNumber: orderNumber
             });
 
         } else if (method === 'GET') {
             const { phone } = req.query;
-            if (!phone) {
-                return res.status(400).json({ success: false, message: "Phone number is required" });
-            }
-
             const withdrawals = await WithdrawalModel.find({ phone }).sort({ time: -1 });
             return res.status(200).json({ success: true, withdrawals });
 
         } else if (method === 'PUT') {
+            // एडमिन स्टेटस अपडेट के लिए
             const { withdrawalId, status } = req.body;
-            if (!withdrawalId || !status) {
-                return res.status(400).json({ success: false, message: "Withdrawal ID and Status are required" });
-            }
-
-            const updatedWithdrawal = await WithdrawalModel.findByIdAndUpdate(
-                withdrawalId,
-                { status },
-                { new: true }
-            );
-
-            if (!updatedWithdrawal) {
-                return res.status(404).json({ success: false, message: "Withdrawal not found" });
-            }
-
-            return res.status(200).json({ success: true, message: "Status updated", withdrawal: updatedWithdrawal });
+            const updated = await WithdrawalModel.findByIdAndUpdate(withdrawalId, { status }, { new: true });
+            return res.status(200).json({ success: true, updated });
 
         } else {
             return res.status(405).json({ success: false, message: "Method not allowed" });
         }
     } catch (err) {
-        console.error("Error in withdraw API:", err);
-        return res.status(500).json({ error: err.message });
+        console.error("API Error:", err);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
