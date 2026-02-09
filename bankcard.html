@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Bank Account</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2d2d2d;
+            color: #ffffff;
+        }
+
+        .header {
+            background-color: #5a5a5a;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-arrow {
+            font-size: 24px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .container {
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .label-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .label {
+            font-size: 16px;
+            color: #ffffff;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 18px;
+            background-color: #3a3a3a;
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .input-field:focus {
+            background-color: #444;
+            box-shadow: 0 0 0 2px #5ce1b8;
+        }
+
+        .input-field::placeholder {
+            color: #6a6a6a;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-bank {
+            width: 100%;
+            padding: 18px;
+            background-color: #d4a76a;
+            border: none;
+            border-radius: 8px;
+            color: #6a4c2a;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        select {
+            width: 100%;
+            padding: 18px;
+            background-color: #3a3a3a;
+            border: 1px solid #5a5a5a;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        select option {
+            background-color: #3a3a3a;
+            color: #ffffff;
+        }
+
+        .save-button {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #5ce1b8;
+            color: #0a0e27;
+            border: none;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .save-button:hover {
+            background-color: #4ecdc4;
+        }
+
+        .save-button:disabled {
+            background-color: #666;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .bank-icon { color: #d4a76a; }
+        .user-icon { color: #d4a76a; }
+        .card-icon { color: #d4a76a; }
+        .phone-icon { color: #d4a76a; }
+        .mail-icon { color: #d4a76a; }
+        .key-icon { color: #d4a76a; }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #5ce1b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="back-arrow" onclick="goBack()">‹</span>
+        <h1 class="header-title">Add Bank Account</h1>
+    </div>
+
+    <div class="container">
+        <!-- Choose a bank -->
+        <div class="form-group">
+            <div class="label-container">
+                <div class="icon bank-icon">🏛</div>
+                <div class="label">Choose a bank</div>
+            </div>
+            <select id="bank" class="input-field">
+                <option value="">Please select a bank</option>
+                <option value="State Bank of India">State Bank of India</option>
+                <option value="HDFC Bank">HDFC Bank</option>
+                <option value="ICICI Bank">ICICI Bank</option>
+                <option value="Axis Bank">Axis Bank</option>
+                <option value="Punjab National Bank">Punjab National Bank</option>
+                <option value="Bank of Baroda">Bank of Baroda</option>
+                <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                <option value="Yes Bank">Yes Bank</option>
+                <option value="IndusInd Bank">IndusInd Bank</option>
+                <option value="Canara Bank">Canara Bank</option>
+            </select>
+        </div>
+
+        <!-- Full recipient's name -->
+        <div class="form-group">
+            <div class="label-container">
+                <div class="icon user-icon">👤</div>
+                <div class="label">Account Holder Name</div>
+            </div>
+            <input type="text" id="holderName" class="input-field" placeholder="Enter account holder name" style="text-transform: uppercase;">
+        </div>
+
+        <!-- Bank account number -->
+        <div class="form-group">
+            <div class="label-container">
+                <div class="icon card-icon">💳</div>
+                <div class="label">Bank Account Number</div>
+            </div>
+            <input type="text" id="accountNumber" class="input-field" placeholder="Enter bank account number">
+        </div>
+
+        <!-- Phone number -->
+        <div class="form-group">
+            <div class="label-container">
+                <div class="icon phone-icon">📱</div>
+                <div class="label">Phone Number</div>
+            </div>
+            <input type="tel" id="phoneNumber" class="input-field" placeholder="Enter phone number" maxlength="10">
+        </div>
+
+        <!-- Mail -->
+        <div class="form-group">
+            <div class="label-container">
+                <div class="icon mail-icon">✉</div>
+                <div class="label">Email (Optional)</div>
+            </div>
+            <input type="email" id="email" class="input-field" placeholder="Enter your email">
+        </div>
+
+        <!-- IFSC code -->
+        <div class="form-group">
+            <div class="label-container">
+                <div class="icon key-icon">🔑</div>
+                <div class="label">IFSC Code</div>
+            </div>
+            <input type="text" id="ifscCode" class="input-field" placeholder="Enter IFSC code" style="text-transform: uppercase;">
+        </div>
+
+        <div class="loading" id="loading">Processing...</div>
+    </div>
+
+    <button class="save-button" id="saveBtn" onclick="saveBankDetails()">Save Details</button>
+
+    <script>
+        // URL से phone number लेना
+        const urlParams = new URLSearchParams(window.location.search);
+        const userPhone = urlParams.get('phone');
+
+        // अगर phone नहीं है तो withdraw page पर redirect करें
+        if (!userPhone) {
+            alert('Session expired! Please try again.');
+            window.location.href = 'withdraw.html';
+        }
+
+        function goBack() {
+            window.location.href = `withdraw.html?phone=${encodeURIComponent(userPhone)}`;
+        }
+
+        async function saveBankDetails() {
+            const bank = document.getElementById('bank').value;
+            const holderName = document.getElementById('holderName').value.trim();
+            const accountNumber = document.getElementById('accountNumber').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const ifscCode = document.getElementById('ifscCode').value.trim().toUpperCase();
+
+            // Validations
+            if (!bank || bank === '') {
+                alert('❌ Please select a bank');
+                return;
+            }
+            if (!holderName) {
+                alert('❌ Please enter account holder name');
+                return;
+            }
+            if (!accountNumber) {
+                alert('❌ Please enter bank account number');
+                return;
+            }
+            if (accountNumber.length < 9 || accountNumber.length > 18) {
+                alert('❌ Please enter a valid account number (9-18 digits)');
+                return;
+            }
+            if (!phoneNumber) {
+                alert('❌ Please enter phone number');
+                return;
+            }
+            if (phoneNumber.length !== 10) {
+                alert('❌ Please enter a valid 10-digit phone number');
+                return;
+            }
+            if (!ifscCode) {
+                alert('❌ Please enter IFSC code');
+                return;
+            }
+            if (ifscCode.length !== 11) {
+                alert('❌ IFSC code must be 11 characters');
+                return;
+            }
+
+            // Button disable karein
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Saving...';
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch('/api/savedetail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        phone: userPhone,
+                        name: holderName,
+                        bankName: bank,
+                        accountNumber: accountNumber,
+                        ifscCode: ifscCode,
+                        email: email || '',
+                        type: 'bank'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ Bank account details saved successfully!');
+                    window.location.href = `withdraw.html?phone=${encodeURIComponent(userPhone)}`;
+                } else {
+                    alert('❌ ' + (data.message || 'Error saving details'));
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = 'Save Details';
+                    document.getElementById('loading').style.display = 'none';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ Server error! Please try again.');
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Save Details';
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Auto uppercase for holder name and IFSC
+        document.getElementById('holderName').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        document.getElementById('ifscCode').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        // Only numbers in account number
+        document.getElementById('accountNumber').addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Only numbers in phone
+        document.getElementById('phoneNumber').addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+</html>
