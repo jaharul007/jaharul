@@ -40,10 +40,8 @@ export default async function handler(req, res) {
                 const searchPhone = formatPhone(phone);
                 const searchPeriod = String(period).trim();
                 const searchMode = parseInt(mode);
-
-                const result = await Result.findOne({ period: searchPeriod, mode: searchMode });
-                if (!result) return res.json({ status: 'pending' });
-
+const result = await Result.findOne({ period: searchPeriod, mode: searchMode, status: 'active' });
+if (!result) return res.json({ status: 'pending' }); 
                 // पेंडिंग बेट ढूंढो (+91 वाले नंबर के साथ)
                 const bet = await Bet.findOne({ 
                     phoneNumber: searchPhone, 
@@ -105,8 +103,12 @@ export default async function handler(req, res) {
 
             // Get History Logic
             if (!action || action === 'getHistory') {
-                const historyData = await Result.find({ mode: parseInt(mode) })
-                    .sort({ period: -1 })
+                // नया हिस्सा (सिर्फ 'active' रिजल्ट्स दिखाएगा)
+const historyData = await Result.find({ 
+    mode: parseInt(mode), 
+    status: 'active' // <--- यह जोड़ना बहुत जरूरी है
+})
+.sort({ period: -1 })
                     .skip((page - 1) * limit)
                     .limit(parseInt(limit))
                     .lean();
@@ -211,91 +213,60 @@ export default async function handler(req, res) {
                 return res.json({ success: true, newBalance: updated.balance });
             }
 
-            // ========================================
-            // ✅ FIXED: Generate Result with ADMIN FORCE
+                        // ========================================
+            // ✅ UPDATED: Admin Force & Result Generation
             // ========================================
             if (action === 'generateResult') {
                 const targetPeriod = String(period).trim();
                 const targetMode = parseInt(mode);
 
-                // Check if result already exists
-                const existingResult = await Result.findOne({ 
-                    period: targetPeriod, 
-                    mode: targetMode 
-                });
+                // 1. चेक करो क्या इस पीरियड के लिए पहले से कोई रिजल्ट है?
+                const existingResult = await Result.findOne({ period: targetPeriod, mode: targetMode });
 
-                // ========================================
-                // ADMIN FORCE MODE - Always Override
-                // ========================================
+                // 2. अगर एडमिन ने "SAVE" दबाया है (isAdmin true है)
                 if (isAdmin && number !== undefined) {
-                    const forcedNum = parseInt(number);
-                    
-                    console.log(`🔧 ADMIN FORCE: Setting ${forcedNum} for period ${targetPeriod}`);
-
-                    // Calculate color and size
-                    const color = (forcedNum === 0) ? ['red', 'violet'] 
-                                : (forcedNum === 5) ? ['green', 'violet'] 
-                                : (forcedNum % 2 === 0) ? ['red'] 
-                                : ['green'];
-                    const size = (forcedNum >= 5) ? 'Big' : 'Small';
-
-                    // Delete existing and create new
-                    await Result.deleteOne({ period: targetPeriod, mode: targetMode });
-                    
-                    const saved = await Result.create({ 
-                        period: targetPeriod, 
-                        mode: targetMode, 
-                        number: forcedNum, 
-                        color, 
-                        size, 
-                        timestamp: new Date(),
-                        isAdminForced: true  // Mark as admin forced
-                    });
-
-                    return res.json({ 
-                        success: true, 
-                        number: forcedNum, 
-                        message: `Admin forced result ${forcedNum} for ${targetPeriod}`,
-                        data: saved 
-                    });
+                    // यहाँ हम रिजल्ट को 'scheduled' स्टेटस में डालेंगे ताकि ये तुरंत हिस्ट्री में न दिखे
+                    await Result.findOneAndUpdate(
+                        { period: targetPeriod, mode: targetMode },
+                        { 
+                            number: parseInt(number), 
+                            status: 'scheduled', // यह सबसे जरूरी है
+                            isAdminForced: true 
+                        },
+                        { upsert: true }
+                    );
+                    return res.json({ success: true, message: "Result locked! Will show when timer ends." });
                 }
 
-                // ========================================
-                // AUTO MODE - Only create if doesn't exist
-                // ========================================
+                // 3. यह हिस्सा तब चलेगा जब टाइमर 0 होने पर ऑटो-कॉल आएगी
                 if (existingResult) {
-                    return res.json({ 
-                        success: true, 
-                        number: existingResult.number,
-                        message: 'Result already exists',
-                        existing: true
-                    });
+                    // अगर रिजल्ट 'scheduled' है, तो उसे 'active' कर दो (अब वो सबको दिखेगा)
+                    if (existingResult.status === 'scheduled') {
+                        const finalNum = existingResult.number;
+                        const color = (finalNum === 0) ? ['red', 'violet'] : (finalNum === 5) ? ['green', 'violet'] : (finalNum % 2 === 0) ? ['red'] : ['green'];
+                        const size = (finalNum >= 5) ? 'Big' : 'Small';
+
+                        await Result.updateOne(
+                            { _id: existingResult._id },
+                            { $set: { color, size, status: 'active', timestamp: new Date() } }
+                        );
+                        return res.json({ success: true, number: finalNum, message: "Scheduled result activated!" });
+                    }
+                    // अगर पहले से 'active' है, तो वही दिखाओ
+                    return res.json({ success: true, number: existingResult.number, existing: true });
                 }
 
-                // Generate random result
+                // 4. अगर कोई शेड्यूल्ड रिजल्ट नहीं है, तो रैंडम बनाओ
                 const randomNum = Math.floor(Math.random() * 10);
-                const color = (randomNum === 0) ? ['red', 'violet'] 
-                            : (randomNum === 5) ? ['green', 'violet'] 
-                            : (randomNum % 2 === 0) ? ['red'] 
-                            : ['green'];
+                const color = (randomNum === 0) ? ['red', 'violet'] : (randomNum === 5) ? ['green', 'violet'] : (randomNum % 2 === 0) ? ['red'] : ['green'];
                 const size = (randomNum >= 5) ? 'Big' : 'Small';
 
-                const saved = await Result.create({ 
-                    period: targetPeriod, 
-                    mode: targetMode, 
-                    number: randomNum, 
-                    color, 
-                    size, 
-                    timestamp: new Date(),
-                    isAdminForced: false
+                await Result.create({ 
+                    period: targetPeriod, mode: targetMode, number: randomNum, 
+                    color, size, status: 'active', isAdminForced: false, timestamp: new Date() 
                 });
 
-                return res.json({ 
-                    success: true, 
-                    number: randomNum, 
-                    message: 'Auto result generated',
-                    data: saved 
-                });
+                return res.json({ success: true, number: randomNum });
             }
 
         } catch (e) {
