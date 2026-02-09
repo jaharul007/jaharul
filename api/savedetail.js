@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // MongoDB Connection (Vercel के लिए ये बेस्ट तरीका है)
 if (!global.mongoose) {
-    global.mongoose = mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://your_id:password@cluster.mongodb.net/test");
+    global.mongoose = mongoose.connect(process.env.MONGO_URI || "mongodb+srv://your_id:password@cluster.mongodb.net/test");
 }
 
 // Schema Setup (Collection: upi bank detail)
