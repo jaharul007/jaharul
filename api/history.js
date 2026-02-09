@@ -1,4 +1,4 @@
-Import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Bet from '../models/Bet.js';
 import Result from '../models/Result.js';
