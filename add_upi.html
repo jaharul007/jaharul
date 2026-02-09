@@ -6,74 +6,182 @@
     <title>Add UPI</title>
     <style>
         body { margin: 0; background-color: #1a1a1a; color: white; font-family: Arial, sans-serif; }
-        .header { display: flex; align-items: center; padding: 15px; background: #222; }
+        .header { 
+            display: flex; 
+            align-items: center; 
+            padding: 15px; 
+            background: #222; 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
         .container { padding: 20px; }
         .input-group { margin-bottom: 20px; }
-        .label { font-size: 14px; margin-bottom: 8px; display: block; color: #aaa; }
-        .input-field { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 15px; width: 100%; box-sizing: border-box; color: white; outline: none; }
-        .save-btn { position: fixed; bottom: 0; left: 0; width: 100%; background: #f3d078; color: #3d2a00; padding: 18px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .label { 
+            font-size: 14px; 
+            margin-bottom: 8px; 
+            display: block; 
+            color: #aaa; 
+        }
+        .input-field { 
+            background: #2a2a2a; 
+            border: 1px solid #444; 
+            border-radius: 8px; 
+            padding: 15px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            color: white; 
+            outline: none;
+            font-size: 16px;
+        }
+        .input-field::placeholder {
+            color: #666;
+        }
+        .input-field:focus {
+            border-color: #5ce1b8;
+        }
+        .save-btn { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: #5ce1b8; 
+            color: #0a0e27; 
+            padding: 18px; 
+            border: none; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .save-btn:hover {
+            background: #4ecdc4;
+        }
+        .save-btn:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #5ce1b8;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <a href="withdraw.html" style="color:white; text-decoration:none; margin-right:20px;">❮</a>
-        <span>Add UPI</span>
+        <a onclick="goBack()" class="back-btn">‹</a>
+        <span class="header-title">Add UPI</span>
     </div>
 
     <div class="container">
         <div class="input-group">
             <span class="label">UPI Name</span>
-            <input type="text" id="u_name" class="input-field" placeholder="Enter Name">
-        </div>
-        <div class="input-group">
-            <span class="label">Phone Number</span>
-            <input type="number" id="u_phone" class="input-field" placeholder="Enter Phone">
+            <input type="text" id="u_name" class="input-field" placeholder="Enter your name">
         </div>
         <div class="input-group">
             <span class="label">UPI ID</span>
-            <input type="text" id="u_id" class="input-field" placeholder="Enter UPI ID">
+            <input type="text" id="u_id" class="input-field" placeholder="Enter UPI ID (e.g., 9876543210@paytm)">
         </div>
+        <div class="loading" id="loading">Processing...</div>
     </div>
 
-    <button class="save-btn" onclick="sendToAdmin()">Save Details</button>
-<script>
-    function sendToAdmin() {
-        const name = document.getElementById('u_name').value;
-        const upi = document.getElementById('u_id').value;
-        
-        // URL से फोन नंबर निकाल रहे हैं
-        const urlParams = new URLSearchParams(window.location.search);
-        const phone = urlParams.get('phone'); 
+    <button class="save-btn" id="saveBtn" onclick="sendToAdmin()">Save Details</button>
 
-        if(!name || !upi || !phone) { 
-            alert("Details missing! Please ensure you came from the correct link."); 
+<script>
+    // URL से phone number लेना
+    const urlParams = new URLSearchParams(window.location.search);
+    const phone = urlParams.get('phone');
+
+    // अगर phone नहीं है तो withdraw page पर redirect करें
+    if (!phone) {
+        alert('Session expired! Please try again.');
+        window.location.href = 'withdraw.html';
+    }
+
+    function goBack() {
+        window.location.href = `withdraw.html?phone=${encodeURIComponent(phone)}`;
+    }
+
+    async function sendToAdmin() {
+        const name = document.getElementById('u_name').value.trim();
+        const upi = document.getElementById('u_id').value.trim();
+        
+        // Validation
+        if(!name) { 
+            alert("❌ Please enter your name"); 
             return; 
         }
 
-        fetch('/api/savedetail', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                name: name, 
-                phone: phone, 
-                upi: upi, 
-                type: 'upi' 
-            })
-        })
-        .then(res => res.json())
-        .then(data => { 
+        if(!upi) { 
+            alert("❌ Please enter UPI ID"); 
+            return; 
+        }
+
+        // UPI ID validation (basic)
+        const upiPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/;
+        if(!upiPattern.test(upi)) {
+            alert("❌ Please enter a valid UPI ID (e.g., 9876543210@paytm)");
+            return;
+        }
+
+        // Button disable karein
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+        document.getElementById('loading').style.display = 'block';
+
+        try {
+            const response = await fetch('/api/savedetail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    name: name, 
+                    phone: phone, 
+                    upi: upi, 
+                    type: 'upi' 
+                })
+            });
+
+            const data = await response.json();
+            
             if(data.success) {
-                alert("✅ UPI Details Saved!");
+                alert("✅ UPI Details Saved Successfully!");
                 window.location.href = `withdraw.html?phone=${encodeURIComponent(phone)}`; 
             } else {
-                alert("❌ Error saving details.");
+                alert("❌ " + (data.message || "Error saving details"));
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Save Details';
+                document.getElementById('loading').style.display = 'none';
             }
-        })
-        .catch(err => {
+        } catch (err) {
             console.error(err);
-            alert("Server Error!");
-        });
+            alert("❌ Server Error! Please try again.");
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Details';
+            document.getElementById('loading').style.display = 'none';
+        }
     }
+
+    // Enter key support
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendToAdmin();
+        }
+    });
 </script>
 </body>
 </html>
