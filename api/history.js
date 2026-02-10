@@ -76,7 +76,8 @@ export default async function handler(req, res) {
                 }
 
                 if (isWin) {
-                    const winAmount = parseFloat(bet.amount) * mult;
+                    const winAmountBeforeTax = parseFloat(bet.amount) * mult;
+                    const winAmount = winAmountBeforeTax * 0.98; // 2% tax deduction
                     
                     // 1. बैलेंस बढ़ाओ
                     const updateBal = await User.updateOne(
