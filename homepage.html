@@ -486,12 +486,12 @@
     const globalPhone = urlParams.get('phone');
     const phoneParam = globalPhone ? encodeURIComponent(globalPhone) : "";
 
-    // 1. Navigation Setup (Ye turant kaam karega)
+    // 1. Navigation Setup
     function setupNavigation() {
         if (!globalPhone) {
-            // Agar phone nahi hai toh sabko index par bhej do
+            // अगर फोन नहीं है तो किसी भी जरूरी बटन पर क्लिक करने पर लॉगिन पर भेजें
             document.body.onclick = (e) => {
-                if(e.target.closest('.btn, .nav-item, .featured-card, .game-card')) {
+                if(e.target.closest('.btn, .nav-item, .featured-card, .game-card, .main-game-card')) {
                     window.location.href = 'index.html';
                 }
             };
@@ -505,6 +505,14 @@
         // Featured Games
         document.querySelector('.featured-card.wingo').onclick = () => window.location.href = `wingo_game.html?phone=${phoneParam}`;
         document.querySelector('.featured-card.trx').onclick = () => window.location.href = `trx_game.html?phone=${phoneParam}`;
+
+        // CHICKEN ROAD बटन का लिंक
+        const chickenCard = document.querySelector('.main-game-card.chicken');
+        if (chickenCard) {
+            chickenCard.onclick = () => {
+                window.location.href = `chicken.html?phone=${phoneParam}`;
+            };
+        }
 
         // Bottom Nav Items
         const navItems = document.querySelectorAll('.nav-item');
@@ -532,8 +540,8 @@
 
     // 3. Initialize everything
     window.addEventListener('DOMContentLoaded', () => {
-        setupNavigation(); // Pehle buttons on karein
-        loadGlobalBalance(); // Fir balance load karein
+        setupNavigation(); 
+        loadGlobalBalance(); 
         createStars();
     });
 
@@ -550,6 +558,5 @@
         }
     }
 </script>
-
 </body>
 </html>
