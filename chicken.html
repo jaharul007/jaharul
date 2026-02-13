@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chicken Game – Multiplier Slider</title>
+    <style>
+    
+.fire-particle {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 100;
+    background: radial-gradient(circle, #fff700 0%, #ff8c00 40%, #ff0000 80%);
+    box-shadow: 0 0 8px #ff4500, 0 0 15px #ff0000;
+    animation: fireFly 0.8s ease-out forwards;
+}
+@keyframes fireFly {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        transform: translate(var(--x), var(--y)) scale(0) rotate(180deg);
+        opacity: 0;
+        filter: blur(2px);
+    }
+}
+
+.fire-wrap {
+    position: absolute;
+    bottom: 0; width: 100%; height: 180px;
+    pointer-events: none; z-index: 15;
+}
+.fire-base {
+    position: absolute; bottom: 0; left: 50%;
+    transform: translateX(-50%); width: 90px;
+    animation: fireRise .4s ease-out forwards;
+}
+@keyframes fireRise {
+    from { height: 0; opacity: 0; }
+    to   { height: 100%; opacity: 1; }
+}
+.flame {
+    position: absolute; bottom: 0;
+    transform-origin: bottom center;
+    border-radius: 50% 50% 20% 20%;
+    animation: flicker var(--fd,.15s) infinite alternate ease-in-out;
+    mix-blend-mode: screen;
+}
+@keyframes flicker {
+    0%   { transform: scaleY(1) scaleX(1) rotate(var(--fr,0deg)); opacity: var(--fa,.9); }
+    100% { transform: scaleY(var(--fs,1.25)) scaleX(.92) rotate(calc(var(--fr,0deg) * -1.3)); opacity: 1; }
+}
+.f-core  { width: 52px; height: 65%; left:50%; margin-left:-26px; background: radial-gradient(ellipse, #fff9e0 0%, #ffe040 30%, #ff8c00 70%, transparent 100%); --fd:.12s; --fs:1.3; --fa:.95; }
+.f-mid   { width: 70px; height: 75%; left:50%; margin-left:-35px; background: radial-gradient(ellipse, #ffe060 0%, #ff6200 40%, #dd2200 80%, transparent 100%); --fd:.17s; --fs:1.2; --fr:3deg; --fa:.85; }
+.f-outer { width: 90px; height: 85%; left:50%; margin-left:-45px; background: radial-gradient(ellipse, #ff8c00 0%, #cc2200 50%, #880000 85%, transparent 100%); --fd:.22s; --fs:1.15; --fr:-4deg; --fa:.75; }
+.f-tip   { width: 28px; height: 90%; left:50%; margin-left:-14px; background: radial-gradient(ellipse, #fff 0%, #fff9a0 20%, #ffd000 60%, transparent 100%); --fd:.10s; --fs:1.4; --fa:1; }
+
+.smoke-particle {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle, rgba(180,180,180,.4) 0%, transparent 70%);
+    animation: smokeRise 1.5s ease-out forwards;
+}
+@keyframes smokeRise {
+    0%   { transform: translateY(0) scale(.5); opacity: .5; }
+    100% { transform: translateY(-120px) scale(2.5); opacity: 0; }
+}
+
+    .fire-sequence {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, #ff4500, #ff8c00, transparent);
+    z-index: 120;
+    opacity: 0.9;
+    border-radius: 10px;
+}
+
+.dead-chicken {
+    transform: scale(0.8);
+    filter: brightness(0.7);
+}
+
+@keyframes flameMove {
+    from { transform: scaleY(1); opacity: 0.8; }
+    to { transform: scaleY(1.2); opacity: 1; }
+}
+
+.dead-chicken {
+    width: 80px !important;
+    height: auto !important;
+}
+
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;700&display=swap');
+
+        :root {
+            --bg-dark:     #12161f;
+            --bg-mid:      #1a1f2e;
+            --bg-footer:   #1e2333;
+            --node-bg:     #252c42;
+            --node-border: #3a4566;
+            --accent:      #00e87c;
+            --accent-glow: rgba(0, 232, 124, 0.35);
+            --accent-dim:  #00a855;
+            --warn:        #ff6b35;
+            --text-dim:    #5a6380;
+            --text-mid:    #8892b0;
+            --gold:        #ffd700;
+            --gold-glow:   rgba(255, 215, 0, 0.4);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        #game-wrapper {
+            position: absolute;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        @media (orientation: portrait) {
+            #game-wrapper {
+                width: 100vh; height: 100vw;
+                transform: rotate(90deg);
+                transform-origin: top left;
+                top: 0; left: 100vw;
+            }
+        }
+        @media (orientation: landscape) {
+            #game-wrapper { width: 100vw; height: 100vh; top: 0; left: 0; }
+        }
+
+        header {
+            flex: 0 0 44px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            background: rgba(0,0,0,0.35);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            z-index: 20;
+        }
+        .menu-btn { color: #fff; font-size: 24px; cursor: pointer; opacity: .7; }
+        .balance-box {
+            background: #2a3044;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: flex; align-items: center; gap: 6px;
+            color: #fff; font-weight: 700; font-size: 15px;
+            font-family: 'Orbitron', monospace;
+            border: 1px solid #404d6e;
+        }
+        .rupee-icon {
+            background: var(--accent); color: #000;
+            border-radius: 50%; width: 18px; height: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 900;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            background: linear-gradient(170deg, #1c2235 0%, #111520 100%);
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        main::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .tunnel-lane {
+            flex: 0 0 50px;
+            background: #0d1018;
+            border-right: 3px solid #000;
+            display: flex; align-items: flex-end; justify-content: center;
+            position: relative; z-index: 2;
+        }
+        .tunnel-entrance {
+            width: 36px; height: 75%;
+            background: radial-gradient(ellipse at 50% 100%, #0a0c14 60%, #1a1f2e 100%);
+            border-radius: 50px 50px 0 0;
+            border: 3px solid #1e2333;
+        }
+
+         .lanes-outer {
+    flex: 1;
+    position: relative;
+    overflow-x: auto;
+    min-width: 0;
+    cursor: grab;
+    user-select: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.lanes-outer::-webkit-scrollbar {
+    display: none;
+}
+
+        #lanes-track {
+            display: flex;
+            height: 100%;
+            position: absolute;
+            left: 0; top: 0;
+            transition: transform 0.35s ease-out;
+            will-change: transform;
+            user-select: none;
+        }
+        .lane {
+    flex: 0 0 var(--lane-w, 14.28%);
+    width: var(--lane-w, 14.28%);
+    border-right: 3px dashed rgba(255, 255, 255, 0.25) !important; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    justify-content: space-between;
+    padding: 30px 0 16px;
+    position: relative;
+            flex: 0 0 var(--lane-w, 14.28%);
+            width: var(--lane-w, 14.28%);
+            border-right: 1px solid rgba(255,255,255,0.07);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between;
+            padding: 30px 0 16px;
+            position: relative;
+        }
+        .lane.active-lane { background: rgba(0, 232, 124, 0.06); }
+
+        .vent {
+            width: 57px; height: 50px;
+            background: linear-gradient(#232b40, #1a2030);
+            border-radius: 26px 26px 4px 4px;
+            display: flex; justify-content: space-evenly; padding: 7px 6px;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 3px solid #0a0c14;
+        }
+.vent-bar { width: 3px; height: 100%; background: #0e1118; border-radius: 2px; }
+        
+        .multiplier-node::before {
+            content: '';
+            position: absolute; inset: -3px;
+            border-radius: 50%;
+            background: conic-gradient(var(--node-color, #3a4566) 0%, transparent 100%);
+            opacity: .4;
+        }
+        .multiplier-node:hover { transform: scale(1.12); }
+
+        @keyframes nodeActivePulse {
+            from { box-shadow: 0 0 0 2px #00e87c, 0 0 12px rgba(0,232,124,0.5); }
+            to   { box-shadow: 0 0 0 4px #00e87c, 0 0 28px rgba(0,232,124,0.8); }
+        }
+
+.multiplier-node {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-family: 'Orbitron', monospace;
+    cursor: pointer;
+    position: relative;
+    background: radial-gradient(circle at 35% 35%, #3a4566 0%, #252c42 100%);
+    border: 2px solid #3a4566;
+    color: #a0aec0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    transition: transform .2s, box-shadow .2s;
+}
+
+.node-val { 
+    font-size: 8.5px;
+    line-height: 1;
+    font-weight: 900;
+    word-break: break-all;
+    text-align: center;
+}
+
+.multiplier-node.node-active {
+    transform: scale(1.15) !important;
+    box-shadow: 0 0 20px rgba(0,232,124,0.6) !important;
+    border-color: #00e87c !important;
+    color: #00e87c !important;
+    background: radial-gradient(circle at 35% 35%, #1e5a38 0%, #112e1f 100%);
+}
+
+        .wall-block {
+            position: absolute;
+            width: 28px; height: 16px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+
+        .road-line {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background: repeating-linear-gradient(
+                90deg,
+                rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 28px,
+                transparent 28px, transparent 56px
+            );
+        }
+
+        .slide-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            z-index: 30; width: 32px; height: 56px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.45);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: rgba(255,255,255,0.5);
+            font-size: 18px;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            user-select: none;
+        }
+        .slide-arrow:hover { background: rgba(0,232,124,0.2); color: var(--accent); }
+        .slide-arrow.left { left: 4px; }
+        .slide-arrow.right { right: 4px; }
+
+        .lanes-outer::before,
+        .lanes-outer::after {
+            content: '';
+            position: absolute; top: 0; bottom: 0; width: 40px;
+            z-index: 10; pointer-events: none;
+        }
+        .lanes-outer::before { left: 0; background: linear-gradient(to right, var(--bg-dark), transparent); }
+        .lanes-outer::after  { right: 0; background: linear-gradient(to left, var(--bg-dark), transparent); }
+
+        #scroll-indicator {
+            position: absolute;
+            bottom: 8px; left: 50%; transform: translateX(-50%);
+            z-index: 25;
+            display: flex; gap: 5px; align-items: center;
+        }
+        .scroll-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            transition: background .3s, transform .3s;
+        }
+        .scroll-dot.active { background: var(--accent); transform: scale(1.4); }
+
+        #scroll-badge {
+            position: absolute;
+            top: 10px; right: 14px; z-index: 25;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            color: var(--text-mid);
+            display: flex; align-items: center; gap: 5px;
+        }
+        #scroll-badge span { color: var(--accent); font-weight: 700; }
+
+        #chicken-character {
+    position: absolute;
+    will-change: left;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20; 
+    pointer-events: none;
+    bottom: -5px;
+    width: 140px;
+    height: 100px;
+    transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+        #chicken-character img { width: 100%; height: 100%; object-fit: contain; }
+        #chicken-character.running { animation: chickenRun .18s ease-in-out infinite alternate; }
+        @keyframes chickenRun {
+            from { transform: translateY(0) rotate(-2deg) scaleY(.95); }
+            to   { transform: translateY(-6px) rotate(2deg) scaleY(1.05); }
+        }
+
+        footer {
+            flex: 0 0 118px;
+            background: var(--bg-footer);
+            padding: 10px 14px;
+            display: grid;
+            grid-template-columns: 1.2fr 1.5fr 1fr;
+            gap: 14px;
+            border-top: 2px solid #0a0c14;
+        }
+
+        .bet-col { display: flex; flex-direction: column; gap: 7px; }
+        .stepper {
+            display: flex; background: #13161f;
+            border-radius: 7px; height: 40px;
+            align-items: center; overflow: hidden;
+            border: 1px solid #2a3044;
+        }
+        .step-btn {
+            width: 44px; height: 100%;
+            background: #252c3d; border: none;
+            color: #fff; font-size: 22px; cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            transition: background .15s;
+        }
+        .step-btn:hover { background: #2e3752; }
+        .bet-display {
+            flex: 1; text-align: center; color: #fff; font-weight: 700;
+            font-size: 15px; font-family: 'Orbitron', monospace;
+        }
+
+        .quick-chips { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
+        .chip {
+            background: #252c3d; border: 1px solid #353d5e;
+            color: #ccc; border-radius: 5px; font-size: 11px;
+            padding: 8px 0; font-weight: 700; cursor: pointer;
+            text-align: center; transition: background .15s, color .15s;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        .chip:hover { background: #2e3752; color: #fff; }
+
+        .settings-col { display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+        .label-row { display: flex; justify-content: space-between; font-size: 11px; }
+        .dropdown {
+            background: #252c3d; color: #fff; border-radius: 7px;
+            padding: 10px 12px; font-size: 13px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #353d5e; cursor: pointer;
+        }
+        .dropdown::after { content: '▾'; color: var(--text-dim); }
+
+.controls-container {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    padding: 5px 10px;
+}
+.play-btn {
+    flex: 2;
+    height: 58px;
+    background: #28a745;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'Rajdhani', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: none;
+    transition: background 0.2s;
+}
+
+.play-btn:active {
+    background: #1e7e34;
+    transform: scale(0.98);
+}
+
+.play-btn::before, .play-btn::after {
+    display: none !important;
+    content: none !important;
+}
+
+#cashout-btn {
+    flex: 1;
+    height: 48px;
+    background: #FFFF00;
+    color: #000000;
+    border: 1px solid #3d4663;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: 'Rajdhani', sans-serif;
+    cursor: pointer;
+    text-transform: uppercase;
+    display: none;
+}
+
+        #start-screen {
+            position: fixed; inset: 0;
+            background: #000; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 20px;
+        }
+        #start-screen h2 {
+            font-family: 'Orbitron', monospace;
+            color: var(--accent); font-size: 22px; letter-spacing: 3px;
+        }
+        #start-screen button {
+            padding: 16px 40px; font-size: 16px;
+            background: var(--accent); color: #000;
+            border: none; border-radius: 10px;
+            font-weight: 900; cursor: pointer;
+            font-family: 'Orbitron', monospace; letter-spacing: 2px;
+        }
+
+        @keyframes swipeHint {
+            0%   { opacity: 0; transform: translateX(0); }
+            20%  { opacity: 1; }
+            80%  { opacity: 1; transform: translateX(-40px); }
+            100% { opacity: 0; transform: translateX(-50px); }
+        }
+        #swipe-hint {
+            position: absolute;
+            top: 50%; right: 60px;
+            transform: translateY(-50%);
+            z-index: 40;
+            display: flex; align-items: center; gap: 8px;
+            animation: swipeHint 2.5s ease-in-out 1.5s 2 forwards;
+            pointer-events: none;
+        }
+        #swipe-hint .hand { font-size: 28px; }
+        #swipe-hint .hint-text {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px; color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+
+    <header>
+        <div class="menu-btn">☰</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div id="rtp-display" style="font-family:'Orbitron',monospace;font-size:9px;color:#5a6380;padding:3px 8px;background:#1a1f2e;border-radius:20px;border:1px solid #2a3044;letter-spacing:.5px;transition:color .3s;">RTP 97% | Easy</div>
+            <div id="rng-indicator" style="font-family:'Rajdhani',sans-serif;font-size:10px;color:#00e87c;background:rgba(0,232,124,0.1);border:1px solid rgba(0,232,124,0.3);border-radius:20px;padding:2px 8px;opacity:0;transition:opacity .4s;">🎲 RNG Seeded</div>
+        </div>
+        <div class="balance-box">
+10000.86 <div class="rupee-icon">₹</div>
+        </div>
+    </header>
+
+    <main id="game-main">
+        <div class="tunnel-lane"><div class="tunnel-entrance"></div></div>
+
+        <div id="chicken-character" style="position: absolute; left: -92px; bottom: 6px; z-index: 100; width: 250px; pointer-events: none;">
+            <img src="https://i.imgur.com/MtRJBYN.png" alt="Chicken" style="width: 100%;">
+        </div>
+
+        <div class="lanes-outer" id="lanes-outer">
+            <div id="lanes-track"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="bet-col">
+            <div class="stepper">
+                <button class="step-btn" onclick="changeBet(-1)">−</button>
+                <div class="bet-display" id="bet-display">₹ 2</div>
+                <button class="step-btn" onclick="changeBet(1)">+</button>
+            </div>
+            <div class="quick-chips">
+                <div class="chip" onclick="setBet(5)">₹5</div>
+                <div class="chip" onclick="setBet(20)">₹20</div>
+                <div class="chip" onclick="setBet(100)">₹100</div>
+                <div class="chip" onclick="setBet(500)">₹500</div>
+            </div>
+        </div>
+
+        <div class="settings-col">
+            <div class="label-row">
+                <span style="color:#fff;font-weight:700;">Difficulty</span>
+                <span style="color:var(--text-dim);">Collision chance</span>
+            </div>
+            <div class="dropdown" id="difficulty-dropdown" onclick="cycleDifficulty()">Easy</div>
+        </div>
+
+     <div class="controls-container">
+    <button id="play-btn" class="play-btn" onclick="playChicken()">
+        PLAY
+    </button>
+    
+    <button id="cashout-btn" onclick="handleCashOut()">
+        CASH OUT
+    </button>
+</div>
+
+    </footer>
+
+</div>
+
+<script>
+/* ====================================================
+   MONGODB SYNC — api/auth.js se balance lena aur dena
+   URL se phoneNumber milega: ?phone=+91XXXXXXXXXX
+====================================================== */
+const API_URL = '/api/auth';
+const urlParams = new URLSearchParams(window.location.search);
+let userPhone = urlParams.get('phone') || urlParams.get('phoneNumber'); 
+
+// अगर यूजर ने +91 नहीं लगाया, तो खुद लगा दे
+if (userPhone && !userPhone.startsWith('+91')) {
+    userPhone = '+91' + userPhone;
+}
+async function loadBalanceFromDB() {
+    if (!userPhone) return;
+    try {
+        const res  = await fetch(`${API_URL}?action=getBalance&phoneNumber=${encodeURIComponent(userPhone)}`);
+        const data = await res.json();
+        if (data.success) {
+            totalBalance = parseFloat(data.balance) || 0;
+            updateBalanceDisplay();
+        }
+    } catch (e) {
+        console.error('Balance load error:', e);
+    }
+}
+
+// Balance MongoDB mein save karna (play aur cashout dono pe)
+async function saveBalanceToDB() {
+    if (!userPhone) return;
+    try {
+        await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'updateBalance',
+                phoneNumber: userPhone,
+                balance: totalBalance
+            })
+        });
+    } catch (e) {
+        console.error('Balance save error:', e);
+    }
+}
+
+/* ====================================================
+   1. CONFIG & STATE
+====================================================== */
+const HOUSE_EDGE = 0.03;
+
+const DIFFICULTY_CONFIG = {
+    Easy:   { deathProb: 0.15, label: 'Easy' },
+    Medium: { deathProb: 0.25, label: 'Medium' },
+    Hard:   { deathProb: 0.40, label: 'Hard' },
+};
+let currentDifficulty = 'Easy';
+
+function generateMultipliers(difficulty) {
+    const p = DIFFICULTY_CONFIG[difficulty].deathProb;
+    const surviveFactor = 1 / (1 - p);
+    const steps = 14;
+    let arr = [];
+    for (let i = 0; i < steps; i++) {
+        const fair     = Math.pow(surviveFactor, i + 1);
+        const adjusted = parseFloat((fair * (1 - HOUSE_EDGE)).toFixed(2));
+        arr.push(adjusted);
+    }
+    return arr;
+}
+function triggerFireOnVent(ventElement) {
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'fire-particle';
+        const xDir = (Math.random() - 0.5) * 60;
+        const yDir = -Math.random() * 100;
+        particle.style.setProperty('--x', xDir + 'px');
+        particle.style.setProperty('--y', yDir + 'px');
+        particle.style.left   = (Math.random() * 30 + 10) + 'px';
+        particle.style.bottom = '10px';
+        ventElement.appendChild(particle);
+        setTimeout(() => particle.remove(), 700);
+    }
+}
+
+function startRandomFireBursts() {
+    setInterval(() => {
+        const allLanes = document.querySelectorAll('.lane');
+        if (allLanes.length === 0) return;
+        const randomIdx      = Math.floor(Math.random() * allLanes.length);
+        const selectedLane   = allLanes[randomIdx];
+        const selectedLaneNum = parseInt(selectedLane.id.replace('lane-', ''));
+        if (selectedLaneNum === activeLaneIndex) return;
+        const vent = selectedLane.querySelector('.vent');
+        if (vent) triggerFireOnVent(vent);
+    }, 300);
+}
+
+let myMultipliers = [1.63, 2.80, 4.95, 9.08, 15.21, 30.12, 62.96, 140.24, 337.19, 890.19, 2643.89, 9161.08, 39301.05, 233448.29, 2542251.29]; 
+
+let LANE_WIDTH_PX = 0;
+const VISIBLE_LANES = 5.9; 
+
+function generateMultipliers(difficulty) {
+    return myMultipliers; 
+}
+
+// Game state
+let totalBalance    = 10000.86; // page load par DB se replace ho jaayega
+let currentWin      = 0;
+let betAmount       = 2;
+let currentGlobalIdx = -1;
+let isMoving        = false;
+let isInsideTrack   = false;
+let activeLaneIndex = -1;
+let roundOutcomeIdx = null;
+
+const track   = document.getElementById('lanes-track');
+const chicken = document.getElementById('chicken-character');
+
+/* ====================================================
+   2B. HELPER FUNCTIONS
+====================================================== */
+function getMultiplier(idx) {
+    if (idx < 0) return "1.00";
+    if (idx >= myMultipliers.length) return myMultipliers[myMultipliers.length - 1].toFixed(2);
+    return myMultipliers[idx].toFixed(2);
+}
+
+function getTier(mult) {
+    if (mult < 2) return 1;
+    if (mult < 10) return 2;
+    if (mult < 50) return 3;
+    return 4;
+}
+
+function updateBalanceDisplay() {
+    const balBox = document.querySelector('.balance-box');
+    if (balBox) {
+        balBox.innerHTML = `${parseFloat(totalBalance).toFixed(2)} <div class="rupee-icon">₹</div>`;
+    }
+}
+
+/* ====================================================
+   3. TRACK & LANE BUILDING
+====================================================== */
+function buildLanes() {
+    const outerW = document.getElementById('lanes-outer').offsetWidth;
+    LANE_WIDTH_PX = outerW / VISIBLE_LANES;
+    const totalLanes = myMultipliers.length + 5;
+
+    Array.from(track.children).forEach(child => {
+        if (child.id !== 'chicken-character') child.remove();
+    });
+
+    track.style.width = (totalLanes * LANE_WIDTH_PX) + 'px';
+
+    for (let i = 0; i < totalLanes; i++) {
+        const mult = parseFloat(getMultiplier(i));
+        const tier = getTier(mult);
+        track.appendChild(createLaneEl(i, mult, tier));
+    }
+    
+    track.style.transform = `translateX(0px)`;
+}
+
+function createLaneEl(idx, mult, tier) {
+    const lane = document.createElement('div');
+    lane.className = 'lane';
+    lane.id        = `lane-${idx}`;
+    lane.style.width = LANE_WIDTH_PX + 'px';
+    lane.style.flex  = `0 0 ${LANE_WIDTH_PX}px`;
+
+    const node = document.createElement('div');
+    node.className = `multiplier-node`; 
+    node.innerHTML = `<div class="node-val">${mult}<small style="font-size:7px">x</small></div>`;
+    lane.appendChild(node);
+
+    const vent = document.createElement('div');
+    vent.className = 'vent';
+    for (let v = 0; v < 5; v++) {
+        const bar = document.createElement('div');
+        bar.className = 'vent-bar';
+        vent.appendChild(bar);
+    }
+    lane.appendChild(vent);
+    return lane;
+}
+
+/* ====================================================
+   4. MOVEMENT & CAMERA
+====================================================== */
+function moveChickenToGlobal(idx) {
+    chicken.style.transition = "left 0.32s cubic-bezier(0.4, 0, 0.2, 1)";
+    
+    if (idx === -1) {
+        chicken.style.left = '-92px'; 
+    } else {
+        const newLeft = (idx * LANE_WIDTH_PX) + (LANE_WIDTH_PX / 2) - (chicken.offsetWidth / 2); 
+        chicken.style.left = newLeft + 'px';
+    }
+    activeLaneIndex = idx;
+    highlightActiveLane();
+}
+
+function highlightActiveLane() {
+    document.querySelectorAll('.lane').forEach(l => l.classList.remove('active-lane'));
+    const el = document.getElementById(`lane-${activeLaneIndex}`);
+    if (el) el.classList.add('active-lane');
+}
+
+function autoCenterCamera(idx) {
+    if (idx >= 1) {
+        let moveX = (idx - 1) * LANE_WIDTH_PX;
+        track.style.transition = "transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        track.style.transform  = `translateX(-${moveX}px)`;
+    }
+}
+
+/* ====================================================
+   5. CORE GAMEPLAY
+====================================================== */
+function playChicken() {
+    if (isMoving) return;
+
+    const playBtn = document.getElementById('play-btn');
+    playBtn.textContent = 'GO'; 
+
+    if (currentGlobalIdx === -1) {
+        if (totalBalance < betAmount) {
+            showToast('❌ Balance कम है!', '#ff6b35');
+            playBtn.textContent = 'PLAY';
+            return;
+        }
+        // Bet katna + DB mein save karna
+        totalBalance -= betAmount;
+        updateBalanceDisplay();
+        saveBalanceToDB(); // ← PLAY dabate hi DB update
+        seedRoundOutcome();
+        showRngSeedIndicator();
+    }
+
+    const nextIdx = currentGlobalIdx + 1;
+    if (roundOutcomeIdx !== null && nextIdx >= roundOutcomeIdx) {
+        const nextLaneEl = document.getElementById(`lane-${nextIdx}`);
+        moveChickenToGlobal(nextIdx);
+        autoCenterCamera(nextIdx);
+        triggerDeath(nextLaneEl);
+        return;
+    }
+
+    if (!isInsideTrack) {
+        track.appendChild(chicken);
+        isInsideTrack = true;
+    }
+
+    isMoving = true;
+    chicken.classList.add('running');
+    currentGlobalIdx++;
+
+    let currentMultiplier = parseFloat(getMultiplier(currentGlobalIdx));
+    currentWin = (betAmount * currentMultiplier).toFixed(2);
+
+    const cashBtn = document.getElementById('cashout-btn');
+    cashBtn.style.display = 'block';
+    cashBtn.innerHTML     = `CASH OUT<br>₹${currentWin}`;
+
+    updateActiveLaneGlow(currentGlobalIdx);
+    moveChickenToGlobal(currentGlobalIdx);
+    autoCenterCamera(currentGlobalIdx);
+
+    setTimeout(() => {
+        chicken.classList.remove('running');
+        isMoving = false;
+    }, 350);
+}
+
+function handleCashOut() {
+    if (currentWin <= 0 || isMoving) return;
+    const won = parseFloat(currentWin);
+    // Winnings add karna + DB mein save karna
+    totalBalance = parseFloat(totalBalance) + won;
+    updateBalanceDisplay();
+    saveBalanceToDB(); // ← CASH OUT dabate hi DB update
+    showToast(`🏆 जीत! ₹${won.toFixed(2)}`, '#00e87c');
+    resetGame();
+}
+
+function resetGame() {
+    currentWin       = 0;
+    currentGlobalIdx = -1;
+    isMoving         = false;
+    isInsideTrack    = false;
+    activeLaneIndex  = -1;
+    roundOutcomeIdx  = null;
+
+    document.getElementById('play-btn').textContent      = 'PLAY';
+    document.getElementById('cashout-btn').style.display = 'none';
+    document.querySelectorAll('.multiplier-node').forEach(n => n.classList.remove('node-active'));
+
+    const gameMain = document.getElementById('game-main');
+    gameMain.appendChild(chicken);
+    
+    chicken.style.transition = "none";
+    chicken.style.left       = '-92px';
+    chicken.style.bottom     = '6px';
+    chicken.style.transform  = "translateY(0) rotate(0deg)"; 
+    chicken.style.opacity    = '1';
+
+    track.style.transition = 'transform 0.5s ease';
+    track.style.transform  = 'translateX(0px)';
+    
+    highlightActiveLane();
+}
+
+function triggerDeath(laneElement) {
+    isMoving = true;
+    const fireWrap = document.createElement('div');
+    fireWrap.className = 'fire-wrap';
+    fireWrap.innerHTML = `<div class="fire-base">
+        <div class="flame f-outer"></div>
+        <div class="flame f-mid"></div>
+        <div class="flame f-core"></div>
+        <div class="flame f-tip"></div>
+    </div>`;
+    laneElement.appendChild(fireWrap);
+    chicken.style.opacity = '0';
+
+    setTimeout(() => {
+        showToast('🔥 Oops! चिकन जल गया।', '#ff4500');
+        setTimeout(() => {
+            resetGame();
+            fireWrap.remove();
+        }, 900);
+    }, 1400);
+}
+
+/* ====================================================
+   5B. RNG ENGINE
+====================================================== */
+function cryptoRandom() {
+    const arr = new Uint32Array(1);
+    window.crypto.getRandomValues(arr);
+    return arr[0] / (0xFFFFFFFF + 1);
+}
+
+function seedRoundOutcome() {
+    const p          = DIFFICULTY_CONFIG[currentDifficulty].deathProb;
+    const totalSteps = myMultipliers.length;
+    roundOutcomeIdx  = null;
+    for (let step = 1; step <= totalSteps; step++) {
+        if (cryptoRandom() < p) {
+            roundOutcomeIdx = step;
+            break;
+        }
+    }
+}
+
+function showRngSeedIndicator() {
+    const ind = document.getElementById('rng-indicator');
+    if (!ind) return;
+    ind.style.opacity = '1';
+    setTimeout(() => { ind.style.opacity = '0'; }, 1800);
+}
+
+function updateActiveLaneGlow(idx) {
+    document.querySelectorAll('.multiplier-node').forEach(n => n.classList.remove('node-active'));
+    const laneEl = document.getElementById(`lane-${idx}`);
+    if (laneEl) {
+        const node = laneEl.querySelector('.multiplier-node');
+        if (node) node.classList.add('node-active');
+    }
+}
+
+function showToast(msg, color) {
+    color = color || '#fff';
+    let t = document.getElementById('toast-msg');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast-msg';
+        t.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:30px;font-family:Orbitron,monospace;font-size:13px;font-weight:700;z-index:9999;transition:opacity .4s;box-shadow:0 4px 20px rgba(0,0,0,.6);pointer-events:none;';
+        document.body.appendChild(t);
+    }
+    t.style.background = color;
+    t.style.color      = (color === '#00e87c') ? '#000' : '#fff';
+    t.textContent      = msg;
+    t.style.opacity    = '1';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function(){ t.style.opacity = '0'; }, 2200);
+}
+
+/* ====================================================
+   6. UI BUTTONS
+====================================================== */
+function changeBet(dir) {
+    const betValues = [2, 5, 10, 20, 50, 100, 200, 500];
+    let idx = betValues.indexOf(betAmount);
+    idx = Math.max(0, Math.min(betValues.length - 1, idx + dir));
+    betAmount = betValues[idx];
+    document.getElementById('bet-display').textContent = '₹ ' + betAmount;
+}
+
+function setBet(val) {
+    betAmount = val;
+    document.getElementById('bet-display').textContent = '₹ ' + betAmount;
+}
+
+function cycleDifficulty() {
+    const diffs = ['Easy', 'Medium', 'Hard'];
+    let idx = diffs.indexOf(currentDifficulty);
+    applyDifficulty(diffs[(idx + 1) % diffs.length]);
+}
+
+function applyDifficulty(diff) {
+    currentDifficulty = diff;
+    document.getElementById('difficulty-dropdown').textContent = diff;
+    updateHouseEdgeDisplay();
+}
+
+function updateHouseEdgeDisplay() {
+    const el = document.getElementById('rtp-display');
+    if (el) {
+        const rtp = ((1 - HOUSE_EDGE) * 100).toFixed(0);
+        el.textContent = 'RTP ' + rtp + '% | ' + currentDifficulty;
+    }
+}
+
+/* ====================================================
+   7. INITIALIZATION
+====================================================== */
+window.addEventListener('load', () => {
+    buildLanes();
+    updateBalanceDisplay();
+    updateHouseEdgeDisplay();
+    startRandomFireBursts();
+    loadBalanceFromDB(); // ← page load par MongoDB se real balance aayega
+});
+window.addEventListener('resize', buildLanes);
+
+</script>
+</body>
+</html>
