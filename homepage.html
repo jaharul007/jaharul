@@ -513,6 +513,13 @@
                 window.location.href = `chicken.html?phone=${phoneParam}`;
             };
         }
+      // Aviator button ka link
+const aviatorCard = document.querySelector('.main-game-card.aviator');
+if (aviatorCard) {
+    aviatorCard.onclick = () => {
+        window.location.href = `aviator.html?phone=${phoneParam}`;
+    };
+}
 
         // Bottom Nav Items
         const navItems = document.querySelectorAll('.nav-item');
