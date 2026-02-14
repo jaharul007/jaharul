@@ -1229,7 +1229,7 @@
                 <div class="admin-section">
                     <div class="admin-section-title">Crash Control</div>
                     <div class="crash-control">
-                        <input type="number" class="crash-input" id="crashMultiplierInput" placeholder="Enter multiplier (e.g., 2.5)" step="0.01" min="1.01">
+                        <input type="text" class="crash-input" id="crashMultiplierInput" placeholder="Enter multiplier (e.g., 2.5 or 5.75)" pattern="[0-9.]*" inputmode="decimal">
                         <button class="crash-btn" onclick="adminCrashGame()">CRASH NOW</button>
                     </div>
                 </div>
@@ -1463,15 +1463,13 @@
                 // Check if target crash multiplier is reached
                 if(targetCrashMultiplier && currentMultiplier >= targetCrashMultiplier) {
                     crashGame();
-                    return;
                 }
                 
                 // Random crash between 1.5x and 10x
-                if(!targetCrashMultiplier) {
+                else if(!targetCrashMultiplier) {
                     const randomCrash = 1.5 + Math.random() * 8.5;
                     if(currentMultiplier >= randomCrash) {
                         crashGame();
-                        return;
                     }
                 }
                 
@@ -1479,7 +1477,7 @@
                 drawGraph();
                 updateBetButtons();
             }
-            animationFrame = requestAnimationFrame(gameLoop);
+            requestAnimationFrame(gameLoop);
         }
 
         function startRound() {
