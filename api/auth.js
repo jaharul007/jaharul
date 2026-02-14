@@ -53,9 +53,9 @@ export default async function handler(req, res) {
         }
     }
 
-    // --- POST Request: Register aur Login ---
+    // --- POST Request: Register, Login, and Balance Update ---
     if (req.method === 'POST') {
-        const { action, phoneNumber, password, inviteCode, balance } = req.body;
+        const { action, phoneNumber, password, inviteCode, balance, betAmount, winAmount, gameType } = req.body;
 
         // REGISTER LOGIC
         if (action === 'register') {
@@ -132,26 +132,38 @@ export default async function handler(req, res) {
             }
         }
 
-        // ── SIRF YAHI NAYA BLOCK JODA HAI (Chicken Game ke liye) ──
+        // UPDATE BALANCE (For Aviator Game)
         else if (action === 'updateBalance') {
             try {
                 if (!phoneNumber || balance === undefined || balance === null) {
                     return res.status(400).json({ 
                         success: false, 
-                        message: 'Phone number aur balance required hai' 
+                        message: 'Phone number and balance required' 
                     });
                 }
 
                 const cleanPhone = decodeURIComponent(phoneNumber);
 
+                // Validate balance is a number
+                const newBalance = parseFloat(balance);
+                if (isNaN(newBalance) || newBalance < 0) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Invalid balance value' 
+                    });
+                }
+
                 const user = await User.findOneAndUpdate(
                     { phoneNumber: cleanPhone },
-                    { $set: { balance: parseFloat(balance) } },
+                    { $set: { balance: newBalance } },
                     { new: true }
                 );
 
                 if (!user) {
-                    return res.status(404).json({ success: false, message: 'User not found' });
+                    return res.status(404).json({ 
+                        success: false, 
+                        message: 'User not found' 
+                    });
                 }
 
                 return res.status(200).json({ 
@@ -161,7 +173,115 @@ export default async function handler(req, res) {
                 });
             } catch (err) {
                 console.error("Update Balance Error:", err);
-                return res.status(500).json({ success: false, message: 'Balance update failed' });
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Balance update failed' 
+                });
+            }
+        }
+
+        // PLACE BET (For game transactions with logging)
+        else if (action === 'placeBet') {
+            try {
+                if (!phoneNumber || !betAmount) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Phone number and bet amount required' 
+                    });
+                }
+
+                const cleanPhone = decodeURIComponent(phoneNumber);
+                const betValue = parseFloat(betAmount);
+
+                if (isNaN(betValue) || betValue <= 0) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Invalid bet amount' 
+                    });
+                }
+
+                const user = await User.findOne({ phoneNumber: cleanPhone });
+
+                if (!user) {
+                    return res.status(404).json({ 
+                        success: false, 
+                        message: 'User not found' 
+                    });
+                }
+
+                if (user.balance < betValue) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Insufficient balance' 
+                    });
+                }
+
+                // Deduct bet amount
+                const newBalance = user.balance - betValue;
+                user.balance = newBalance;
+                await user.save();
+
+                return res.status(200).json({ 
+                    success: true, 
+                    balance: user.balance,
+                    message: 'Bet placed successfully',
+                    phoneNumber: user.phoneNumber
+                });
+            } catch (err) {
+                console.error("Place Bet Error:", err);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Bet placement failed' 
+                });
+            }
+        }
+
+        // CASHOUT (Win money and add to balance)
+        else if (action === 'cashout') {
+            try {
+                if (!phoneNumber || !winAmount) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Phone number and win amount required' 
+                    });
+                }
+
+                const cleanPhone = decodeURIComponent(phoneNumber);
+                const winValue = parseFloat(winAmount);
+
+                if (isNaN(winValue) || winValue <= 0) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Invalid win amount' 
+                    });
+                }
+
+                const user = await User.findOne({ phoneNumber: cleanPhone });
+
+                if (!user) {
+                    return res.status(404).json({ 
+                        success: false, 
+                        message: 'User not found' 
+                    });
+                }
+
+                // Add win amount
+                const newBalance = user.balance + winValue;
+                user.balance = newBalance;
+                await user.save();
+
+                return res.status(200).json({ 
+                    success: true, 
+                    balance: user.balance,
+                    message: 'Cashout successful',
+                    phoneNumber: user.phoneNumber
+                });
+            } catch (err) {
+                console.error("Cashout Error:", err);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Cashout failed' 
+                });
             }
         }
     }
