@@ -1,569 +1,490 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gaming App</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
+    /* --- यह कोड सब कुछ बराबर रखेगा --- */
+
+/* 1. छोटे मोबाइल (iPhone SE, पुराने छोटे Samsung/Mi) */
+@media screen and (max-width: 380px) {
+    .original-icon, .mines-icon, .extra-slot-icon {
+        width: 65px !important; /* बटन थोड़े छोटे ताकि स्क्रीन से बाहर न जाएँ */
+        height: 65px !important;
+    }
+    .icon-label {
+        font-size: 11px !important;
+        width: 65px !important;
+    }
+    .wallet-fix {
+        font-size: 15px !important;
+        min-width: 60px !important;
+    }
+    #ff-play-container {
+        width: 120px !important; /* Play बटन भी छोटा हो जाएगा */
+    }
+}
+
+/* 2. मीडियम और बड़े मोबाइल (iPhone Pro Max, Google Pixel, OnePlus) */
+@media screen and (min-width: 381px) and (max-width: 480px) {
+    /* यहाँ आपका वर्तमान कोड सही काम करेगा */
+}
+
+/* 3. टैबलेट के लिए (अगर कोई टैबलेट में खोले तो भी खराब न दिखे) */
+@media screen and (min-width: 481px) and (max-width: 1024px) {
+    .container {
+        max-width: 500px; /* कंटेंट को बीच में रखेगा, फैलने नहीं देगा */
+        margin: 0 auto;
+    }
+    .bottom-fixed {
+        width: 500px !important;
+    }
+}
+
+/* 4. यूनिवर्सल फिक्स: इमेज कभी फटे नहीं और बटन गायब न हों */
+img {
+    max-width: 100%;
+    height: auto;
+}
+    
+    #ff-play-container {
+    position: absolute;
+    display: none; /* शुरुआत में गायब */
+    z-index: 2500;
+    
+    /* --- यहाँ से कंट्रोल कर --- */
+    top: 64%;      /* ऊपर-नीचे करने के लिए (कम करोगे तो ऊपर जाएगा) */
+    left: 20%;     /* लेफ्ट-राइट के लिए */
+    transform: translateX(-50%);
+    width: 150px;  /* बटन की चौड़ाई (मोटा करने के लिए बढ़ा दे) */
+}
+
+.play-btn-main {
+    width: 100%;
+    padding: 5px;
+    background: linear-gradient(180deg, #f0ad4e 0%, #d9534f 100%); /* ऑरेंज-लाल गेमिंग लुक */
+    color: white;
+    font-weight: bold;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+    font-size: 16px;
+    text-transform: uppercase;
+}
+
+    .ff-new-image {
+    position: absolute;
+    top: 50%; /* पोजीशन सेट करें */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10% !important; /* चौड़ाई (छोटा/बड़ा) - आप इसे % या px में बदल सकती हैं */
+    z-index: 500;
+    display: none; /* शुरुआत में छुपा हुआ रहेगा */
+}
+
+.ff-new-image img {
+    width: 100%; 
+    height: auto; /* मोटाई (हाइट) अपने आप एडजस्ट हो जाएगी */
+    border-radius: 10px; /* किनारे (चेहरा) गोल कर सकती हैं */
+}
+
+    /* जब बटन एक्टिव (क्लिक) हो, तब ये लाइट जलेगी */
+.active-border {
+    border: 3px solid #ffffff !important; /* सफ़ेद बॉर्डर */
+    box-shadow: 0 0 20px #ffffff, 0 0 40px #00ff00 !important; /* डबल चमक */
+    transform: scale(1.05); /* थोड़ा बड़ा दिखेगा */
+    transition: all 0.2s ease;
+}
+
+/* क्लिक करने के लिए बटन को कर्सर पॉइंटर दें */
+.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+       /* टेक्स्ट के लिए कॉमन स्टाइल */
+.icon-label {
+    position: absolute;
+    z-index: 2001;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 10px; /* मोबाइल के हिसाब से साइज */
+    font-weight: bold;
+    text-align: center;
+    width: 74px; /* आइकॉन के बराबर चौड़ाई */
+    text-shadow: 1px 1px 2px black; /* पढ़ने में आसानी हो */
+}
+
+/* हर टेक्स्ट की पोजीशन - आइकॉन के ठीक नीचे */
+.original-label {
+    top: 30.5%; /* आइकॉन 18.9% पर है + हाइट के बाद का गैप */
+    left: 2.1%;
+    font-size: 13px;
+}
+
+.mines-label {
+    top: 30.5%;
+    left: 79.2%;
+    font-size: 13px;
+}
+
+.slot-label {
+    top: 30.5%;
+    left: 53.3%;
+    font-size: 13px;
+}
+
+/* 1. Original Icon - सेम बॉर्डर और चमक */
+.original-icon {
+    position: absolute;
+    top: 18.9%;
+    left: 2.1%;
+    width: 74px;
+    height: 74px;
+    z-index: 2000;
+    border-radius: 20%;
+    overflow: hidden;
+    border: 2px solid #00ff00; /* हरा बॉर्डर */
+    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
+}
+
+/* 2. Mines Icon - सेम बॉर्डर और चमक */
+.mines-icon {
+    position: absolute;
+    top: 18.9%;
+    left: 78.7%;
+    width: 74px;
+    height: 74px;
+    z-index: 2000;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 2px solid #00ff00; /* हरा बॉर्डर */
+    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
+}
+
+/* 3. Slot Icon - सेम बॉर्डर और चमक */
+.extra-slot-icon {
+    position: absolute;
+    top: 18.9%;
+    left: 53.3%;
+    width: 74px;
+    height: 74px;
+    z-index: 2000;
+    border-radius: 20%;
+    overflow: hidden;
+    border: 2px solid #00ff00; /* हरा बॉर्डर */
+    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
+}
+
+/* 4. FF Tournament Banner - सेम बॉर्डर और चमक */
+.ff-tournament-banner {
+    position: absolute;
+    top: 19%; 
+    left: 37%;
+    width: 18%;
+    z-index: 1000;
+    transform: translateX(-50%);
+    border-radius: 17px; 
+    overflow: hidden;
+    border: 2px solid #00ff00; /* हरा बॉर्डर */
+    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
+}
+
+/* इमेज की सेटिंग (ताकि सही दिखें) */
+.original-icon img, .mines-icon img, .extra-slot-icon img, .ff-tournament-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+        /* --- Border for debugging (Taki aap button dekh saken) --- */
+        .wingo-btn, .chicken-btn, .aviator-btn, .deposit-btn, .withdraw-btn, .account-btn-box {
+            border: 2px dashed red !important; /* Lal rang ki border add ki gayi hai */
             box-sizing: border-box;
         }
 
+        /* --- Baki ka original style --- */
+        /* यहाँ से फोटो की चौड़ाई और पोजीशन कंट्रोल होगी */
+.home-bottom-img {
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%; /* शुरुआत में पूरा बड़ा रहेगा */
+    z-index: 500;
+    display: block;
+    transition: all 0.4s ease; /* छोटा-बड़ा और साइड में जाने का एनीमेशन */
+}
+.home-bottom-img img {
+    width: 100%; /* इसे 100% ही रहने दें */
+    height: auto; /* इससे फोटो का चेहरा मोटा-पतला नहीं होगा, सही रहेगा */
+    border-radius: 10px;
+}
+
+
+        .mini-games-strip {
+    position: absolute;
+    top: 53%;
+    left: 37%;
+    transform: translateX(-50%);
+    width: 20%;
+    /* Updated: काली बैकग्राउंड हटाई और स्टाइल बदला */
+    background: none; 
+    color: white;
+    text-align: center;
+    padding: 2px 0;
+    font-size: 9px;
+    font-weight: bold;
+    border-radius: 5px;
+    z-index: 1000;
+    /* टेक्स्ट में चमक या शैडो जोड़ी */
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+}
+
+
+        
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(180deg, #0a1628 0%, #1a2a4a 100%);
-            min-height: 100vh;
-            color: white;
-            overflow-x: hidden;
+            margin: 0; 
+            padding: 0;
+            background-color: #0d1117;
+            overflow-x: hidden; 
+            padding-bottom: 600px; 
         }
 
-        .stars {
+        #draggable-support {
             position: fixed;
-            width: 100%;
-            height: 100%;
+            right: 10px;
+            bottom: 150px;
+            width: 50px;
+            height: 50px; 
+            z-index: 10001;
+            cursor: grab;
+            touch-action: none;
+            border-radius: 50%;     
+            overflow: hidden;       
+            background-color: #fff; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid gold;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+        }
+
+        #draggable-support img {
+            width: 100%; height: 100%;
+            object-fit: cover;
             pointer-events: none;
         }
 
-        .star {
+        .wallet-container {
             position: absolute;
-            width: 2px;
-            height: 2px;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 10px 12px 0px 12px;
-            position: relative;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 13px;
-        }
-
-        .wallet {
+            top: 20.2%; left: 1.2%;
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .wallet-icon {
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            border-radius: 50%;
-        }
-
-        .wallet-text {
-            color: #8b92a8;
-            font-size: 14px;
-        }
-
-        .balance {
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .refresh-icon {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .refresh-icon:hover {
-            transform: rotate(180deg);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-        }
-
-        .btn {
-            padding: 9px 7px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-withdraw {
-            background: linear-gradient(135deg, #ffb347 0%, #ffcc70 100%);
-            color: white;
-        }
-
-        .btn-deposit {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
-            color: white;
-        }
-
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .game-card {
-            background: linear-gradient(135deg, rgba(26, 42, 74, 0.6) 0%, rgba(15, 25, 45, 0.8) 100%);
-            border-radius: 15px;
-            padding: 10px 5px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.3s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .game-icon {
-            width: 10px;
-            height: 10px;
-            margin: 0 auto 10px;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .game-name {
-            font-size: 11px;
-            color: #8fa1c4;
-        }
-
-        .featured-games {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .featured-card {
-            border-radius: 15px;
-            padding: 12px 10px;
-            text-align: center;
-            cursor: pointer;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100px;
-        }
-        
-        .featured-card.wingo {
-            background: linear-gradient(135deg, #f95ad2 0%, #4a3af5 100%);
-        }
-
-        .featured-card.trx {
-            background: linear-gradient(135deg, #f95ad2 0%, #d93ac1 100%);
-        }
-
-        .featured-title {
-            font-size: 25px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
-
-        .featured-icon {
-            font-size: 50px;
-            margin-bottom: 0px;
-        }
-
-        .main-games {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 9px;
-            margin-bottom: 20px;
-        }
-
-        .main-game-card {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b1428 100%);
-            border-radius: 18px;
-            padding: 4px;
-            text-align: center;
-            cursor: pointer;
-            min-height: 110px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        .main-game-card.aviator {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b1428 100%);
-        }
-
-        .main-game-card.dragon {
-            background: linear-gradient(135deg, #7b3ff2 0%, #5c2db8 100%);
-        }
-
-        .main-game-card.chicken {
-            background: linear-gradient(135deg, #ff1744 0%, #c2185b 100%);
-        }
-
-        .main-game-card.vortex {
-            background: linear-gradient(135deg, #1a237e 0%, #0d1b5e 100%);
-        }
-
-        .main-game-card.mines {
-            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
-        }
-
-        .main-game-card.fortune {
-            background: linear-gradient(135deg, #ff9800 0%, #e65100 100%);
-        }
-
-        .main-game-card.teenpatti {
-            background: linear-gradient(135deg, #1e3a5f 0%, #0f1d3a 100%);
-        }
-
-        .main-game-card.money {
-            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-        }
-
-        .main-game-card.andar {
-            background: linear-gradient(135deg, #5e35b1 0%, #4527a0 100%);
-        }
-
-        .hot-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-            padding: 2px 6px;
-            border-radius: 9px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .main-game-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 10px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(10, 22, 40, 0.95);
-            display: flex;
-            justify-content: space-around;
-            padding: 7px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0px;
-            cursor: pointer;
-            color: #8b92a8;
-        }
-
-        .nav-item.active {
-            color: #ffd700;
-        }
-
-        .nav-icon {
-            font-size: 21px;
-        }
-
-        .nav-text {
-            font-size: 12px;
-        }
-
-        .get-bonus {
-            position: relative;
-        }
-
-        .bonus-badge {
-            position: absolute;
-            top: -9px;
-            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-            border-radius: 50%;
-            width: 45px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .error-banner {
-            background: #ff4444;
-            color: white;
-            padding: 10px;
-            text-align: center;
             border-radius: 8px;
-            margin-bottom: 15px;
-            display: none;
+            padding: 2px 5px;
+            z-index: 1000;
         }
+
+        .wallet-fix {
+            color: #ffffff;
+            padding: 5px 8px;
+            font-family: Arial;
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .refresh-btn {
+            transform: rotate(90deg);
+            background: none;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .container { position: relative; width: 100%; }
+        .top-image { width: 100%; display: block; }
+        
+        /* Buttons Positioning */
+        .wingo-btn { position: absolute; top: 92.9%; left: 0.6%; width: 48%; height: 118px; z-index: 999; }
+        .chicken-btn { position: absolute; top: 122.9%; left: 0%; width: 32%; height: 180px; z-index: 999; }
+        .aviator-btn { position: absolute; top: 122.9%; left: 33%; width: 32%; height: 180px; z-index: 999; }
+        .deposit-btn { position: absolute; top: 17%; left: 57%; width: 19%; height: 44px; z-index: 1000; }
+        .withdraw-btn { position: absolute; top: 17%; left: 79%; width: 18%; height: 44px; z-index: 1000; }
+
+        .bottom-fixed { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 105%; z-index: 9999; margin-bottom: -133px; }
+        .bottom-fixed img { width: 100%; display: block; }
+        .account-btn-box { position: absolute; bottom: 134px; right: 3%; width: 18%; height: 70px; z-index: 10000; }
     </style>
 </head>
 <body>
-    <div class="stars" id="stars"></div>
+    <div id="ff-play-container">
+    <button class="play-btn-main" onclick="window.location.href='play_game.html'">PLAY NOW</button>
+</div>
+
+    <div class="icon-label original-label">ORIGINAL</div>
+<div class="icon-label mines-label">MINES</div>
+<div class="icon-label slot-label">SLOTS</div>
+<div class="original-icon" onclick="handleIconClick(this, 'original')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5dbed4bbf17f181d635eec3508adbd47d34cd289/original.jpg">
+</div>
+
+<div class="ff-tournament-banner" onclick="handleIconClick(this, 'ff')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/8e61a92cf14ed5a4e903850f2fcdc26100338f99/fftournament.png">
+</div>
+
+<div class="extra-slot-icon" onclick="handleIconClick(this, 'slot')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/b2f44f3e1e546352b929128d7bdd289a0fd2fb3f/allslot.png">
+</div>
+
+<div class="mines-icon" onclick="handleIconClick(this, 'mines')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/9655259478a8327682db77d3c130e7e6f00afaea/mines.png">
+</div>
+
     
-    <div class="container">
-        <!-- Error Banner -->
-        <div class="error-banner" id="errorBanner"></div>
 
-        <!-- Header -->
-        <div class="header">
-            <div class="wallet">
-                <div class="wallet-icon"></div>
-                <div>
-                    <div class="wallet-text">Wallet balance</div>
-                    <div class="balance">
-                        ₹<span id="acc_bal">0.00</span>
-                        <svg class="refresh-icon" onclick="loadGlobalBalance()" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button class="btn btn-withdraw">
-                    <span>↑</span> Withdraw
-                </button>
-                <button class="btn btn-deposit">
-                    <span>↓</span> Deposit
-                </button>
-            </div>
-        </div>
+<div class="home-bottom-img">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg" alt="Home Page Image">
+</div>
 
-        <!-- Top Games Grid -->
-        <div class="games-grid">
-            <div class="game-card">
-                <div class="game-icon">🎱</div>
-                <div class="game-name">Lottery</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎮</div>
-                <div class="game-name">Mini games</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">💙</div>
-                <div class="game-name">Hot Slots</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎰</div>
-                <div class="game-name">Slots</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🐠</div>
-                <div class="game-name">Fishing</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎲</div>
-                <div class="game-name">PVC</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🎯</div>
-                <div class="game-name">Casino</div>
-            </div>
-            <div class="game-card">
-                <div class="game-icon">🏏</div>
-                <div class="game-name">Sports</div>
-            </div>
-        </div>
+<div id="draggable-support">
+    <a href="support.html">
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/0ab7b9df6331b73aa6ba2f41060e99ccebbf359d/customer.png" alt="Support">
+    </a>
+</div>
 
-        <!-- Featured Games -->
-        <div class="featured-games"> 
-            <div class="featured-card wingo">
-                <div class="featured-icon">🎱</div>
-                <div class="featured-title" style="font-size: 26px;">WINGO</div>
-            </div>
-            <div class="featured-card trx">
-                <div class="featured-icon">💜</div>
-                <div class="featured-title" style="font-size: 25px;">TRX WINGO</div>
-            </div>
-        </div>
-
-        <!-- Main Games -->
-        <div class="main-games">
-            <div class="main-game-card aviator">
-                <div class="main-game-title">AVIATOR</div>
-                <div style="font-size: 40px; margin-top: 15px;">✈️</div>
-            </div>
-            <div class="main-game-card dragon">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">🐉</div>
-                <div class="main-game-title">DRAGON VSTIGER</div>
-            </div>
-            <div class="main-game-card chicken">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">🐔</div>
-                <div class="main-game-title">CHICKEN ROAD</div>
-            </div>
-            <div class="main-game-card vortex">
-                <div style="font-size: 50px;">🌀</div>
-                <div class="main-game-title">VORTEX</div>
-            </div>
-            <div class="main-game-card mines">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">💣</div>
-                <div class="main-game-title">MINES</div>
-            </div>
-            <div class="main-game-card fortune">
-                <div class="hot-badge">Hot</div>
-                <div style="font-size: 50px;">💰</div>
-                <div class="main-game-title">FORTUNE GEMS</div>
-            </div>
-            <div class="main-game-card teenpatti">
-                <div style="font-size: 50px;">🃏</div>
-                <div class="main-game-title">TEEN PATTI</div>
-            </div>
-            <div class="main-game-card money">
-                <div style="font-size: 50px;">💵</div>
-                <div class="main-game-title">MONEY COMING</div>
-            </div>
-            <div class="main-game-card andar">
-                <div style="font-size: 50px;">🎰</div>
-                <div class="main-game-title">ANDAR BAHAR</div>
-            </div>
-        </div>
-
-        <div style="height: 80px;"></div>
+<div class="container">
+    <div class="wallet-container">
+        <div class="wallet-fix">₹0.00</div>
+        <button class="refresh-btn" onclick="location.reload()">↻</button>
     </div>
+    <div class="mini-games-strip">FF TOURNAMENT</div>
+    
+    <a href="wingo_game.html" class="wingo-btn"></a>
+    <a href="chicken.html" class="chicken-btn"></a>
+    <a href="aviator.html" class="aviator-btn"></a>
+    <a href="deposit.html" class="deposit-btn"></a>
+    <a href="withdraw.html" class="withdraw-btn"></a>
+    
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/58db71e407098116c82be62f7968004e7ed22d04/homeupar.jpg" class="top-image">
+</div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <div class="nav-item active">
-            <div class="nav-icon">🏠</div>
-            <div class="nav-text">Home</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">📋</div>
-            <div class="nav-text">Activity</div>
-        </div>
-        <div class="nav-item get-bonus">
-            <div class="bonus-badge">100</div>
-            <div class="nav-icon">💰</div>
-            <div class="nav-text">Get 500</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">🎁</div>
-            <div class="nav-text">Promotion</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon">👤</div>
-            <div class="nav-text">Account</div>
-        </div>
-    </div>
-     <script>
+<div class="bottom-fixed">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5ef5d5c512d4ccef0cd74bfd91be6e13a560d99d/homebutton.png">
+    <a href="account.html" class="account-btn-box"></a>
+</div>
+
+<script>
+    // 1. URL से फोन नंबर निकालना (पहचान के लिए)
     const urlParams = new URLSearchParams(window.location.search);
-    const globalPhone = urlParams.get('phone');
-    const phoneParam = globalPhone ? encodeURIComponent(globalPhone) : "";
+    const rawPhone = urlParams.get('phone') || "";
+    // अगर नंबर +91 के साथ नहीं है तो जोड़ना (मोंगोडीबी मैच के लिए)
+    const globalPhone = (rawPhone && !rawPhone.startsWith('+')) ? '+' + rawPhone : rawPhone;
+    const phoneParam = encodeURIComponent(globalPhone);
 
-    // 1. Navigation Setup
-    function setupNavigation() {
-        if (!globalPhone) {
-            // अगर फोन नहीं है तो किसी भी जरूरी बटन पर क्लिक करने पर लॉगिन पर भेजें
-            document.body.onclick = (e) => {
-                if(e.target.closest('.btn, .nav-item, .featured-card, .game-card, .main-game-card')) {
-                    window.location.href = 'index.html';
-                }
-            };
+    // 2. बैलेंस लोड करने वाला फंक्शन (MongoDB से सीधा कनेक्शन)
+    async function loadGlobalBalance() {
+        const balElement = document.querySelector('.wallet-fix');
+        if (!globalPhone || globalPhone === "+") return;
+
+        try {
+            // तुम्हारे बैकएंड API को कॉल
+            const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                // ₹ का चिन्ह और मोंगोडीबी वाला बैलेंस
+                balElement.innerText = `₹${parseFloat(result.balance).toFixed(2)}`;
+            }
+        } catch (error) {
+            console.error("Balance fetch error:", error);
+        }
+    }
+
+    // 3. सभी बटन्स को "स्मार्ट" बनाना (ताकि हर क्लिक पर फोन नंबर साथ जाए)
+    function setupDynamicLinks() {
+        if (!globalPhone || globalPhone === "+") {
+            console.warn("User not logged in!");
             return;
         }
 
-        // Withdraw & Deposit
-        document.querySelector('.btn-withdraw').onclick = () => window.location.href = `withdraw.html?phone=${phoneParam}`;
-        document.querySelector('.btn-deposit').onclick = () => window.location.href = `deposit.html?phone=${phoneParam}`;
+        // गेम बटन्स
+        document.querySelector('.wingo-btn').href = `wingo_game.html?phone=${phoneParam}`;
+        document.querySelector('.chicken-btn').href = `chicken.html?phone=${phoneParam}`;
+        document.querySelector('.aviator-btn').href = `aviator.html?phone=${phoneParam}`;
+        
+        // ट्रांजैक्शन बटन्स
+        document.querySelector('.deposit-btn').href = `deposit.html?phone=${phoneParam}`;
+        document.querySelector('.withdraw-btn').href = `withdraw.html?phone=${phoneParam}`;
+        
+        // अकाउंट और सपोर्ट
+        document.querySelector('.account-btn-box').href = `account.html?phone=${phoneParam}`;
+        document.querySelector('#draggable-support a').href = `support.html?phone=${phoneParam}`;
 
-        // Featured Games
-        document.querySelector('.featured-card.wingo').onclick = () => window.location.href = `wingo_game.html?phone=${phoneParam}`;
-        document.querySelector('.featured-card.trx').onclick = () => window.location.href = `trx_game.html?phone=${phoneParam}`;
-
-        // CHICKEN ROAD बटन का लिंक
-        const chickenCard = document.querySelector('.main-game-card.chicken');
-        if (chickenCard) {
-            chickenCard.onclick = () => {
-                window.location.href = `chicken.html?phone=${phoneParam}`;
+        // टूर्नामेंट "PLAY NOW" बटन
+        const playBtn = document.querySelector('.play-btn-main');
+        if(playBtn) {
+            playBtn.onclick = () => {
+                window.location.href = `play_game.html?phone=${phoneParam}`;
             };
         }
-      // Aviator button ka link
-const aviatorCard = document.querySelector('.main-game-card.aviator');
-if (aviatorCard) {
-    aviatorCard.onclick = () => {
-        window.location.href = `aviator.html?phone=${phoneParam}`;
-    };
-}
-
-        // Bottom Nav Items
-        const navItems = document.querySelectorAll('.nav-item');
-        if (navItems[0]) navItems[0].onclick = () => window.location.href = `homepage.html?phone=${phoneParam}`;
-        if (navItems[1]) navItems[1].onclick = () => window.location.href = `activity.html?phone=${phoneParam}`;
-        if (navItems[3]) navItems[3].onclick = () => window.location.href = `promotion.html?phone=${phoneParam}`;
-        if (navItems[4]) navItems[4].onclick = () => window.location.href = `account.html?phone=${phoneParam}`;
     }
 
-    // 2. Balance Load logic
-    async function loadGlobalBalance() {
-        const balElement = document.getElementById('acc_bal');
-        if (!globalPhone) return;
-
-        try {
-            const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
-            const result = await response.json();
-            if (result.success) {
-                balElement.innerText = parseFloat(result.balance).toFixed(2);
-            }
-        } catch (error) {
-            console.error("Balance Load Error:", error);
-        }
-    }
-
-    // 3. Initialize everything
+    // 4. पेज लोड होते ही सब शुरू करें
     window.addEventListener('DOMContentLoaded', () => {
-        setupNavigation(); 
-        loadGlobalBalance(); 
-        createStars();
+        loadGlobalBalance();
+        setupDynamicLinks();
+        
+        // हर 15 सेकंड में ऑटो-रिफ्रेश बैलेंस (ताकि मोंगोडीबी से अपडेट मिलता रहे)
+        setInterval(loadGlobalBalance, 15000);
     });
 
-    function createStars() {
-        const starsContainer = document.getElementById('stars');
-        if(!starsContainer) return;
-        for (let i = 0; i < 40; i++) {
-            const star = document.createElement('div');
-            star.className = 'star';
-            star.style.left = Math.random() * 100 + '%';
-            star.style.top = Math.random() * 100 + '%';
-            star.style.animationDelay = Math.random() * 3 + 's';
-            starsContainer.appendChild(star);
+    // --- तुम्हारा पुराना आइकन क्लिक और ड्रैग वाला लॉजिक यहाँ रहेगा ---
+    function handleIconClick(element, type) {
+        // ... (तुम्हारा पुराना कोड जैसा था वैसा ही रहने दें) ...
+        const allIcons = document.querySelectorAll('.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner');
+        allIcons.forEach(icon => icon.classList.remove('active-border'));
+        element.classList.add('active-border');
+        
+        const bottomImgDiv = document.querySelector('.home-bottom-img'); 
+        const bottomImgTag = document.querySelector('.home-bottom-img img'); 
+        const playContainer = document.getElementById('ff-play-container'); 
+        const wingoBtn = document.querySelector('.wingo-btn');
+        const chickenBtn = document.querySelector('.chicken-btn');
+        const aviatorBtn = document.querySelector('.aviator-btn');
+        const ffStrip = document.querySelector('.mini-games-strip'); 
+
+        if (type === 'ff') {
+            if (bottomImgTag) bottomImgTag.src = "https://raw.githubusercontent.com/jaharul007/jaharul/11123fdf3c6e43f342a7367a03ea69d727a7817b/ff4vs4.jpg";
+            if (playContainer) playContainer.style.display = 'block';
+            if (bottomImgDiv) { bottomImgDiv.style.width = "40%"; bottomImgDiv.style.left = "20%"; }
+            if (wingoBtn) wingoBtn.style.display = 'none';
+            if (chickenBtn) chickenBtn.style.display = 'none';
+            if (aviatorBtn) aviatorBtn.style.display = 'none';
+            if (ffStrip) ffStrip.style.display = 'none';
+        } else {
+            if (bottomImgTag) bottomImgTag.src = "https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg";
+            if (playContainer) playContainer.style.display = 'none';
+            if (bottomImgDiv) { bottomImgDiv.style.width = "100%"; bottomImgDiv.style.left = "50%"; }
+            if (wingoBtn) wingoBtn.style.display = 'block';
+            if (chickenBtn) chickenBtn.style.display = 'block';
+            if (aviatorBtn) aviatorBtn.style.display = 'block';
+            if (ffStrip) ffStrip.style.display = 'block';
         }
     }
+
+    // --- तुम्हारा ड्रैग वाला कोड यहाँ रहेगा ---
+    // ... (dragItem, events, dragStart, dragEnd, drag, setTranslate) ...
 </script>
 </body>
 </html>
