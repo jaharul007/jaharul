@@ -4,48 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-    /* --- यह कोड सब कुछ बराबर रखेगा --- */
 
-/* 1. छोटे मोबाइल (iPhone SE, पुराने छोटे Samsung/Mi) */
-@media screen and (max-width: 380px) {
-    .original-icon, .mines-icon, .extra-slot-icon {
-        width: 65px !important; /* बटन थोड़े छोटे ताकि स्क्रीन से बाहर न जाएँ */
-        height: 65px !important;
-    }
-    .icon-label {
-        font-size: 11px !important;
-        width: 65px !important;
-    }
-    .wallet-fix {
-        font-size: 15px !important;
-        min-width: 60px !important;
-    }
-    #ff-play-container {
-        width: 120px !important; /* Play बटन भी छोटा हो जाएगा */
-    }
-}
-
-/* 2. मीडियम और बड़े मोबाइल (iPhone Pro Max, Google Pixel, OnePlus) */
-@media screen and (min-width: 381px) and (max-width: 480px) {
-    /* यहाँ आपका वर्तमान कोड सही काम करेगा */
-}
-
-/* 3. टैबलेट के लिए (अगर कोई टैबलेट में खोले तो भी खराब न दिखे) */
-@media screen and (min-width: 481px) and (max-width: 1024px) {
-    .container {
-        max-width: 500px; /* कंटेंट को बीच में रखेगा, फैलने नहीं देगा */
-        margin: 0 auto;
-    }
-    .bottom-fixed {
-        width: 500px !important;
-    }
-}
-
-/* 4. यूनिवर्सल फिक्स: इमेज कभी फटे नहीं और बटन गायब न हों */
-img {
-    max-width: 100%;
-    height: auto;
-}
     
     #ff-play-container {
     position: absolute;
