@@ -2,448 +2,618 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Home</title>
     <style>
 
-    
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #0d1117;
+        overflow-x: hidden;
+        padding-bottom: 600px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    /* ============================================================
+       CONTAINER — the single positioning root for everything.
+       .top-image (homeupar.jpg) is 100% wide inside it, so
+       container height === rendered image height at every screen
+       size. All absolute children use % relative to THIS width.
+    ============================================================ */
+    .container {
+        position: relative;
+        width: 100%;
+    }
+
+    .top-image {
+        width: 100%;
+        display: block;
+    }
+
+    /* ============================================================
+       GAME / ACTION BUTTONS — FULLY PROPORTIONAL
+       ──────────────────────────────────────────────────────────
+       THE TRICK  (padding-bottom aspect-ratio method):
+         • height: 0
+         • padding-bottom: X%
+             X = original_px_height / reference_container_width × 100
+             For position:absolute children, % is of PARENT WIDTH.
+             So as the container shrinks/grows, both the button
+             width AND its "height" (padding-bottom) scale
+             perfectly together — exactly like the background image.
+
+       REFERENCE measurements at 375 px container width:
+         wingo    48% wide × 118 px → pb = 118/375 = 31.47%
+         chicken  32% wide × 180 px → pb = 180/375 = 48.00%
+         aviator  32% wide × 180 px → pb = 180/375 = 48.00%
+         deposit  19% wide ×  44 px → pb =  44/375 = 11.73%
+         withdraw 18% wide ×  44 px → pb =  44/375 = 11.73%
+
+       top / left remain as original % values — untouched.
+       NO fixed pixel heights anywhere.
+    ============================================================ */
+
+    /* Shared base */
+    .wingo-btn,
+    .chicken-btn,
+    .aviator-btn,
+    .deposit-btn,
+    .withdraw-btn {
+        position: absolute;
+        height: 0;            /* hit-area height = padding-bottom only */
+        overflow: hidden;
+        display: block;
+        /* DEBUG: red dashed border — remove after testing */
+        border: 2px dashed red;
+        box-sizing: border-box;
+    }
+
+    /* ── Wingo ── covers Wingo area of homeupar.jpg */
+    .wingo-btn {
+        top: 92.9%;
+        left: 0.6%;
+        width: 48%;
+        padding-bottom: 31.47%;   /* 118px ÷ 375px */
+        z-index: 999;
+    }
+
+    /* ── Chicken ── sits below the banner (top > 100%), on homeniche.jpg */
+    .chicken-btn {
+        top: 122.9%;
+        left: 0%;
+        width: 32%;
+        padding-bottom: 48.00%;   /* 180px ÷ 375px */
+        z-index: 999;
+    }
+
+    /* ── Aviator ── same row as chicken */
+    .aviator-btn {
+        top: 122.9%;
+        left: 33%;
+        width: 32%;
+        padding-bottom: 48.00%;   /* 180px ÷ 375px */
+        z-index: 999;
+    }
+
+    /* ── Deposit ── top-right of homeupar.jpg */
+    .deposit-btn {
+        top: 17%;
+        left: 57%;
+        width: 19%;
+        padding-bottom: 11.73%;   /* 44px ÷ 375px */
+        z-index: 1000;
+    }
+
+    /* ── Withdraw ── far-right of homeupar.jpg */
+    .withdraw-btn {
+        top: 17%;
+        left: 79%;
+        width: 18%;
+        padding-bottom: 11.73%;   /* 44px ÷ 375px */
+        z-index: 1000;
+    }
+
+    /* ============================================================
+       WALLET
+    ============================================================ */
+    .wallet-container {
+        position: absolute;
+        top: 20.2%;
+        left: 1.2%;
+        display: flex;
+        align-items: center;
+        border-radius: 8px;
+        padding: 2px 5px;
+        z-index: 1000;
+    }
+
+    .wallet-fix {
+        color: #ffffff;
+        padding: 5px 8px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: clamp(14px, 4.5vw, 18px);
+        font-weight: bold;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .refresh-btn {
+        transform: rotate(90deg);
+        background: none;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        touch-action: manipulation;
+    }
+
+    /* ============================================================
+       ICON BUTTONS (Original / Mines / Slot / FF Tournament)
+       These float over the layout (outside .container).
+       clamp() ensures they scale between 320px and 480px screens.
+    ============================================================ */
+    .original-icon,
+    .mines-icon,
+    .extra-slot-icon {
+        position: absolute;
+        width: clamp(58px, 19.5vw, 80px);
+        height: clamp(58px, 19.5vw, 80px);
+        top: 18.9%;
+        z-index: 2000;
+        overflow: hidden;
+        border: 2px solid #00ff00;
+        box-shadow: 0 0 10px #00ff00;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .original-icon   { left: 2.1%;  border-radius: 20%; }
+    .mines-icon      { left: 78.7%; border-radius: 15px; }
+    .extra-slot-icon { left: 53.3%; border-radius: 20%; }
+
+    .original-icon img,
+    .mines-icon img,
+    .extra-slot-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* ============================================================
+       FF TOURNAMENT BANNER ICON
+    ============================================================ */
+    .ff-tournament-banner {
+        position: absolute;
+        top: 19%;
+        left: 37%;
+        width: clamp(52px, 18vw, 74px);
+        z-index: 1000;
+        transform: translateX(-50%);
+        border-radius: 17px;
+        overflow: hidden;
+        border: 2px solid #00ff00;
+        box-shadow: 0 0 10px #00ff00;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .ff-tournament-banner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* ============================================================
+       ICON LABELS
+    ============================================================ */
+    .icon-label {
+        position: absolute;
+        z-index: 2001;
+        color: white;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: clamp(10px, 3.3vw, 13px);
+        font-weight: bold;
+        text-align: center;
+        width: clamp(58px, 19.5vw, 80px);
+        text-shadow: 1px 1px 2px black;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .original-label { top: 30.5%; left: 2.1%;  }
+    .mines-label    { top: 30.5%; left: 78.7%; }
+    .slot-label     { top: 30.5%; left: 53.3%; }
+
+    /* ============================================================
+       ACTIVE BORDER GLOW
+    ============================================================ */
+    .active-border {
+        border: 3px solid #ffffff !important;
+        box-shadow: 0 0 20px #ffffff, 0 0 40px #00ff00 !important;
+        transform: scale(1.05);
+        transition: all 0.2s ease;
+    }
+
+    /* ============================================================
+       HOME BOTTOM IMAGE (homeniche.jpg)
+    ============================================================ */
+    .home-bottom-img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        z-index: 500;
+        display: block;
+        transition: all 0.4s ease;
+    }
+
+    .home-bottom-img img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+    }
+
+    /* ============================================================
+       MINI GAMES STRIP
+    ============================================================ */
+    .mini-games-strip {
+        position: absolute;
+        top: 53%;
+        left: 37%;
+        transform: translateX(-50%);
+        width: 20%;
+        background: none;
+        color: white;
+        text-align: center;
+        padding: 2px 0;
+        font-size: 9px;
+        font-weight: bold;
+        border-radius: 5px;
+        z-index: 1000;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    }
+
+    /* ============================================================
+       FF PLAY NOW BUTTON
+    ============================================================ */
     #ff-play-container {
-    position: absolute;
-    display: none; /* शुरुआत में गायब */
-    z-index: 2500;
-    
-    /* --- यहाँ से कंट्रोल कर --- */
-    top: 64%;      /* ऊपर-नीचे करने के लिए (कम करोगे तो ऊपर जाएगा) */
-    left: 20%;     /* लेफ्ट-राइट के लिए */
-    transform: translateX(-50%);
-    width: 150px;  /* बटन की चौड़ाई (मोटा करने के लिए बढ़ा दे) */
-}
+        position: absolute;
+        display: none;
+        z-index: 2500;
+        top: 64%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: clamp(120px, 40vw, 160px);
+    }
 
-.play-btn-main {
-    width: 100%;
-    padding: 5px;
-    background: linear-gradient(180deg, #f0ad4e 0%, #d9534f 100%); /* ऑरेंज-लाल गेमिंग लुक */
-    color: white;
-    font-weight: bold;
-    border: 2px solid #fff;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
-    font-size: 16px;
-    text-transform: uppercase;
-}
+    .play-btn-main {
+        width: 100%;
+        padding: 8px 5px;
+        background: linear-gradient(180deg, #f0ad4e 0%, #d9534f 100%);
+        color: white;
+        font-weight: bold;
+        border: 2px solid #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+        font-size: clamp(13px, 4vw, 16px);
+        text-transform: uppercase;
+        touch-action: manipulation;
+    }
 
-    .ff-new-image {
-    position: absolute;
-    top: 50%; /* पोजीशन सेट करें */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 10% !important; /* चौड़ाई (छोटा/बड़ा) - आप इसे % या px में बदल सकती हैं */
-    z-index: 500;
-    display: none; /* शुरुआत में छुपा हुआ रहेगा */
-}
+    /* ============================================================
+       BOTTOM FIXED NAV BAR
+    ============================================================ */
+    .bottom-fixed {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(105vw, 105%);
+        z-index: 9999;
+        margin-bottom: -133px;
+    }
 
-.ff-new-image img {
-    width: 100%; 
-    height: auto; /* मोटाई (हाइट) अपने आप एडजस्ट हो जाएगी */
-    border-radius: 10px; /* किनारे (चेहरा) गोल कर सकती हैं */
-}
+    .bottom-fixed img {
+        width: 100%;
+        display: block;
+    }
 
-    /* जब बटन एक्टिव (क्लिक) हो, तब ये लाइट जलेगी */
-.active-border {
-    border: 3px solid #ffffff !important; /* सफ़ेद बॉर्डर */
-    box-shadow: 0 0 20px #ffffff, 0 0 40px #00ff00 !important; /* डबल चमक */
-    transform: scale(1.05); /* थोड़ा बड़ा दिखेगा */
-    transition: all 0.2s ease;
-}
+    /*
+      Account button inside .bottom-fixed.
+      padding-bottom: 18.67% = 70px ÷ 375px × 100
+    */
+    .account-btn-box {
+        position: absolute;
+        bottom: 134px;
+        right: 3%;
+        width: 18%;
+        height: 0;
+        padding-bottom: 18.67%;   /* 70px ÷ 375px */
+        z-index: 10000;
+        border: 2px dashed red;   /* debug */
+        box-sizing: border-box;
+        overflow: hidden;
+    }
 
-/* क्लिक करने के लिए बटन को कर्सर पॉइंटर दें */
-.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
+    /* ============================================================
+       DRAGGABLE SUPPORT BUTTON
+    ============================================================ */
+    #draggable-support {
+        position: fixed;
+        right: 10px;
+        bottom: 150px;
+        width: 50px;
+        height: 50px;
+        z-index: 10001;
+        cursor: grab;
+        touch-action: none;
+        border-radius: 50%;
+        overflow: hidden;
+        background-color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid gold;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+    }
 
-       /* टेक्स्ट के लिए कॉमन स्टाइल */
-.icon-label {
-    position: absolute;
-    z-index: 2001;
-    color: white;
-    font-family: Arial, sans-serif;
-    font-size: 10px; /* मोबाइल के हिसाब से साइज */
-    font-weight: bold;
-    text-align: center;
-    width: 74px; /* आइकॉन के बराबर चौड़ाई */
-    text-shadow: 1px 1px 2px black; /* पढ़ने में आसानी हो */
-}
+    #draggable-support img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+    }
 
-/* हर टेक्स्ट की पोजीशन - आइकॉन के ठीक नीचे */
-.original-label {
-    top: 30.5%; /* आइकॉन 18.9% पर है + हाइट के बाद का गैप */
-    left: 2.1%;
-    font-size: 13px;
-}
+    /* ============================================================
+       RESPONSIVE OVERRIDES
+    ============================================================ */
 
-.mines-label {
-    top: 30.5%;
-    left: 79.2%;
-    font-size: 13px;
-}
+    /* ── Very small phones ≤ 380px ── */
+    @media screen and (max-width: 380px) {
+        /*
+          The padding-bottom % values auto-scale with container
+          width — no override needed for game buttons.
+          Only UI chrome (icons, wallet) needs explicit adjustment.
+        */
+        .original-icon,
+        .mines-icon,
+        .extra-slot-icon   { width: 58px !important; height: 58px !important; }
+        .ff-tournament-banner { width: 52px !important; }
+        .icon-label        { font-size: 10px !important; width: 58px !important; }
+        .wallet-fix        { font-size: 14px !important; min-width: 60px !important; }
+        #ff-play-container { width: 120px !important; }
+        .play-btn-main     { font-size: 12px !important; }
+    }
 
-.slot-label {
-    top: 30.5%;
-    left: 53.3%;
-    font-size: 13px;
-}
+    /* ── Standard phones 381–480px ── */
+    @media screen and (min-width: 381px) and (max-width: 480px) {
+        /* padding-bottom % auto-scales — no overrides needed */
+    }
 
-/* 1. Original Icon - सेम बॉर्डर और चमक */
-.original-icon {
-    position: absolute;
-    top: 18.9%;
-    left: 2.1%;
-    width: 74px;
-    height: 74px;
-    z-index: 2000;
-    border-radius: 20%;
-    overflow: hidden;
-    border: 2px solid #00ff00; /* हरा बॉर्डर */
-    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
-}
-
-/* 2. Mines Icon - सेम बॉर्डर और चमक */
-.mines-icon {
-    position: absolute;
-    top: 18.9%;
-    left: 78.7%;
-    width: 74px;
-    height: 74px;
-    z-index: 2000;
-    border-radius: 15px;
-    overflow: hidden;
-    border: 2px solid #00ff00; /* हरा बॉर्डर */
-    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
-}
-
-/* 3. Slot Icon - सेम बॉर्डर और चमक */
-.extra-slot-icon {
-    position: absolute;
-    top: 18.9%;
-    left: 53.3%;
-    width: 74px;
-    height: 74px;
-    z-index: 2000;
-    border-radius: 20%;
-    overflow: hidden;
-    border: 2px solid #00ff00; /* हरा बॉर्डर */
-    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
-}
-
-/* 4. FF Tournament Banner - सेम बॉर्डर और चमक */
-.ff-tournament-banner {
-    position: absolute;
-    top: 19%; 
-    left: 37%;
-    width: 18%;
-    z-index: 1000;
-    transform: translateX(-50%);
-    border-radius: 17px; 
-    overflow: hidden;
-    border: 2px solid #00ff00; /* हरा बॉर्डर */
-    box-shadow: 0 0 10px #00ff00; /* हरी चमक */
-}
-
-/* इमेज की सेटिंग (ताकि सही दिखें) */
-.original-icon img, .mines-icon img, .extra-slot-icon img, .ff-tournament-banner img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-        /* --- Border for debugging (Taki aap button dekh saken) --- */
-        .wingo-btn, .chicken-btn, .aviator-btn, .deposit-btn, .withdraw-btn, .account-btn-box {
-            border: 2px dashed red !important; /* Lal rang ki border add ki gayi hai */
-            box-sizing: border-box;
+    /* ── Tablets 481–1024px ── */
+    @media screen and (min-width: 481px) and (max-width: 1024px) {
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
         }
+        .bottom-fixed { width: 500px !important; }
+        /*
+          Container is capped at 500px on tablets.
+          padding-bottom % is now of 500px → buttons scale
+          correctly to that capped width. Still no px heights.
+        */
+        .original-icon,
+        .mines-icon,
+        .extra-slot-icon { width: 74px !important; height: 74px !important; }
+    }
 
-        /* --- Baki ka original style --- */
-        /* यहाँ से फोटो की चौड़ाई और पोजीशन कंट्रोल होगी */
-.home-bottom-img {
-    position: absolute;
-    top: 50%; 
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%; /* शुरुआत में पूरा बड़ा रहेगा */
-    z-index: 500;
-    display: block;
-    transition: all 0.4s ease; /* छोटा-बड़ा और साइड में जाने का एनीमेशन */
-}
-.home-bottom-img img {
-    width: 100%; /* इसे 100% ही रहने दें */
-    height: auto; /* इससे फोटो का चेहरा मोटा-पतला नहीं होगा, सही रहेगा */
-    border-radius: 10px;
-}
-
-
-        .mini-games-strip {
-    position: absolute;
-    top: 53%;
-    left: 37%;
-    transform: translateX(-50%);
-    width: 20%;
-    /* Updated: काली बैकग्राउंड हटाई और स्टाइल बदला */
-    background: none; 
-    color: white;
-    text-align: center;
-    padding: 2px 0;
-    font-size: 9px;
-    font-weight: bold;
-    border-radius: 5px;
-    z-index: 1000;
-    /* टेक्स्ट में चमक या शैडो जोड़ी */
-    text-shadow: 0 0 5px #fff, 0 0 10px #fff;
-}
-
-
-        
-        body {
-            margin: 0; 
-            padding: 0;
-            background-color: #0d1117;
-            overflow-x: hidden; 
-            padding-bottom: 600px; 
-        }
-
-        #draggable-support {
-            position: fixed;
-            right: 10px;
-            bottom: 150px;
-            width: 50px;
-            height: 50px; 
-            z-index: 10001;
-            cursor: grab;
-            touch-action: none;
-            border-radius: 50%;     
-            overflow: hidden;       
-            background-color: #fff; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 2px solid gold;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
-        }
-
-        #draggable-support img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            pointer-events: none;
-        }
-
-        .wallet-container {
-            position: absolute;
-            top: 20.2%; left: 1.2%;
-            display: flex;
-            align-items: center;
-            border-radius: 8px;
-            padding: 2px 5px;
-            z-index: 1000;
-        }
-
-        .wallet-fix {
-            color: #ffffff;
-            padding: 5px 8px;
-            font-family: Arial;
-            font-size: 18px;
-            font-weight: bold;
-            min-width: 80px;
-            text-align: center;
-        }
-
-        .refresh-btn {
-            transform: rotate(90deg);
-            background: none;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .container { position: relative; width: 100%; }
-        .top-image { width: 100%; display: block; }
-        
-        /* Buttons Positioning */
-        .wingo-btn { position: absolute; top: 92.9%; left: 0.6%; width: 48%; height: 118px; z-index: 999; }
-        .chicken-btn { position: absolute; top: 122.9%; left: 0%; width: 32%; height: 180px; z-index: 999; }
-        .aviator-btn { position: absolute; top: 122.9%; left: 33%; width: 32%; height: 180px; z-index: 999; }
-        .deposit-btn { position: absolute; top: 17%; left: 57%; width: 19%; height: 44px; z-index: 1000; }
-        .withdraw-btn { position: absolute; top: 17%; left: 79%; width: 18%; height: 44px; z-index: 1000; }
-
-        .bottom-fixed { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 105%; z-index: 9999; margin-bottom: -133px; }
-        .bottom-fixed img { width: 100%; display: block; }
-        .account-btn-box { position: absolute; bottom: 134px; right: 3%; width: 18%; height: 70px; z-index: 10000; }
     </style>
 </head>
 <body>
+
+    <!-- FF PLAY NOW BUTTON (shown only in FF Tournament view) -->
     <div id="ff-play-container">
-    <button class="play-btn-main" onclick="window.location.href='play_game.html'">PLAY NOW</button>
-</div>
-
-    <div class="icon-label original-label">ORIGINAL</div>
-<div class="icon-label mines-label">MINES</div>
-<div class="icon-label slot-label">SLOTS</div>
-<div class="original-icon" onclick="handleIconClick(this, 'original')">
-    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5dbed4bbf17f181d635eec3508adbd47d34cd289/original.jpg">
-</div>
-
-<div class="ff-tournament-banner" onclick="handleIconClick(this, 'ff')">
-    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/8e61a92cf14ed5a4e903850f2fcdc26100338f99/fftournament.png">
-</div>
-
-<div class="extra-slot-icon" onclick="handleIconClick(this, 'slot')">
-    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/b2f44f3e1e546352b929128d7bdd289a0fd2fb3f/allslot.png">
-</div>
-
-<div class="mines-icon" onclick="handleIconClick(this, 'mines')">
-    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/9655259478a8327682db77d3c130e7e6f00afaea/mines.png">
-</div>
-
-    
-
-<div class="home-bottom-img">
-    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg" alt="Home Page Image">
-</div>
-
-<div id="draggable-support">
-    <a href="support.html">
-        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/0ab7b9df6331b73aa6ba2f41060e99ccebbf359d/customer.png" alt="Support">
-    </a>
-</div>
-
-<div class="container">
-    <div class="wallet-container">
-        <div class="wallet-fix">₹0.00</div>
-        <button class="refresh-btn" onclick="location.reload()">↻</button>
+        <button class="play-btn-main">PLAY NOW</button>
     </div>
-    <div class="mini-games-strip">FF TOURNAMENT</div>
-    
-    <a href="wingo_game.html" class="wingo-btn"></a>
-    <a href="chicken.html" class="chicken-btn"></a>
-    <a href="aviator.html" class="aviator-btn"></a>
-    <a href="deposit.html" class="deposit-btn"></a>
-    <a href="withdraw.html" class="withdraw-btn"></a>
-    
-    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/58db71e407098116c82be62f7968004e7ed22d04/homeupar.jpg" class="top-image">
-</div>
 
-<div class="bottom-fixed">
-    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5ef5d5c512d4ccef0cd74bfd91be6e13a560d99d/homebutton.png">
-    <a href="account.html" class="account-btn-box"></a>
-</div>
+    <!-- ICON LABELS -->
+    <div class="icon-label original-label">ORIGINAL</div>
+    <div class="icon-label mines-label">MINES</div>
+    <div class="icon-label slot-label">SLOTS</div>
 
-<script>
-    // 1. URL से फोन नंबर निकालना (पहचान के लिए)
-    const urlParams = new URLSearchParams(window.location.search);
-    const rawPhone = urlParams.get('phone') || "";
-    // अगर नंबर +91 के साथ नहीं है तो जोड़ना (मोंगोडीबी मैच के लिए)
+    <!-- GAME ICONS -->
+    <div class="original-icon" onclick="handleIconClick(this, 'original')">
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5dbed4bbf17f181d635eec3508adbd47d34cd289/original.jpg" alt="Original">
+    </div>
+    <div class="ff-tournament-banner" onclick="handleIconClick(this, 'ff')">
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/8e61a92cf14ed5a4e903850f2fcdc26100338f99/fftournament.png" alt="FF Tournament">
+    </div>
+    <div class="extra-slot-icon" onclick="handleIconClick(this, 'slot')">
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/b2f44f3e1e546352b929128d7bdd289a0fd2fb3f/allslot.png" alt="Slots">
+    </div>
+    <div class="mines-icon" onclick="handleIconClick(this, 'mines')">
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/9655259478a8327682db77d3c130e7e6f00afaea/mines.png" alt="Mines">
+    </div>
+
+    <!-- HOME BOTTOM IMAGE (homeniche.jpg) -->
+    <div class="home-bottom-img">
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg" alt="Home Page Image">
+    </div>
+
+    <!-- DRAGGABLE SUPPORT BUTTON -->
+    <div id="draggable-support">
+        <a href="support.html">
+            <img src="https://raw.githubusercontent.com/jaharul007/jaharul/0ab7b9df6331b73aa6ba2f41060e99ccebbf359d/customer.png" alt="Support">
+        </a>
+    </div>
+
+    <!--
+        MAIN CONTAINER
+        homeupar.jpg is the "ruler" — its rendered height defines
+        the container height, and ALL button % values are anchored
+        to that same measured space.
+    -->
+    <div class="container">
+
+        <div class="wallet-container">
+            <div class="wallet-fix">&#8377;0.00</div>
+            <button class="refresh-btn" onclick="loadGlobalBalance()" aria-label="Refresh Balance">&#8635;</button>
+        </div>
+
+        <div class="mini-games-strip">FF TOURNAMENT</div>
+
+        <!--
+            TRANSPARENT HIT-AREA LINKS
+            Each uses: height:0 + padding-bottom:X%
+            where X = (original_px_height / 375) × 100
+            This makes the clickable zone grow/shrink at the
+            exact same rate as the background images.
+        -->
+        <a href="wingo_game.html"  class="wingo-btn"    aria-label="Wingo Game"></a>
+        <a href="chicken.html"     class="chicken-btn"  aria-label="Chicken Game"></a>
+        <a href="aviator.html"     class="aviator-btn"  aria-label="Aviator Game"></a>
+        <a href="deposit.html"     class="deposit-btn"  aria-label="Deposit"></a>
+        <a href="withdraw.html"    class="withdraw-btn" aria-label="Withdraw"></a>
+
+        <!-- Top banner — sets container height -->
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/58db71e407098116c82be62f7968004e7ed22d04/homeupar.jpg"
+             class="top-image" alt="Home Top Banner">
+
+    </div>
+
+    <!-- FIXED BOTTOM NAV -->
+    <div class="bottom-fixed">
+        <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5ef5d5c512d4ccef0cd74bfd91be6e13a560d99d/homebutton.png" alt="Bottom Nav">
+        <a href="account.html" class="account-btn-box" aria-label="Account"></a>
+    </div>
+
+    <script>
+    // ── 1. Read phone from URL ─────────────────────────────────
+    const urlParams   = new URLSearchParams(window.location.search);
+    const rawPhone    = urlParams.get('phone') || '';
     const globalPhone = (rawPhone && !rawPhone.startsWith('+')) ? '+' + rawPhone : rawPhone;
-    const phoneParam = encodeURIComponent(globalPhone);
+    const phoneParam  = encodeURIComponent(globalPhone);
 
-    // 2. बैलेंस लोड करने वाला फंक्शन (MongoDB से सीधा कनेक्शन)
+    // ── 2. Balance loader ──────────────────────────────────────
     async function loadGlobalBalance() {
-        const balElement = document.querySelector('.wallet-fix');
-        if (!globalPhone || globalPhone === "+") return;
-
+        const balEl = document.querySelector('.wallet-fix');
+        if (!globalPhone || globalPhone === '+') return;
         try {
-            // तुम्हारे बैकएंड API को कॉल
-            const response = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
-            const result = await response.json();
-            
+            const res    = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
+            const result = await res.json();
             if (result.success) {
-                // ₹ का चिन्ह और मोंगोडीबी वाला बैलेंस
-                balElement.innerText = `₹${parseFloat(result.balance).toFixed(2)}`;
+                balEl.innerText = `\u20B9${parseFloat(result.balance).toFixed(2)}`;
             }
-        } catch (error) {
-            console.error("Balance fetch error:", error);
+        } catch (err) {
+            console.error('Balance fetch error:', err);
         }
     }
 
-    // 3. सभी बटन्स को "स्मार्ट" बनाना (ताकि हर क्लिक पर फोन नंबर साथ जाए)
+    // ── 3. Inject phone param into all navigation links ────────
     function setupDynamicLinks() {
-        if (!globalPhone || globalPhone === "+") {
-            console.warn("User not logged in!");
-            return;
-        }
-
-        // गेम बटन्स
-        document.querySelector('.wingo-btn').href = `wingo_game.html?phone=${phoneParam}`;
-        document.querySelector('.chicken-btn').href = `chicken.html?phone=${phoneParam}`;
-        document.querySelector('.aviator-btn').href = `aviator.html?phone=${phoneParam}`;
-        
-        // ट्रांजैक्शन बटन्स
-        document.querySelector('.deposit-btn').href = `deposit.html?phone=${phoneParam}`;
-        document.querySelector('.withdraw-btn').href = `withdraw.html?phone=${phoneParam}`;
-        
-        // अकाउंट और सपोर्ट
+        if (!globalPhone || globalPhone === '+') { console.warn('User not logged in!'); return; }
+        document.querySelector('.wingo-btn').href       = `wingo_game.html?phone=${phoneParam}`;
+        document.querySelector('.chicken-btn').href     = `chicken.html?phone=${phoneParam}`;
+        document.querySelector('.aviator-btn').href     = `aviator.html?phone=${phoneParam}`;
+        document.querySelector('.deposit-btn').href     = `deposit.html?phone=${phoneParam}`;
+        document.querySelector('.withdraw-btn').href    = `withdraw.html?phone=${phoneParam}`;
         document.querySelector('.account-btn-box').href = `account.html?phone=${phoneParam}`;
         document.querySelector('#draggable-support a').href = `support.html?phone=${phoneParam}`;
-
-        // टूर्नामेंट "PLAY NOW" बटन
         const playBtn = document.querySelector('.play-btn-main');
-        if(playBtn) {
-            playBtn.onclick = () => {
-                window.location.href = `play_game.html?phone=${phoneParam}`;
-            };
-        }
+        if (playBtn) playBtn.onclick = () => { window.location.href = `play_game.html?phone=${phoneParam}`; };
     }
 
-    // 4. पेज लोड होते ही सब शुरू करें
+    // ── 4. Init ────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
         loadGlobalBalance();
         setupDynamicLinks();
-        
-        // हर 15 सेकंड में ऑटो-रिफ्रेश बैलेंस (ताकि मोंगोडीबी से अपडेट मिलता रहे)
+        initDraggableSupport();
         setInterval(loadGlobalBalance, 15000);
     });
 
-    // --- तुम्हारा पुराना आइकन क्लिक और ड्रैग वाला लॉजिक यहाँ रहेगा ---
+    // ── 5. Icon click handler ──────────────────────────────────
     function handleIconClick(element, type) {
-        // ... (तुम्हारा पुराना कोड जैसा था वैसा ही रहने दें) ...
-        const allIcons = document.querySelectorAll('.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner');
-        allIcons.forEach(icon => icon.classList.remove('active-border'));
+        document.querySelectorAll('.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner')
+                .forEach(el => el.classList.remove('active-border'));
         element.classList.add('active-border');
-        
-        const bottomImgDiv = document.querySelector('.home-bottom-img'); 
-        const bottomImgTag = document.querySelector('.home-bottom-img img'); 
-        const playContainer = document.getElementById('ff-play-container'); 
-        const wingoBtn = document.querySelector('.wingo-btn');
-        const chickenBtn = document.querySelector('.chicken-btn');
-        const aviatorBtn = document.querySelector('.aviator-btn');
-        const ffStrip = document.querySelector('.mini-games-strip'); 
+
+        const bottomImgDiv  = document.querySelector('.home-bottom-img');
+        const bottomImgTag  = document.querySelector('.home-bottom-img img');
+        const playContainer = document.getElementById('ff-play-container');
+        const wingoBtn      = document.querySelector('.wingo-btn');
+        const chickenBtn    = document.querySelector('.chicken-btn');
+        const aviatorBtn    = document.querySelector('.aviator-btn');
+        const ffStrip       = document.querySelector('.mini-games-strip');
 
         if (type === 'ff') {
-            if (bottomImgTag) bottomImgTag.src = "https://raw.githubusercontent.com/jaharul007/jaharul/11123fdf3c6e43f342a7367a03ea69d727a7817b/ff4vs4.jpg";
+            if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/11123fdf3c6e43f342a7367a03ea69d727a7817b/ff4vs4.jpg';
             if (playContainer) playContainer.style.display = 'block';
-            if (bottomImgDiv) { bottomImgDiv.style.width = "40%"; bottomImgDiv.style.left = "20%"; }
-            if (wingoBtn) wingoBtn.style.display = 'none';
-            if (chickenBtn) chickenBtn.style.display = 'none';
-            if (aviatorBtn) aviatorBtn.style.display = 'none';
-            if (ffStrip) ffStrip.style.display = 'none';
+            if (bottomImgDiv)  { bottomImgDiv.style.width = '40%'; bottomImgDiv.style.left = '20%'; }
+            [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'none'; });
         } else {
-            if (bottomImgTag) bottomImgTag.src = "https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg";
+            if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg';
             if (playContainer) playContainer.style.display = 'none';
-            if (bottomImgDiv) { bottomImgDiv.style.width = "100%"; bottomImgDiv.style.left = "50%"; }
-            if (wingoBtn) wingoBtn.style.display = 'block';
-            if (chickenBtn) chickenBtn.style.display = 'block';
-            if (aviatorBtn) aviatorBtn.style.display = 'block';
-            if (ffStrip) ffStrip.style.display = 'block';
+            if (bottomImgDiv)  { bottomImgDiv.style.width = '100%'; bottomImgDiv.style.left = '50%'; }
+            [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'block'; });
         }
     }
 
-    // --- तुम्हारा ड्रैग वाला कोड यहाँ रहेगा ---
-    // ... (dragItem, events, dragStart, dragEnd, drag, setTranslate) ...
-</script>
+    // ── 6. Draggable support button ────────────────────────────
+    function initDraggableSupport() {
+        const el = document.getElementById('draggable-support');
+        if (!el) return;
+        let startX, startY, initX, initY, isDragging = false;
+
+        function dragStart(e) {
+            isDragging = false;
+            const pt = e.touches ? e.touches[0] : e;
+            startX = pt.clientX; startY = pt.clientY;
+            const r = el.getBoundingClientRect();
+            initX = r.left; initY = r.top;
+            el.style.cursor = 'grabbing';
+        }
+        function dragMove(e) {
+            const pt = e.touches ? e.touches[0] : e;
+            const dx = pt.clientX - startX, dy = pt.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) isDragging = true;
+            if (!isDragging) return;
+            e.preventDefault();
+            const vw = window.innerWidth, vh = window.innerHeight;
+            el.style.left   = Math.min(Math.max(initX + dx, 0), vw - el.offsetWidth)  + 'px';
+            el.style.top    = Math.min(Math.max(initY + dy, 0), vh - el.offsetHeight) + 'px';
+            el.style.right  = 'auto';
+            el.style.bottom = 'auto';
+        }
+        function dragEnd() { el.style.cursor = 'grab'; }
+
+        el.addEventListener('touchstart', dragStart, { passive: true });
+        el.addEventListener('touchmove',  dragMove,  { passive: false });
+        el.addEventListener('touchend',   dragEnd);
+        el.addEventListener('mousedown',  dragStart);
+        document.addEventListener('mousemove', e => { if (isDragging) dragMove(e); });
+        document.addEventListener('mouseup',   dragEnd);
+    }
+    </script>
 </body>
 </html>
