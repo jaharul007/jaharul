@@ -1889,10 +1889,24 @@ async function checkBetResult(betData) {
     }
     
     activeBetChecks[checkKey] = true;
-    console.log(`🔍 Checking result for ${betData.betOn} - ${betData.period}`);
+    console.log(`🔍 Waiting for period ${betData.period} to end before showing result`);
     
     const checkInterval = setInterval(async () => {
         try {
+            // ✅ KEY FIX: Pehle check karo ki timer period badal gaya ya nahi
+            // Jo period user ne bet lagaya tha, woh period khatam hona chahiye
+            // Period display mein current period dikhi hogi jo BET period se BADI hogi
+            const displayedPeriod = document.getElementById('periodDisplay').innerText.trim();
+            
+            // Agar abhi bhi wahi period chal rahi hai jis par bet lagaya - wait karo
+            if (displayedPeriod === betData.period || displayedPeriod === '') {
+                console.log(`⏳ Still in bet period ${betData.period}, waiting for timer to end...`);
+                return; // Timer abhi zero nahi hua - wait karo
+            }
+            
+            // Period badal gayi matlab timer zero ho gaya - ab result fetch karo
+            console.log(`✅ Period changed! Bet period: ${betData.period}, Now: ${displayedPeriod} - Fetching result...`);
+            
             const res = await fetch(`/api/history?action=checkResult&phone=${betData.phone}&period=${betData.period}&mode=${betData.mode}`);
             const data = await res.json();
             
@@ -1935,6 +1949,13 @@ async function checkBetResult(betData) {
 // CONFIRM BET FUNCTION (FIXED - NEXT PERIOD)
 // ========================================
 async function confirmBet() {
+    // ✅ FIX: Last 5 seconds mein confirm bhi nahi hona chahiye
+    if (bettingLocked) {
+        alert('⏰ Betting band ho gayi! Timer khatam hone ka wait karo.');
+        closeBetPopup();
+        return;
+    }
+    
     const phone = getCurrentUserPhone();
     if (!phone) { 
         alert('❌ Please login first!'); 
@@ -2228,6 +2249,11 @@ Good luck! 🍀`);
 }
 
 function openBet(val) {
+    // ✅ FIX: Last 5 seconds mein bet nahi lag sakti
+    if (bettingLocked) {
+        return; // Silently block - buttons disabled hain, yeh extra safety hai
+    }
+    
     const phone = getCurrentUserPhone();
     if (!phone) {
         alert('❌ Unable to get user info. Please refresh the page.');
@@ -2376,46 +2402,33 @@ function renderHistory(history) {
 
 
 // ========================================
-// FIX 1: SOUND - Web Audio API use karo (file nahi chahiye, har baar bajega)
+// SOUND - Original audio file se bajao (aapka apna MP3)
 // ========================================
-let audioCtx = null;
 function playTimerSound() {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        [0, 0.2, 0.4].forEach(startAt => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = 880;
-            gain.gain.setValueAtTime(0.7, audioCtx.currentTime + startAt);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startAt + 0.18);
-            osc.start(audioCtx.currentTime + startAt);
-            osc.stop(audioCtx.currentTime + startAt + 0.18);
-        });
-    } catch(e) { console.log("Sound error:", e); }
+    const audio = document.getElementById('timerAudio');
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log("Sound play error:", e));
+    }
 }
-// Mobile ke liye: first touch par audio context unlock karo
-document.addEventListener('touchstart', function unlockAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-}, { once: true });
 
 // ========================================
-// FIX 2: Last 5 seconds mein betting band karo
+// FIX: Last 5 seconds mein betting band karo
 // ========================================
 let bettingLocked = false;
 function setBettingLock(lock) {
-    if (bettingLocked === lock) return; // Already same state, skip
+    if (bettingLocked === lock) return;
     bettingLocked = lock;
-    document.querySelectorAll('.ball, .bet-btn, .color-btn, .big-small-btn').forEach(btn => {
-        btn.disabled = lock;
-        btn.style.opacity = lock ? '0.4' : '';
-        btn.style.pointerEvents = lock ? 'none' : '';
+    // Balls aur color/size buttons disable karo
+    document.querySelectorAll('#mainGrid .ball, #mainGrid .ball-wrapper').forEach(el => {
+        el.style.pointerEvents = lock ? 'none' : '';
+        el.style.opacity = lock ? '0.4' : '';
     });
-    if (lock) closeBetPopup(); // Agar popup khula ho to band karo
+    document.querySelectorAll('.color-row .bet-btn, .size-row .bet-btn').forEach(btn => {
+        btn.style.pointerEvents = lock ? 'none' : '';
+        btn.style.opacity = lock ? '0.4' : '';
+    });
+    if (lock) closeBetPopup();
 }
 
 // ========================================
