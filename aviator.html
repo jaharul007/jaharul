@@ -5,24 +5,203 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Aviator Game - MongoDB Enhanced</title>
     <style>
+    /* पंखों की बेसिक सेटिंग */
+/* पंखों की सेटिंग */
+.wing {
+    position: absolute;
+    height: auto;
+    z-index: 12;
+    animation: flutter 0.13s ease-in-out infinite alternate;
+}
+
+/* ऊपर वाला पंख */
+.wing-upper {
+    width: 85px; 
+    top: -21.5px;  
+    left: 95.5px;
+    transform-origin: bottom right;
+    animation-name: flutterUpper;
+}
+
+/* नीचे वाला पंख */
+.wing-lower {
+    width: 50px;
+    top: 49.9px;
+    left: 115.3px;
+    transform-origin: top left;
+    animation-name: flutterLower;
+}
+
+/* आगे वाला लाल डॉट */
+.plane-dot {
+    position: absolute;
+    width: 40px;      /* साइज एडजस्ट किया है */
+    height: auto;
+    left: 145px;      /* प्लेन के मुँह के पास */
+    top: 35px;
+    z-index: 15;
+}
+
+/* एनीमेशन */
+@keyframes flutterUpper {
+    0% { transform: rotate(-15deg) rotateX(0deg); }
+    100% { transform: rotate(-15deg) rotateX(70deg); }
+}
+
+@keyframes flutterLower {
+    0% { transform: rotate(-5deg) rotateX(0deg); }
+    100% { transform: rotate(-5deg) rotateX(70deg); }
+}
+     /* दोनों बटनों को एक साथ सेट करने के लिए */
+
+
+/* बटन का डिब्बा (गोल कैप्सूल जैसा) */
+.icon-box {
+    width: 22px;
+    height: 18px;
+    background: #2a2a2a;
+    border: 1px solid #3d3d3d;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* बटन के अंदर के आइकन का साइज */
+.icon-box svg {
+    width: 12px;
+    height: 12px;
+    color: #9ca3af;
+}
+
+/* Round Info को लाइन में लाने के लिए */
+.round-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* यह पहले से center है */
+    padding: 8px 15px !important;
+    position: relative; /* पोजीशन रिलेटिव रखें */
+}
+
+.icons-container {
+    display: flex;
+    gap: 6px;
+    /* margin-left: auto; */ /* इसे हटा दें या बदल दें */
+    /* margin-right: 10px; */
+
+    /* ऊपर करने के लिए पोजीशन एब्सोल्यूट का उपयोग करें */
+    position: absolute;
+    right: 10px; /* दाईं ओर से दूरी */
+    top: -5px;    /* इसे ऊपर ले जाने के लिए (वैल्यू एडजस्ट करें) */
+    /* या फिर negative margin का उपयोग करें */
+    /* margin-top: -5px; */ 
+}
+
+
+    .provably-fair-icon {
+    width: 24px;
+    height: 18px;
+    background: #2c2c2e;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    margin-right: 5px; /* आप अपनी पसंद के अनुसार मार्जिन एडजस्ट कर सकती हैं */
+    cursor: pointer;
+    border: 1px solid #3a3a3c;
+}
+
+.triangle-icon {
+    color: #9ca3af;
+    font-size: 10px;
+    line-height: 1;
+}
+
+/* आइकन का डिज़ाइन */
+.history-fair-icon {
+    width: 24px;   /* फोटो के हिसाब से साइज */
+    height: 18px;
+    background: #2c2c2e; /* गहरा ग्रे बैकग्राउंड */
+    border-radius: 10px; /* कैप्सूल जैसा शेप */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    margin-left: auto; /* इसे दाईं तरफ (Ping के पास) धकेलने के लिए */
+    margin-right: 8px; /* Ping से थोड़ी दूरी */
+    cursor: pointer;
+    border: 1px solid #3a3a3c;
+}
+
+.history-fair-icon svg {
+    width: 12px;
+    height: 12px;
+    color: #9ca3af; /* हल्का सफेद/ग्रे रंग */
+}
+
+/* Ping का स्टाइल भी फोटो जैसा करने के लिए */
+
+/* एक ही लंबा बटन (कैप्सूल शेप) */
+.history-fair-combined-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;            /* दोनों आइकनों के बीच की दूरी */
+    background: #2a2a2a; /* गहरा बैकग्राउंड */
+    padding: 2px 8px;    /* बटन को थोड़ा लंबा करने के लिए */
+    border-radius: 12px; /* गोल कैप्सूल शेप */
+    border: 1px solid #3d3d3d;
+    cursor: pointer;
+    margin-left: auto;   /* Ping के पास ले जाने के लिए */
+    margin-right: -79px;
+    
+    /* इसे ऊपर खिसकाने के लिए */
+    margin-top: -75px;    /* इसे अपनी जरूरत के हिसाब से और घटा-बढ़ा सकते हैं */
+    height: 20px;
+}
+
+/* आइकन का साइज */
+.icon-svg {
+    width: 12px;
+    height: 12px;
+    color: #9ca3af;
+}
+
+/* पिंग को भी थोड़ा ऊपर करने के लिए */
+.ping {
+    margin-top: -5px; 
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+    
+    
+    .plane-dot {
+    position: absolute;
+    width: 200px;       /* जरूरत के हिसाब से साइज बदलें */
+    height: auto;
+    left: 30px;      /* इसे प्लेन के एकदम आगे सेट करने के लिए */
+    top: -32px;        /* ऊपर-नीचे सेट करने के लिए */
+    z-index: 15;      /* इसे पंख से भी ऊपर रखने के लिए */
+}
         /* Propeller animation */
         .propeller-img {
             position: absolute;
-            width: 300px;
+            width: 250px;
             height: auto;
-            left: -22px; 
-            top: -68px;
-            animation: flipVertical 0.3s linear infinite;
+            left: -25px; 
+            top: -114px;
+            animation: spinPropeller 0.1s linear infinite;
             transform-style: preserve-3d;
             z-index: 6;
         }
-
         @keyframes flipVertical {
             0% { transform: rotateX(0deg) scaleY(1); }
             50% { transform: rotateX(180deg) scaleY(0.1); }
             100% { transform: rotateX(480deg) scaleY(1); }
         }
-
+    https://github.com/jaharul007/jaharul/blob/a3687c4144037b8fe13190d24bc7476909a342fc/avtpankhuper.png
         * {
             margin: 0;
             padding: 0;
@@ -356,58 +535,77 @@
 
         /* Betting sections container */
         .betting-sections-container {
-            background: #0a0a0a;
-            border-bottom: 2px solid #1a1a1a;
-        }
+    display: flex;
+    flex-direction: column;
+    gap: 0px; /* डब्बों के बीच का गैप जीरो */
+    background: #0a0a0a;
+}
+.bet-tabs {
+    grid-column: span 2;
+    display: flex;
+    justify-content: center;
+    background: #000;
+    border-radius: 20px;
+    padding: 2px;
+    margin-bottom: 4px;
+    width: 170px; 
+    gap: 20px;
+    margin-left: auto;   
+    margin-right: auto;  
+}
 
-        /* Betting Section */
-        .betting-section {
-            background: #0a0a0a;
-            padding: 12px 15px;
-            border-bottom: 1px solid #1a1a1a;
-        }
+.bet-tab {
+    flex: unset;             /* इसे हटाना जरूरी है ताकि बटन फैलें नहीं */
+    width: 85px;             /* बटन की चौड़ाई छोटी कर दी */
+    background: #2a2a2a;
+    border: none;
+    color: #9ca3af;
+    padding: 4px 0;          /* ऊपर-नीचे की पैडिंग कम की */
+    border-radius: 15px;
+    font-size: 11px;         /* 5px बहुत छोटा था, 11px सही दिखेगा */
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
 
-        .bet-tab {
-            width: 70px;
-            flex: 1;
-            background: #2a2a2a;
-            border: none;
-            color: #9ca3af;
-            padding: 8px;
-            border-radius: 10px;
-            font-size: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
 
-        .bet-tab.active {
-            background: #374151;
-            color: #fff;
-        }
 
-        .bet-controls {
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 12px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+/* 2. मुख्य बेट बटन (बड़ा वाला हरा बटन) */
+.bet-button {
+    height: 100%;     /* ऊंचाई पूरी कर दी */
+    width: 100%;      /* चौड़ाई डब्बे के हिसाब से */
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: #fff;
+    border-radius: 12px; /* इसके भी चारों कोने गोल */
+    font-size: 18px;     /* फॉन्ट थोड़ा बड़ा */
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+}
 
-        .bet-tabs {
-            grid-column: span 2;
-            display: flex;
-            justify-content: center;
-            background: #000;
-            border-radius: 20px;
-            gap: 60px;
-            padding: 0px;
-            margin-bottom: 8px;
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-        }
+.betting-section {
+    background: #0a0a0a;
+    padding: 2px 10px; /* ऊपर-नीचे की जगह 2px कर दी */
+    border-bottom: 0px; /* बॉर्डर हटा दी ताकि गैप न दिखे */
+    margin-bottom: -5px; /* ये दोनों सेक्शन को ऊपर खींचेगा */
+}
+
+/* 4. कंट्रोल डब्बे की सेटिंग */
+.bet-controls {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 8px; /* डब्बे के अंदर की खाली जगह कम की */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px; /* बीच का गैप कम किया */
+    margin-top: 0px; 
+}
+
+        
 
         .left-controls {
             display: flex;
@@ -416,11 +614,12 @@
         }
 
         .bet-button {
-            height: 70%;
+            height: 72%;
+            width: 200px;
             background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
             color: #fff;
-            border-radius: 20px;
-            font-size: 14px;
+            border-radius: 15.5px;
+            font-size: 16px;
             line-height: 1.2;
             display: flex;
             flex-direction: column;
@@ -891,6 +1090,24 @@
             max-height: 80vh;
             overflow-y: auto;
         }
+.amount-input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+    width: 60px; /* ज़रूरत के हिसाब से एडजस्ट करें */
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+/* इनपुट के किनारे वाले छोटे तीर (arrows) हटाने के लिए */
+.amount-input::-webkit-outer-spin-button,
+.amount-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 
         .admin-header {
             display: flex;
@@ -1014,14 +1231,20 @@
 
         <!-- Round Info -->
         <div class="round-info">
-            <div class="round-id">
-                <span>Round ID: <span id="roundId">18035825</span></span>
-                <span style="cursor: pointer;">❤</span>
-            </div>
-            <div class="ping" id="pingArea">
-                Ping:<span id="pingDisplay">175</span>ms
-            </div>
-        </div>
+    <div class="round-id">
+        <span>Round ID: <span id="roundId">19177984</span></span>
+        <span class="heart-icon">❤</span>
+    </div>
+
+    <div class="history-fair-combined-btn">
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <svg class="icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"></path></svg>
+    </div>
+
+    <div class="ping" id="pingArea">
+        Ping:<span id="pingDisplay">349</span>ms
+    </div>
+</div>
 
         <!-- Game Canvas -->
         <div class="game-container">
@@ -1056,9 +1279,13 @@
 
                 <!-- Plane -->
                 <div class="plane-container" id="planeContainer">
-                    <img class="propeller-img" src="https://i.imgur.com/wZKBJzT.png" alt="Propeller">
-                    <img class="plane-svg" src="https://i.imgur.com/wAklB00.png" alt="plane" />
-                </div>
+    <img class="plane-dot" src="https://raw.githubusercontent.com/jaharul007/jaharul/main/planekidot.png" alt="dot">
+    
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/main/avtpankhuper.png" alt="Upper Wing" class="wing wing-upper">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/main/avtpankhniche.png" alt="Lower Wing" class="wing wing-lower">
+    
+    <img class="plane-svg" src="https://raw.githubusercontent.com/jaharul007/jaharul/main/aviatorplane.png" alt="plane" />
+</div>
 
                 <!-- Multiplier Display -->
                 <div class="multiplier-display" id="multiplierDisplay" style="display: none;">1.00x</div>
@@ -1087,7 +1314,7 @@
                     <div class="left-side-controls">
                         <div class="amount-control">
                             <button class="minus-btn" onclick="changeAmount(-10, 1)">−</button>
-                            <div class="amount-value" id="betAmount1">10.00</div>
+                            <input type="number" class="amount-input" id="betAmount1" value="10.00" step="10" oninput="syncBetAmount(1)">
                             <button class="plus-btn" onclick="changeAmount(10, 1)">+</button>
                         </div>
 
@@ -1128,7 +1355,7 @@
                     <div class="left-side-controls">
                         <div class="amount-control">
                             <button class="minus-btn" onclick="changeAmount(-10, 2)">−</button>
-                            <div class="amount-value" id="betAmount2">10.00</div>
+                            <input type="number" class="amount-input" id="betAmount2" value="10.00" step="10" oninput="syncBetAmount(2)">
                             <button class="plus-btn" onclick="changeAmount(10, 2)">+</button>
                         </div>
                         <div class="quick-amounts">
@@ -1242,13 +1469,25 @@
     </div>
 
     <script>
+      // साउंड फाइल्स लोड करना
+const flightSound = new Audio('https://raw.githubusercontent.com/jaharul007/jaharul/6daf350ff74229a00ddda1545d0bf50f002e8e7d/aviatorsound.mp3');
+const crashSound = new Audio('https://raw.githubusercontent.com/jaharul007/jaharul/6daf350ff74229a00ddda1545d0bf50f002e8e7d/aviatorcrashsound.mp3');
+
+// सेटिंग्स
+flightSound.loop = true; // प्लेन उड़ने वाला साउंड हमेशा चलेगा
+flightSound.volume = 0.5; // आवाज थोड़ी कम (ताकि इरिटेट न करे)
+crashSound.volume = 1.0;  // क्रैश की आवाज पूरी
+
+
         // API Configuration
-        const API_URL = '/api/auth.js'; // Replace with your actual API endpoint
-        
-        // Get phone number from URL parameters or session
+        const API_URL = '/api/auth';
+
+        // Get phone number from URL parameters (+91XXXXXXXXXX format)
         function getUserPhone() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('phone') || sessionStorage.getItem('userPhone');
+            let phone = urlParams.get('phone') || sessionStorage.getItem('userPhone');
+            // +91 ke saath aata hai URL mein, as-is use karo
+            return phone || null;
         }
 
         // Game State
@@ -1287,12 +1526,21 @@
         let pathPoints = [];
         
         // Separate speeds for plane and multiplier
-        let planeSpeedMultiplier = 1.8; // Plane flies faster
-        let multiplierSpeed = 0.04; // Multiplier increases independently
-        
+        let planeSpeedMultiplier = 4.8; // Plane ki apni slow raftar
+        let multiplierSpeed = 0.01;      // Number ki tez raftar
+        let planeProgress = 0;           // Ye plane ko screen ke andar rakhega
+
         // Target crash multiplier
         let targetCrashMultiplier = null;
         let isAdminCrash = false;
+
+        // Plane bobbing state
+        let planeReachedEdge = false;   // क्या प्लेन स्क्रीन के दूसरे कोने तक पहुँच गया?
+        let bobbingOffset = 0;          // ऊपर-नीचे का current offset (px)
+        let bobbingAngle = 0;           // sine wave angle
+        let bobbingDirection = 1;       // +1 = ऊपर जा रहा, -1 = नीचे जा रहा
+        const BOBBING_AMPLITUDE = 49;   // ऊपर-नीचे का max px
+        const BOBBING_SPEED = 0.05;     // कितनी तेज़ी से bob करे
 
         // User names for fake bets
         const userNames = ['j***7', 'w***6', 'h***7', 's***3', '1***0', '1***8', '1***5', '1***2', 'm***9', 'r***4'];
@@ -1312,14 +1560,14 @@
             if (!userPhone) {
                 showToast('Please login first', 'error');
                 setTimeout(() => {
-                    window.location.href = '/login.html'; // Redirect to login page
+                    window.location.href = '/login.html';
                 }, 2000);
                 return;
             }
             
             sessionStorage.setItem('userPhone', userPhone);
             
-            // Fetch user balance from MongoDB
+            // MongoDB se real balance fetch karo
             await fetchUserBalance();
             
             resizeCanvas();
@@ -1352,18 +1600,14 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'updateBalance',
                         phoneNumber: userPhone,
                         balance: newBalance
                     })
                 });
-                
                 const data = await response.json();
-                
                 if (!data.success) {
                     console.error('Balance update failed:', data.message);
                 }
@@ -1379,69 +1623,98 @@
 
         // Draw Game Graph
         function drawGraph() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if(gameState === 'playing' && pathPoints.length > 1) {
-                const lastPt = pathPoints[pathPoints.length - 1];
-                
-                // Red gradient shadow
-                let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-                gradient.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
-                gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
-                
-                ctx.beginPath();
-                ctx.moveTo(pathPoints[0].x, canvas.height - 20);
-                pathPoints.forEach(p => ctx.lineTo(p.x, p.y));
-                ctx.lineTo(lastPt.x, canvas.height - 20);
-                ctx.closePath();
-                ctx.fillStyle = gradient;
-                ctx.fill();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if(gameState === 'playing' && pathPoints.length > 1) {
+        const lastPt = pathPoints[pathPoints.length - 1];
+        
+        // 1. नीचे का भरा हुआ हिस्सा (Gradient Fill)
+        let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'rgba(239, 68, 68, 0.9)'); 
+        gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+        
+        ctx.beginPath();
+        ctx.moveTo(pathPoints[0].x, canvas.height - 20);
+        pathPoints.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.lineTo(lastPt.x, canvas.height - 20);
+        ctx.fillStyle = gradient;
+        ctx.fill();
 
-                // Main red line
-                ctx.strokeStyle = '#ef4444';
-                ctx.lineWidth = 4;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#ef4444';
-                ctx.beginPath();
-                ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
-                pathPoints.forEach(p => ctx.lineTo(p.x, p.y));
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
-        }
+        // 2. मुख्य चमकती हुई लाल लाइन (Main Path)
+        ctx.save(); // सेटिंग्स सुरक्षित करें
+        ctx.strokeStyle = '#ef4444'; 
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        // शानदार ग्लो इफ़ेक्ट
+        ctx.shadowBlur = 30; // थोड़ा और बढ़ा दिया चमक के लिए
+        ctx.shadowColor = '#ef4444';
+        
+        ctx.beginPath();
+        ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+        pathPoints.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+        ctx.restore(); // शैडो को वापस नॉर्मल कर देगा
+    }
+}
+
+
 
         // Update Plane Position (separate from multiplier)
         function updatePlanePosition() {
-            if(gameState === 'playing') {
-                const pWidth = 150; 
-                const maxX = canvas.width - pWidth - 20;
-                const maxY = 50;
-                
-                // Plane moves faster independently
-                let planeProgress = Math.min((currentMultiplier - 1) / 8 * planeSpeedMultiplier, 1.2);
-                
-                planeX = planeProgress * maxX;
-                planeY = canvas.height - 20 - (Math.pow(planeProgress, 1.8) * (canvas.height - maxY - 40));
-                
-                const planeContainer = document.getElementById('planeContainer');
-                const planeImgH = 100;
-                
-                const cssBottom = (canvas.height - planeY) - planeImgH * 0.5;
-                
-                if(planeContainer) {
-                    planeContainer.style.left = planeX + 'px';
-                    planeContainer.style.bottom = cssBottom + 'px'; 
-                }
+    if(gameState === 'playing') {
+        const pWidth = 150; 
+        const maxX = canvas.width - pWidth - 20;
+        const maxY = 68;
+        
+        let rawProgress = Math.min((currentMultiplier - 1) / 8 * 4.8, 1.2);
+        const planeContainer = document.getElementById('planeContainer');
 
-                const tailCanvasY = canvas.height - cssBottom - planeImgH * 0.5;
-                pathPoints.push({ 
-                    x: planeX + 57,
-                    y: planeY + 24,
-                });
+        if (rawProgress >= 1.0 && !planeReachedEdge) {
+            planeReachedEdge = true;
+            bobbingAngle = 0;
+            // जब प्लेन रुकता है, तो उस समय की बेस ऊंचाई को सेव कर लें
+            window.baseYAtEdge = canvas.height - 20 - (Math.pow(1.0, 1.8) * (canvas.height - maxY - 40));
+        }
+
+        if (!planeReachedEdge) {
+            planeX = rawProgress * maxX;
+            planeY = canvas.height - 20 - (Math.pow(rawProgress, 1.8) * (canvas.height - maxY - 40));
+            pathPoints.push({ x: planeX + 60, y: planeY + 20 });
+        } else {
+            // प्लेन रुक गया है, अब Bobbing शुरू
+            planeX = maxX; 
+            bobbingAngle += BOBBING_SPEED;
+            bobbingOffset = Math.sin(bobbingAngle) * BOBBING_AMPLITUDE;
+            planeY = window.baseYAtEdge + bobbingOffset;
+
+            // --- पूरी पट्टी को एक साथ नचाने का फिक्स ---
+            // हम देखेंगे कि प्लेन अपनी बेस ऊंचाई से कितना ऊपर या नीचे है
+            // scaleFactor तय करेगा कि पट्टी कितनी खिंचेगी या चपटी होगी
+            let groundY = canvas.height - 20;
+            let scaleFactor = (groundY - planeY) / (groundY - window.baseYAtEdge);
+
+            // पूरी पट्टी के हर पॉइंट को स्केल करें
+            for (let i = 0; i < pathPoints.length; i++) {
+                // यह हर पॉइंट की ऊंचाई को जमीन से प्लेन की दूरी के हिसाब से कम-ज्यादा करेगा
+                let originalDistFromGround = groundY - (pathPoints[i].originalY || pathPoints[i].y);
+                
+                // पहली बार ओरिजिनल Y को सेव करें ताकि डेटा खराब न हो
+                if (!pathPoints[i].originalY) pathPoints[i].originalY = pathPoints[i].y;
+                
+                pathPoints[i].y = groundY - (originalDistFromGround * scaleFactor);
             }
         }
+
+        const cssBottom = (canvas.height - planeY) - 50; 
+        if(planeContainer) {
+            planeContainer.style.left = planeX + 'px';
+            planeContainer.style.bottom = cssBottom + 'px'; 
+        }
+    }
+}
+
 
         // Game Loop
         function gameLoop() {
@@ -1465,13 +1738,7 @@
                     crashGame();
                 }
                 
-                // Random crash between 1.5x and 10x
-                else if(!targetCrashMultiplier) {
-                    const randomCrash = 1.5 + Math.random() * 8.5;
-                    if(currentMultiplier >= randomCrash) {
-                        crashGame();
-                    }
-                }
+                
                 
                 updatePlanePosition();
                 drawGraph();
@@ -1481,20 +1748,38 @@
         }
 
         function startRound() {
-            gameState = 'playing';
-            currentMultiplier = 1.00;
-            pathPoints = [];
-            targetCrashMultiplier = null;
-            isAdminCrash = false;
-            
-            roundId++;
-            
-            document.getElementById('roundId').textContent = roundId;
-            document.getElementById('waitingScreen').style.display = 'none';
-            document.getElementById('multiplierDisplay').style.display = 'block';
-            document.getElementById('multiplierDisplay').classList.remove('crashed');
-            document.getElementById('planeContainer').style.display = 'block';
-            document.getElementById('statusText').style.display = 'none';
+    gameState = 'playing';
+    flightSound.currentTime = 0;
+    flightSound.play();
+
+    currentMultiplier = 1.00;
+    pathPoints = [];
+    isAdminCrash = false;
+    
+    // Naya Crash Logic (High Multiplier ke liye)
+    if (!targetCrashMultiplier) {
+        const rand = Math.random();
+        
+        if (rand < 0.15) { 
+            // 15% chance: Jaldi crash (1.1x - 2x)
+            targetCrashMultiplier = 1.1 + Math.random() * 0.9;
+        } else if (rand < 0.40) { 
+            // 25% chance: Medium range (2x - 10x)
+            targetCrashMultiplier = 2 + Math.random() * 8;
+        } else { 
+            // 60% chance: AB PLANE LAMBA JAYEGA (10x - 50x+)
+            targetCrashMultiplier = 10 + Math.random() * 100; 
+        }
+    }
+    
+    // Baaki ka code waisa hi rehne dein...
+    roundId++;
+    document.getElementById('roundId').textContent = roundId;
+    document.getElementById('waitingScreen').style.display = 'none';
+    document.getElementById('multiplierDisplay').style.display = 'block';
+    document.getElementById('multiplierDisplay').classList.remove('crashed');
+    document.getElementById('planeContainer').style.display = 'block';
+
 
             // Auto bet logic
             if(autoPlay1 && !activeBet1 && balance >= betAmount1) {
@@ -1533,8 +1818,34 @@
 
         // Crash Game
         function crashGame() {
-            gameState = 'crashed';
-            
+    gameState = 'crashed';
+
+    flightSound.pause();
+    crashSound.play();
+
+            const planeContainer = document.getElementById('planeContainer');
+
+            // क्रैश के समय plane किस दिशा में bob कर रहा था?
+            const crashDir = planeReachedEdge ? bobbingDirection : -1;
+
+            if(planeContainer) {
+                planeContainer.style.transition = 'all 0.5s ease-in';
+                if(crashDir === -1) {
+                    // ऊपर की तरफ "फुर्र"
+                    planeContainer.style.transform = 'translateY(-350px) rotate(-30deg)';
+                } else {
+                    // नीचे की तरफ "फुर्र"
+                    planeContainer.style.transform = 'translateY(350px) rotate(30deg)';
+                }
+                planeContainer.style.opacity = '0';
+                setTimeout(() => {
+                    planeContainer.style.display = 'none';
+                    planeContainer.style.transition = '';
+                    planeContainer.style.transform = '';
+                    planeContainer.style.opacity = '1';
+                }, 500);
+            }
+
             document.getElementById('multiplierDisplay').classList.add('crashed');
             document.getElementById('statusText').textContent = 'FLEW AWAY!';
             document.getElementById('statusText').style.display = 'block';
@@ -1575,6 +1886,12 @@
             gameState = 'waiting';
             countdownTimer = 5;
             
+            // Agar admin crash set nahi kiya tha, toh reset karo taaki agla round mein naya random set ho
+            if (!isAdminCrash) {
+                targetCrashMultiplier = null;
+            }
+            isAdminCrash = false;
+            
             document.getElementById('multiplierDisplay').style.display = 'none';
             document.getElementById('waitingScreen').style.display = 'block';
             document.getElementById('planeContainer').style.display = 'none';
@@ -1582,6 +1899,10 @@
             planeX = 0; 
             planeY = canvas.height - 20; 
             pathPoints = [];
+            planeReachedEdge = false;
+            bobbingAngle = 0;
+            bobbingOffset = 0;
+            bobbingDirection = 1;
             
             updateBetButtons();
             
@@ -1831,12 +2152,25 @@
             
             container.innerHTML = html;
         }
+   function syncBetAmount(slot) {
+    let input = document.getElementById('betAmount' + slot);
+    let val = parseFloat(input.value) || 0;
+    
+    if(slot === 1) {
+        betAmount1 = val;
+        document.getElementById('betBtnAmount1').textContent = val.toFixed(2) + ' INR';
+    } else {
+        betAmount2 = val;
+        document.getElementById('betBtnAmount2').textContent = val.toFixed(2) + ' INR';
+    }
+}
 
+    
         // Amount Controls
         function changeAmount(delta, slot) {
             if(slot === 1) {
                 betAmount1 = Math.max(10, Math.min(10000, betAmount1 + delta));
-                document.getElementById('betAmount1').textContent = betAmount1.toFixed(2);
+                document.getElementById('betAmount1').value = betAmount1.toFixed(2);
                 const btnAmount = document.getElementById('betBtnAmount1');
                 if(btnAmount) btnAmount.textContent = betAmount1.toFixed(2) + ' INR';
             } else {
