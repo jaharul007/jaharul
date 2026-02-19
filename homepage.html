@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Home</title>
     <style>
+    /* Fishing Icon ki position */
+.fishing-icon { 
+    left: 2.1%; 
+    top: 36.7%; /* Ye niche wali line mein aayega */
+    border-radius: 20%; 
+    position: absolute; 
+    z-index: 2000; 
+    overflow: hidden; 
+    border: 2px solid #00ff00; 
+    box-shadow: 0 0 10px #00ff00; 
+    width: clamp(58px, 19.5vw, 80px); 
+    height: clamp(58px, 19.5vw, 80px); 
+    cursor: pointer; 
+}
+
+.fishing-label { top: 48.5%; left: 2.1%; } /* Label position */
+
+       /* Naye Icons ki position (Left side se adjust kiya hai) */
+.ludo-icon    { left: 28%; border-radius: 20%; position: absolute; top: 36.9%; z-index: 2000; overflow: hidden; border: 2px solid #00ff00; box-shadow: 0 0 10px #00ff00; width: clamp(58px, 19.5vw, 80px); height: clamp(58px, 19.5vw, 80px); cursor: pointer; }
+.casino-icon  { left: 53.4%; border-radius: 20%; position: absolute; top: 36.9%; z-index: 2000; overflow: hidden; border: 2px solid #00ff00; box-shadow: 0 0 10px #00ff00; width: clamp(58px, 19.5vw, 80px); height: clamp(58px, 19.5vw, 80px); cursor: pointer; }
+.cricket-icon { left: 78.8%; border-radius: 20%; position: absolute; top: 36.9%; z-index: 2000; overflow: hidden; border: 2px solid #00ff00; box-shadow: 0 0 10px #00ff00; width: clamp(58px, 19.5vw, 80px); height: clamp(58px, 19.5vw, 80px); cursor: pointer; }
+
+/* Inke Labels ki position */
+.ludo-label    { top: 48.5%; left: 28%; }
+.casino-label  { top: 48.5%; left: 53.5%; }
+.cricket-label { top: 48.5%; left: 80%; }
+
+/* Purane icons ki left values thodi adjust karni pad sakti hai agar jagah kam pade */
 
     /* ============================================================
        RESET & BASE
@@ -277,15 +305,15 @@
     ============================================================ */
     .mini-games-strip {
         position: absolute;
-        top: 61%;
-        left: 37%;
+        top: 53%;
+        left: 37.8%;
         transform: translateX(-50%);
         width: 20%;
         background: none;
         color: white;
         text-align: center;
         padding: 2px 0;
-        font-size: 9px;
+        font-size: 10px;
         font-weight: bold;
         border-radius: 5px;
         z-index: 1000;
@@ -430,6 +458,12 @@
     </style>
 </head>
 <body>
+    <div class="icon-label fishing-label">FISHING</div>
+
+<div class="fishing-icon" onclick="handleIconClick(this, 'fishing')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/fdc300119f96105e4b126f9e5ae21e3e8381015a/fishing.jpg" alt="Fishing">
+</div>
+
 
     <!-- FF PLAY NOW BUTTON (shown only in FF Tournament view) -->
     <div id="ff-play-container">
@@ -440,6 +474,19 @@
     <div class="icon-label original-label">ORIGINAL</div>
     <div class="icon-label mines-label">MINES</div>
     <div class="icon-label slot-label">SLOTS</div>
+     <div class="icon-label ludo-label">LUDO</div>
+<div class="icon-label casino-label">CASINO</div>
+<div class="icon-label cricket-label">CRICKET</div>
+
+<div class="ludo-icon" onclick="handleIconClick(this, 'ludo')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5261c240021701dd8bb292b32473bc991d18693c/ludo.jpeg" alt="Ludo">
+</div>
+<div class="casino-icon" onclick="handleIconClick(this, 'casino')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5261c240021701dd8bb292b32473bc991d18693c/casino.jpg" alt="Casino">
+</div>
+<div class="cricket-icon" onclick="handleIconClick(this, 'cricket')">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5261c240021701dd8bb292b32473bc991d18693c/cricket.png" alt="Cricket">
+</div>
 
     <!-- GAME ICONS -->
     <div class="original-icon" onclick="handleIconClick(this, 'original')">
@@ -553,30 +600,41 @@
 
     // ── 5. Icon click handler ──────────────────────────────────
     function handleIconClick(element, type) {
-        document.querySelectorAll('.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner')
-                .forEach(el => el.classList.remove('active-border'));
-        element.classList.add('active-border');
+    // 1. Sabhi icons se purana border (glow) hatana
+    // Isme humne naye saare icons (.ludo-icon, .fishing-icon etc.) add kar diye hain
+    document.querySelectorAll('.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner, .ludo-icon, .casino-icon, .cricket-icon, .fishing-icon')
+            .forEach(el => el.classList.remove('active-border'));
+    
+    // 2. Jis par click kiya, uspar border lagana
+    element.classList.add('active-border');
 
-        const bottomImgDiv  = document.querySelector('.home-bottom-img');
-        const bottomImgTag  = document.querySelector('.home-bottom-img img');
-        const playContainer = document.getElementById('ff-play-container');
-        const wingoBtn      = document.querySelector('.wingo-btn');
-        const chickenBtn    = document.querySelector('.chicken-btn');
-        const aviatorBtn    = document.querySelector('.aviator-btn');
-        const ffStrip       = document.querySelector('.mini-games-strip');
+    // 3. UI Elements ko select karna
+    const bottomImgDiv  = document.querySelector('.home-bottom-img');
+    const bottomImgTag  = document.querySelector('.home-bottom-img img');
+    const playContainer = document.getElementById('ff-play-container');
+    const wingoBtn      = document.querySelector('.wingo-btn');
+    const chickenBtn    = document.querySelector('.chicken-btn');
+    const aviatorBtn    = document.querySelector('.aviator-btn');
+    const ffStrip       = document.querySelector('.mini-games-strip');
 
-        if (type === 'ff') {
-            if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/11123fdf3c6e43f342a7367a03ea69d727a7817b/ff4vs4.jpg';
-            if (playContainer) playContainer.style.display = 'block';
-            if (bottomImgDiv)  { bottomImgDiv.style.width = '40%'; bottomImgDiv.style.left = '20%'; }
-            [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'none'; });
-        } else {
-            if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg';
-            if (playContainer) playContainer.style.display = 'none';
-            if (bottomImgDiv)  { bottomImgDiv.style.width = '100%'; bottomImgDiv.style.left = '50%'; }
-            [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'block'; });
-        }
+    // 4. FF Tournament select hone par kya badlega
+    if (type === 'ff') {
+        if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/11123fdf3c6e43f342a7367a03ea69d727a7817b/ff4vs4.jpg';
+        if (playContainer) playContainer.style.display = 'block';
+        if (bottomImgDiv)  { bottomImgDiv.style.width = '40%'; bottomImgDiv.style.left = '20%'; }
+        // Baaki buttons chhupana
+        [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'none'; });
+    } 
+    // 5. Baaki koi bhi icon (Fishing, Ludo, Original) select hone par Normal view
+    else {
+        if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg';
+        if (playContainer) playContainer.style.display = 'none';
+        if (bottomImgDiv)  { bottomImgDiv.style.width = '100%'; bottomImgDiv.style.left = '50%'; }
+        // Baaki buttons wapas dikhana
+        [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'block'; });
     }
+}
+
 
     // ── 6. Draggable support button ────────────────────────────
     function initDraggableSupport() {
