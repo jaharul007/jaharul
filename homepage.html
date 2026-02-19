@@ -5,6 +5,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Home</title>
     <style>
+    /* ==========================================
+   EXTRA TEXT OVERLAY (आइकन के ऊपर टेक्स्ट)
+   ========================================== */
+.extra-text {
+    position: absolute; /* ये इसे PNG के ऊपर कहीं भी ले जाने देगा */
+    z-index: 99999;      /* ताकि फोटो के ऊपर दिखे */
+    font-weight: 900;
+    text-shadow: 2px 2px 4px #000; /* साफ़ दिखने के लिए शैडो */
+    pointer-events: none; /* क्लिक करने में रुकावट न बने */
+}
+
+/* --- टेक्स्ट 3 (Solo Play के लिए) --- */
+.text-style-3 {
+    bottom: 150px;
+    top: 6%;    
+    left: 41%;      
+    transform: translateX(-50%); /* सेंटर में रखने के लिए */
+    color: #ffffff; 
+    font-size: 11px;
+}
+
+/* ==========================================
+   ICON SIZE CONTROL (आइकन छोटा-बड़ा करने के लिए)
+   ========================================== */
+/* अगर आपको पूरा बॉर्डर ही छोटा करना है, तो यहाँ बदलें */
+.border-4vs4     { width: 100px; height: 100px; } 
+.border-lonewolf { width: 110px; height: 110px; } /* इसे थोड़ा बड़ा किया */
+.border-soloplay { width: 90px; height: 90px; }   /* इसे थोड़ा छोटा किया */
+
+/* ==========================================
+   LONE WOLF BORDER (जो आपने माँगा था)
+   ========================================== */
+.border-lonewolf { 
+    border: 3px solid #ff0000; 
+    box-shadow: 0 0 15px #ff0000; 
+}
+
+       /* ==========================================
+   1. MAIN BOX POSITIONS (पूरा ग्रुप एक साथ हिलेगा)
+   ========================================== */
+.ff-main-box {
+    position: absolute;
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 3000;
+}
+
+/* 4vs4 बॉक्स की पोजीशन */
+.box-pos-1 { 
+    left: 30%;   /* लेफ्ट-राइट के लिए इसे बदलें (0-100%) */
+    top: 200px;  /* ऊपर-नीचे के लिए इसे बदलें */
+} 
+
+/* Lone Wolf बॉक्स की पोजीशन */
+.box-pos-2 { 
+    left: 160%;  /* इसे 37% रखा है ताकि बीच में रहे */
+    top: -60px;  /* ऊपर-नीचे */
+} 
+
+/* Solo Play बॉक्स की पोजीशन */
+.box-pos-3 { 
+    left: 33%;  /* इसे 70% रखा है ताकि राइट में रहे */
+    top: -60px;  /* ऊपर-नीचे */
+}
+
+/* ==========================================
+   2. BORDERS (तीनों के बॉर्डर का अलग कंट्रोल)
+   ========================================== */
+.ff-border-layer {
+    width: 100px;
+    height: 100px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #000;
+}
+
+/* हर बॉर्डर का कलर और ग्लो यहाँ से बदलें */
+.border-4vs4 {
+    width: 200px; /* 100px से ज्यादा */
+    height: 150px; /* 100px से ज्यादा */
+    border: 3px solid #00ff00; 
+    box-shadow: 0 0 15px #00ff00; 
+}
+.border-soloplay {
+    width: 200px; /* 100px से कम */
+    height: 200px; /* 100px से कम */
+    border: 3px solid #ffffff; 
+    box-shadow: 0 0 15px #ffffff; 
+}
+.border-lonewolf {
+    width: 200px; /* आप इसे 120px या 80px करके छोटा-बड़ा कर सकती हैं */
+    height: 200px; /* इसे भी width के बराबर रखें */
+    border: 3px solid #ff0000; /* बॉर्डर का रंग */
+    box-shadow: 0 0 15px #ff0000; /* ग्लो इफ़ेक्ट */
+    border-radius: 15px; /* कोनों को गोल करने के लिए */
+}
+
+/* ==========================================
+   3. PNG IMAGES (सिर्फ फोटो छोटी-बड़ी करने के लिए)
+   ========================================== */
+.png-4vs4 {
+    width: 190%;      /* फोटो का साइज */
+    height: auto;
+    padding: 1px;     /* फोटो के अंदर का गैप */
+}
+
+.png-lonewolf {
+    width: 150%; 
+    height: 135px;
+    padding: 5px;
+}
+
+.png-soloplay {
+    width: 170%;
+    height: auto;
+    padding: 2px;
+}
+
+/* ==========================================
+   4. JOIN BUTTONS (बटन का ऊपर-नीचे और कलर)
+   ========================================== */
+.btn-4vs4, .btn-lonewolf, .btn-soloplay {
+    font-weight: bold;
+    font-size: 11px;
+    padding: 5px 0;
+    width: 85px;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    position: relative; /* बेहतर कंट्रोल के लिए */
+}
+
+/* 4vs4 Button Control */
+.btn-4vs4 {
+    margin-top: 8px; /* इमेज से दूरी (नीचे करने के लिए) */
+    background: linear-gradient(180deg, #ffcc00, #ff8800);
+    color: black;
+    border: 1px solid #fff;
+}
+
+/* Lone Wolf Button Control */
+.btn-lonewolf {
+    margin-top: 8px; /* इसे अगर -20px करोगे तो ये फोटो के ऊपर चला जाएगा */
+    background: linear-gradient(180deg, #ff4444, #990000);
+    color: white;
+    border: 1px solid #fff;
+}
+
+/* Solo Play Button Control */
+.btn-soloplay {
+    margin-top: 8px; 
+    background: linear-gradient(180deg, #ffffff, #aaaaaa);
+    color: black;
+    border: 1px solid #333;
+}
+
+
+
+    /* Nayi image (homeniche2) ka style */
+.home-bottom-img-2 {
+    position: absolute;
+    top: 111%; /* Aap is percentage ko kam-zyada karke upar ya niche sarka sakte hain */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    z-index: 490; /* Pehli image se thoda niche */
+    display: block;
+}
+
+.home-bottom-img-2 img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
     /* Fishing Icon ki position */
 .fishing-icon { 
     left: 2.1%; 
@@ -44,7 +225,7 @@
         padding: 0;
         background-color: #0d1117;
         overflow-x: hidden;
-        padding-bottom: 600px;
+        padding-bottom: 1200px;
         -webkit-tap-highlight-color: transparent;
     }
 
@@ -69,31 +250,6 @@
         width: 100%;
         display: block;
     }
-
-    /* ============================================================
-       GAME / ACTION BUTTONS — FULLY PROPORTIONAL
-       ──────────────────────────────────────────────────────────
-       THE TRICK  (padding-bottom aspect-ratio method):
-         • height: 0
-         • padding-bottom: X%
-             X = original_px_height / reference_container_width × 100
-             For position:absolute children, % is of PARENT WIDTH.
-             So as the container shrinks/grows, both the button
-             width AND its "height" (padding-bottom) scale
-             perfectly together — exactly like the background image.
-
-       REFERENCE measurements at 375 px container width:
-         wingo    48% wide × 118 px → pb = 118/375 = 31.47%
-         chicken  32% wide × 180 px → pb = 180/375 = 48.00%
-         aviator  32% wide × 180 px → pb = 180/375 = 48.00%
-         deposit  19% wide ×  44 px → pb =  44/375 = 11.73%
-         withdraw 18% wide ×  44 px → pb =  44/375 = 11.73%
-
-       top / left remain as original % values — untouched.
-       NO fixed pixel heights anywhere.
-    ============================================================ */
-
-    /* Shared base */
     .wingo-btn,
     .chicken-btn,
     .aviator-btn,
@@ -284,15 +440,19 @@
        HOME BOTTOM IMAGE (homeniche.jpg)
     ============================================================ */
     .home-bottom-img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100%;
-        z-index: 500;
-        display: block;
-        transition: all 0.4s ease;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    z-index: 500;
+    /* height set karein aur overflow hidden karein */
+    height: 507px; /* उदाहरण के लिए, एक निश्चित height दें */
+    overflow: hidden; /* अतिरिक्त हिस्से को छिपा दें */
+    display: block;
+    transition: all 0.4s ease;
     }
+    
 
     .home-bottom-img img {
         width: 100%;
@@ -305,7 +465,7 @@
     ============================================================ */
     .mini-games-strip {
         position: absolute;
-        top: 53%;
+        top: 61%;
         left: 37.8%;
         transform: translateX(-50%);
         width: 20%;
@@ -458,6 +618,8 @@
     </style>
 </head>
 <body>
+
+
     <div class="icon-label fishing-label">FISHING</div>
 
 <div class="fishing-icon" onclick="handleIconClick(this, 'fishing')">
@@ -466,9 +628,31 @@
 
 
     <!-- FF PLAY NOW BUTTON (shown only in FF Tournament view) -->
-    <div id="ff-play-container">
-        <button class="play-btn-main">PLAY NOW</button>
+             <div id="ff-play-container" style="display: none;">
+    <div class="ff-main-box box-pos-1">
+        <div class="ff-border-layer border-4vs4">
+            <img src="https://raw.githubusercontent.com/jaharul007/jaharul/11123fdf3c6e43f342a7367a03ea69d727a7817b/ff4vs4.jpg" class="png-4vs4">
+            
+            </div>
+        <div class="btn-4vs4">JOIN</div>
     </div>
+
+    <div class="ff-main-box box-pos-2">
+        <div class="ff-border-layer border-lonewolf">
+            <img src="https://raw.githubusercontent.com/jaharul007/jaharul/e142f7342aae95ae769cc203add90726418887e2/lonewolf.jpg" class="png-lonewolf">
+        </div>
+        <div class="btn-lonewolf">JOIN</div>
+    </div>
+
+    <div class="ff-main-box box-pos-3">
+        <div class="ff-border-layer border-soloplay">
+            <img src="https://raw.githubusercontent.com/jaharul007/jaharul/e142f7342aae95ae769cc203add90726418887e2/solo%20play.png" class="png-soloplay">
+            <div class="extra-text text-style-3">Per Kill ₹42</div>
+        </div>
+        <div class="btn-soloplay">JOIN</div>
+    </div>
+</div>
+
 
     <!-- ICON LABELS -->
     <div class="icon-label original-label">ORIGINAL</div>
@@ -492,9 +676,10 @@
     <div class="original-icon" onclick="handleIconClick(this, 'original')">
         <img src="https://raw.githubusercontent.com/jaharul007/jaharul/5dbed4bbf17f181d635eec3508adbd47d34cd289/original.jpg" alt="Original">
     </div>
-    <div class="ff-tournament-banner" onclick="handleIconClick(this, 'ff')">
+        <div class="ff-tournament-banner" onclick="handleIconClick(this, 'ff')">
         <img src="https://raw.githubusercontent.com/jaharul007/jaharul/8e61a92cf14ed5a4e903850f2fcdc26100338f99/fftournament.png" alt="FF Tournament">
     </div>
+
     <div class="extra-slot-icon" onclick="handleIconClick(this, 'slot')">
         <img src="https://raw.githubusercontent.com/jaharul007/jaharul/b2f44f3e1e546352b929128d7bdd289a0fd2fb3f/allslot.png" alt="Slots">
     </div>
@@ -506,6 +691,9 @@
     <div class="home-bottom-img">
         <img src="https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg" alt="Home Page Image">
     </div>
+<div class="home-bottom-img-2">
+    <img src="https://raw.githubusercontent.com/jaharul007/jaharul/3f286a530a77e701bd419531afe64c85e4bb4bcc/homeniche2.png" alt="Bottom Layer 2">
+</div>
 
     <!-- DRAGGABLE SUPPORT BUTTON -->
     <div id="draggable-support">
@@ -600,41 +788,44 @@
 
     // ── 5. Icon click handler ──────────────────────────────────
     function handleIconClick(element, type) {
-    // 1. Sabhi icons se purana border (glow) hatana
-    // Isme humne naye saare icons (.ludo-icon, .fishing-icon etc.) add kar diye hain
+    // 1. सभी icons से glow हटाना
     document.querySelectorAll('.original-icon, .mines-icon, .extra-slot-icon, .ff-tournament-banner, .ludo-icon, .casino-icon, .cricket-icon, .fishing-icon')
             .forEach(el => el.classList.remove('active-border'));
     
-    // 2. Jis par click kiya, uspar border lagana
+    // 2. Click किए गए icon पर border लगाना
     element.classList.add('active-border');
 
-    // 3. UI Elements ko select karna
-    const bottomImgDiv  = document.querySelector('.home-bottom-img');
-    const bottomImgTag  = document.querySelector('.home-bottom-img img');
+    // 3. UI Elements को select करना
+    const bottomImgDiv  = document.querySelector('.home-bottom-img');   // (homeniche.jpg)
+    const bottomImg2    = document.querySelector('.home-bottom-img-2'); // (homeniche2.png) - इसे नया ऐड किया
     const playContainer = document.getElementById('ff-play-container');
     const wingoBtn      = document.querySelector('.wingo-btn');
     const chickenBtn    = document.querySelector('.chicken-btn');
     const aviatorBtn    = document.querySelector('.aviator-btn');
     const ffStrip       = document.querySelector('.mini-games-strip');
 
-    // 4. FF Tournament select hone par kya badlega
+    // 4. FF Tournament select होने पर क्या होगा
     if (type === 'ff') {
-        if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/11123fdf3c6e43f342a7367a03ea69d727a7817b/ff4vs4.jpg';
-        if (playContainer) playContainer.style.display = 'block';
-        if (bottomImgDiv)  { bottomImgDiv.style.width = '40%'; bottomImgDiv.style.left = '20%'; }
-        // Baaki buttons chhupana
+        if (playContainer) playContainer.style.display = 'block'; 
+        
+        // अब ये दोनों गायब हो जायेंगे
+        if (bottomImgDiv) bottomImgDiv.style.display = 'none';
+        if (bottomImg2)   bottomImg2.style.display = 'none'; // <-- ये लाइन आपका काम कर देगी
+        
         [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'none'; });
     } 
-    // 5. Baaki koi bhi icon (Fishing, Ludo, Original) select hone par Normal view
+
+    // 5. बाकी किसी भी बटन पर क्लिक करने पर सब वापस आ जायेगा
     else {
-        if (bottomImgTag)  bottomImgTag.src = 'https://raw.githubusercontent.com/jaharul007/jaharul/7491bee349154a5f3910f7b5b4d3bd8c60dc3318/homeniche.jpg';
         if (playContainer) playContainer.style.display = 'none';
-        if (bottomImgDiv)  { bottomImgDiv.style.width = '100%'; bottomImgDiv.style.left = '50%'; }
-        // Baaki buttons wapas dikhana
+        
+        // दोनों images को वापस दिखाना
+        if (bottomImgDiv) bottomImgDiv.style.display = 'block';
+        if (bottomImg2)   bottomImg2.style.display = 'block'; // <-- वापस दिखाने के लिए
+        
         [wingoBtn, chickenBtn, aviatorBtn, ffStrip].forEach(el => { if (el) el.style.display = 'block'; });
     }
 }
-
 
     // ── 6. Draggable support button ────────────────────────────
     function initDraggableSupport() {
