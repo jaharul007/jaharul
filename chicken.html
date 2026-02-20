@@ -5,11 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chicken Game – Multiplier Slider</title>
     <style>
-    
+    /* गोल्डन एग का स्टाइल */
+.golden-egg {
+    width: 50px;
+    height: 65px;
+    background: radial-gradient(circle at 30% 30%, #fff7a0, #ffd700 40%, #b8860b 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    position: absolute;
+    bottom: 55px;
+    z-index: 5;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), inset -5px -10px 15px rgba(0,0,0,0.2);
+    animation: eggGlow 2s infinite alternate;
+}
+.egg-stand {
+    width: 40px;
+    height: 15px;
+    background: #d1d5db;
+    position: absolute;
+    bottom: 40px;
+    border-radius: 4px 4px 2px 2px;
+    border-bottom: 4px solid #9ca3af;
+}
+.spotlight {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+    pointer-events: none;
+}
+@keyframes eggGlow {
+    from { filter: brightness(1) drop-shadow(0 0 5px gold); }
+    to { filter: brightness(1.2) drop-shadow(0 0 20px gold); }
+}
+
 .fire-particle {
     position: absolute;
-    width: 5px;
-    height: 5px;
+    width: 5px; height: 5px;
     border-radius: 50%;
     pointer-events: none;
     z-index: 100;
@@ -18,22 +51,14 @@
     animation: fireFly 0.8s ease-out forwards;
 }
 @keyframes fireFly {
-    0% {
-        transform: translate(0, 0) scale(1) rotate(0deg);
-        opacity: 1;
-        filter: blur(0px);
-    }
-    100% {
-        transform: translate(var(--x), var(--y)) scale(0) rotate(180deg);
-        opacity: 0;
-        filter: blur(2px);
-    }
+    0%   { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
+    100% { transform: translate(var(--x), var(--y)) scale(0) rotate(180deg); opacity: 0; filter: blur(2px); }
 }
-
 .fire-wrap {
     position: absolute;
     bottom: 0; width: 100%; height: 180px;
-    pointer-events: none; z-index: 15;
+    pointer-events: none; z-index: 200;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255,80,0,0.25) 0%, transparent 70%);
 }
 .fire-base {
     position: absolute; bottom: 0; left: 50%;
@@ -49,17 +74,16 @@
     transform-origin: bottom center;
     border-radius: 50% 50% 20% 20%;
     animation: flicker var(--fd,.15s) infinite alternate ease-in-out;
-    mix-blend-mode: screen;
+    /* mix-blend-mode removed for dark bg compatibility */
 }
 @keyframes flicker {
     0%   { transform: scaleY(1) scaleX(1) rotate(var(--fr,0deg)); opacity: var(--fa,.9); }
     100% { transform: scaleY(var(--fs,1.25)) scaleX(.92) rotate(calc(var(--fr,0deg) * -1.3)); opacity: 1; }
 }
-.f-core  { width: 52px; height: 65%; left:50%; margin-left:-26px; background: radial-gradient(ellipse, #fff9e0 0%, #ffe040 30%, #ff8c00 70%, transparent 100%); --fd:.12s; --fs:1.3; --fa:.95; }
-.f-mid   { width: 70px; height: 75%; left:50%; margin-left:-35px; background: radial-gradient(ellipse, #ffe060 0%, #ff6200 40%, #dd2200 80%, transparent 100%); --fd:.17s; --fs:1.2; --fr:3deg; --fa:.85; }
-.f-outer { width: 90px; height: 85%; left:50%; margin-left:-45px; background: radial-gradient(ellipse, #ff8c00 0%, #cc2200 50%, #880000 85%, transparent 100%); --fd:.22s; --fs:1.15; --fr:-4deg; --fa:.75; }
-.f-tip   { width: 28px; height: 90%; left:50%; margin-left:-14px; background: radial-gradient(ellipse, #fff 0%, #fff9a0 20%, #ffd000 60%, transparent 100%); --fd:.10s; --fs:1.4; --fa:1; }
-
+.f-core  { width: 52px; height: 65%; left:50%; margin-left:-26px; background: radial-gradient(ellipse, #ffffff 0%, #ffee00 25%, #ff8c00 65%, rgba(255,50,0,0) 100%); --fd:.12s; --fs:1.3; --fa:1; }
+.f-mid   { width: 70px; height: 75%; left:50%; margin-left:-35px; background: radial-gradient(ellipse, #ffcc00 0%, #ff4400 45%, #cc1100 80%, rgba(180,0,0,0) 100%); --fd:.17s; --fs:1.2; --fr:3deg; --fa:.95; }
+.f-outer { width: 90px; height: 85%; left:50%; margin-left:-45px; background: radial-gradient(ellipse, #ff6600 0%, #dd1100 55%, #770000 85%, rgba(100,0,0,0) 100%); --fd:.22s; --fs:1.15; --fr:-4deg; --fa:.9; }
+.f-tip   { width: 28px; height: 90%; left:50%; margin-left:-14px; background: radial-gradient(ellipse, #ffffff 0%, #fffde0 15%, #ffdd00 55%, rgba(255,150,0,0) 100%); --fd:.10s; --fs:1.4; --fa:1; }
 .smoke-particle {
     position: absolute; border-radius: 50%;
     background: radial-gradient(circle, rgba(180,180,180,.4) 0%, transparent 70%);
@@ -69,31 +93,15 @@
     0%   { transform: translateY(0) scale(.5); opacity: .5; }
     100% { transform: translateY(-120px) scale(2.5); opacity: 0; }
 }
-
-    .fire-sequence {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
+.fire-sequence {
+    position: absolute; bottom: 0; width: 100%; height: 100%;
     background: linear-gradient(to top, #ff4500, #ff8c00, transparent);
-    z-index: 120;
-    opacity: 0.9;
-    border-radius: 10px;
+    z-index: 120; opacity: 0.9; border-radius: 10px;
 }
-
-.dead-chicken {
-    transform: scale(0.8);
-    filter: brightness(0.7);
-}
-
+.dead-chicken { transform: scale(0.8); filter: brightness(0.7); width: 80px !important; height: auto !important; }
 @keyframes flameMove {
     from { transform: scaleY(1); opacity: 0.8; }
     to { transform: scaleY(1.2); opacity: 1; }
-}
-
-.dead-chicken {
-    width: 80px !important;
-    height: auto !important;
 }
 
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;700&display=swap');
@@ -115,7 +123,6 @@
         }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
         body, html {
             width: 100%; height: 100%;
             overflow: hidden;
@@ -177,7 +184,6 @@
             overflow: hidden;
             min-height: 0;
         }
-
         main::before {
             content: '';
             position: absolute; inset: 0;
@@ -202,19 +208,16 @@
             border: 3px solid #1e2333;
         }
 
-         .lanes-outer {
-    flex: 1;
-    position: relative;
-    overflow-x: auto;
-    min-width: 0;
-    cursor: grab;
-    user-select: none;
-    -webkit-overflow-scrolling: touch;
-}
-
-.lanes-outer::-webkit-scrollbar {
-    display: none;
-}
+        .lanes-outer {
+            flex: 1;
+            position: relative;
+            overflow-x: auto;
+            min-width: 0;
+            cursor: grab;
+            user-select: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .lanes-outer::-webkit-scrollbar { display: none; }
 
         #lanes-track {
             display: flex;
@@ -225,25 +228,22 @@
             will-change: transform;
             user-select: none;
         }
+
         .lane {
-    flex: 0 0 var(--lane-w, 14.28%);
-    width: var(--lane-w, 14.28%);
-    border-right: 3px dashed rgba(255, 255, 255, 0.25) !important; 
-    display: flex; 
-    flex-direction: column;
-    align-items: center; 
-    justify-content: space-between;
-    padding: 30px 0 16px;
-    position: relative;
             flex: 0 0 var(--lane-w, 14.28%);
             width: var(--lane-w, 14.28%);
-            border-right: 1px solid rgba(255,255,255,0.07);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: space-between;
+            border-right: 3px dashed rgba(255,255,255,0.25) !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
             padding: 30px 0 16px;
             position: relative;
         }
         .lane.active-lane { background: rgba(0, 232, 124, 0.06); }
+
+        /* ── नया: node selected (manual pick) ── */
+        .lane.selected-lane { background: rgba(255, 215, 0, 0.07); }
 
         .vent {
             width: 57px; height: 50px;
@@ -253,8 +253,8 @@
             border: 1px solid rgba(255,255,255,0.06);
             border-bottom: 3px solid #0a0c14;
         }
-.vent-bar { width: 3px; height: 100%; background: #0e1118; border-radius: 2px; }
-        
+        .vent-bar { width: 3px; height: 100%; background: #0e1118; border-radius: 2px; }
+
         .multiplier-node::before {
             content: '';
             position: absolute; inset: -3px;
@@ -269,39 +269,76 @@
             to   { box-shadow: 0 0 0 4px #00e87c, 0 0 28px rgba(0,232,124,0.8); }
         }
 
-.multiplier-node {
-    width: 62px;
-    height: 62px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    font-family: 'Orbitron', monospace;
-    cursor: pointer;
-    position: relative;
-    background: radial-gradient(circle at 35% 35%, #3a4566 0%, #252c42 100%);
-    border: 2px solid #3a4566;
-    color: #a0aec0;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-    transition: transform .2s, box-shadow .2s;
-}
+        .multiplier-node {
+            width: 62px; height: 62px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+            font-family: 'Orbitron', monospace;
+            cursor: pointer;
+            position: relative;
+            background: radial-gradient(circle at 35% 35%, #3a4566 0%, #252c42 100%);
+            border: 2px solid #3a4566;
+            color: #a0aec0;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .node-val {
+            font-size: 8.5px; line-height: 1;
+            font-weight: 900; word-break: break-all; text-align: center;
+        }
+        .multiplier-node.node-active {
+            transform: scale(1.15) !important;
+            box-shadow: 0 0 20px rgba(0,232,124,0.6) !important;
+            border-color: #00e87c !important;
+            color: #00e87c !important;
+            background: radial-gradient(circle at 35% 35%, #1e5a38 0%, #112e1f 100%);
+        }
 
-.node-val { 
-    font-size: 8.5px;
-    line-height: 1;
-    font-weight: 900;
-    word-break: break-all;
-    text-align: center;
-}
+        /* ── नया: manually selected node का style ── */
+        .multiplier-node.node-selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 16px rgba(255,215,0,0.7) !important;
+            border-color: #ffd700 !important;
+            color: #ffd700 !important;
+            background: radial-gradient(circle at 35% 35%, #3a3000 0%, #1a1500 100%);
+        }
+        /* Gold badge — node ke upar chota checkmark */
+        .node-check {
+            position: absolute;
+            top: -6px; right: -6px;
+            width: 18px; height: 18px;
+            background: #ffd700;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; color: #000; font-weight: 900;
+            box-shadow: 0 0 6px rgba(255,215,0,0.8);
+            z-index: 5;
+        }
 
-.multiplier-node.node-active {
-    transform: scale(1.15) !important;
-    box-shadow: 0 0 20px rgba(0,232,124,0.6) !important;
-    border-color: #00e87c !important;
-    color: #00e87c !important;
-    background: radial-gradient(circle at 35% 35%, #1e5a38 0%, #112e1f 100%);
-}
+        /* ── नया: Multi-select cashout bar ── */
+        #multi-cashout-bar {
+            display: none;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            background: rgba(20,24,36,0.95);
+            border: 1px solid #ffd700;
+            border-radius: 14px;
+            padding: 6px 14px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        #multi-cashout-bar.visible { display: flex; }
+        #multi-cashout-bar span { color: #fff; font-size: 10px; }
 
         .wall-block {
             position: absolute;
@@ -310,7 +347,6 @@
             border: 1px solid rgba(255,255,255,0.05);
             border-radius: 3px;
         }
-
         .road-line {
             position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
             background: repeating-linear-gradient(
@@ -320,25 +356,7 @@
             );
         }
 
-        .slide-arrow {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            z-index: 30; width: 32px; height: 56px;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.45);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px;
-            color: rgba(255,255,255,0.5);
-            font-size: 18px;
-            cursor: pointer;
-            transition: background .2s, color .2s;
-            user-select: none;
-        }
-        .slide-arrow:hover { background: rgba(0,232,124,0.2); color: var(--accent); }
-        .slide-arrow.left { left: 4px; }
-        .slide-arrow.right { right: 4px; }
-
-        .lanes-outer::before,
-        .lanes-outer::after {
+        .lanes-outer::before, .lanes-outer::after {
             content: '';
             position: absolute; top: 0; bottom: 0; width: 40px;
             z-index: 10; pointer-events: none;
@@ -346,47 +364,16 @@
         .lanes-outer::before { left: 0; background: linear-gradient(to right, var(--bg-dark), transparent); }
         .lanes-outer::after  { right: 0; background: linear-gradient(to left, var(--bg-dark), transparent); }
 
-        #scroll-indicator {
-            position: absolute;
-            bottom: 8px; left: 50%; transform: translateX(-50%);
-            z-index: 25;
-            display: flex; gap: 5px; align-items: center;
-        }
-        .scroll-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: rgba(255,255,255,0.15);
-            transition: background .3s, transform .3s;
-        }
-        .scroll-dot.active { background: var(--accent); transform: scale(1.4); }
-
-        #scroll-badge {
-            position: absolute;
-            top: 10px; right: 14px; z-index: 25;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 3px 10px;
-            font-family: 'Orbitron', monospace;
-            font-size: 10px;
-            color: var(--text-mid);
-            display: flex; align-items: center; gap: 5px;
-        }
-        #scroll-badge span { color: var(--accent); font-weight: 700; }
-
         #chicken-character {
-    position: absolute;
-    will-change: left;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 20; 
-    pointer-events: none;
-    bottom: -5px;
-    width: 140px;
-    height: 100px;
-    transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+            position: absolute;
+            will-change: left;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 20;
+            pointer-events: none;
+            bottom: -5px;
+            width: 140px; height: 100px;
+            transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         #chicken-character img { width: 100%; height: 100%; object-fit: contain; }
         #chicken-character.running { animation: chickenRun .18s ease-in-out infinite alternate; }
         @keyframes chickenRun {
@@ -423,7 +410,6 @@
             flex: 1; text-align: center; color: #fff; font-weight: 700;
             font-size: 15px; font-family: 'Orbitron', monospace;
         }
-
         .quick-chips { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
         .chip {
             background: #252c3d; border: 1px solid #353d5e;
@@ -444,76 +430,55 @@
         }
         .dropdown::after { content: '▾'; color: var(--text-dim); }
 
-.controls-container {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    gap: 12px;
-    padding: 5px 10px;
-}
-.play-btn {
-    flex: 2;
-    height: 58px;
-    background: #28a745;
-    border: none;
-    border-radius: 8px;
-    color: #ffffff;
-    font-size: 20px;
-    font-weight: 800;
-    font-family: 'Rajdhani', sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    text-transform: uppercase;
-    box-shadow: none;
-    transition: background 0.2s;
-}
-
-.play-btn:active {
-    background: #1e7e34;
-    transform: scale(0.98);
-}
-
-.play-btn::before, .play-btn::after {
-    display: none !important;
-    content: none !important;
-}
-
-#cashout-btn {
-    flex: 1;
-    height: 48px;
-    background: #FFFF00;
-    color: #000000;
-    border: 1px solid #3d4663;
-    border-radius: 12px;
-    font-size: 9px;
-    font-weight: 700;
-    font-family: 'Rajdhani', sans-serif;
-    cursor: pointer;
-    text-transform: uppercase;
-    display: none;
-}
-
-        #start-screen {
-            position: fixed; inset: 0;
-            background: #000; z-index: 9999;
+        .controls-container {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            gap: 12px;
+            padding: 5px 10px;
+        }
+        .play-btn {
+            flex: 2; height: 58px;
+            background: #28a745; border: none;
+            border-radius: 8px; color: #ffffff;
+            font-size: 20px; font-weight: 800;
+            font-family: 'Rajdhani', sans-serif;
             display: flex; align-items: center; justify-content: center;
-            flex-direction: column; gap: 20px;
+            cursor: pointer; text-transform: uppercase;
+            box-shadow: none; transition: background 0.2s;
         }
-        #start-screen h2 {
+        .play-btn:active { background: #1e7e34; transform: scale(0.98); }
+        .play-btn::before, .play-btn::after { display: none !important; content: none !important; }
+
+        #cashout-btn {
+            flex: 1; height: 48px;
+            background: #FFFF00; color: #000000;
+            border: 1px solid #3d4663; border-radius: 12px;
+            font-size: 9px; font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            cursor: pointer; text-transform: uppercase;
+            display: none;
+        }
+
+        /* ── नया: Multi-select info badge (footer ke upar) ── */
+        #selection-info {
+            display: none;
+            position: absolute;
+            top: -32px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,215,0,0.15);
+            border: 1px solid rgba(255,215,0,0.4);
+            border-radius: 20px;
+            padding: 4px 14px;
             font-family: 'Orbitron', monospace;
-            color: var(--accent); font-size: 22px; letter-spacing: 3px;
+            font-size: 9px;
+            color: #ffd700;
+            white-space: nowrap;
+            z-index: 30;
         }
-        #start-screen button {
-            padding: 16px 40px; font-size: 16px;
-            background: var(--accent); color: #000;
-            border: none; border-radius: 10px;
-            font-weight: 900; cursor: pointer;
-            font-family: 'Orbitron', monospace; letter-spacing: 2px;
-        }
+        #selection-info.visible { display: block; }
 
         @keyframes swipeHint {
             0%   { opacity: 0; transform: translateX(0); }
@@ -522,8 +487,7 @@
             100% { opacity: 0; transform: translateX(-50px); }
         }
         #swipe-hint {
-            position: absolute;
-            top: 50%; right: 60px;
+            position: absolute; top: 50%; right: 60px;
             transform: translateY(-50%);
             z-index: 40;
             display: flex; align-items: center; gap: 8px;
@@ -533,9 +497,299 @@
         #swipe-hint .hand { font-size: 28px; }
         #swipe-hint .hint-text {
             font-family: 'Rajdhani', sans-serif;
-            font-size: 13px; color: rgba(255,255,255,0.6);
-            white-space: nowrap;
+            font-size: 13px; color: rgba(255,255,255,0.6); white-space: nowrap;
         }
+    /* Bottom Modal Styling */
+#difficulty-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    z-index: 2000;
+    align-items: flex-end;
+}
+
+#difficulty-modal {
+    width: 100%;
+    background: #1a1f2e;
+    border-top: 3px solid #00e87c;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#difficulty-modal.open {
+    transform: translateY(0);
+}
+
+.modal-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    background: #252c42;
+    border-radius: 14px;
+    cursor: pointer;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    border: 1px solid transparent;
+    transition: 0.2s;
+}
+
+.modal-option.selected {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.check-mark {
+    color: #ffd700;
+    display: none;
+}
+
+.selected .check-mark {
+    display: block;
+}
+/* मोड सिलेक्ट करने वाला नया लेआउट (फोटो जैसा) */
+.difficulty-layout {
+    position: absolute;
+    bottom: 50px; /* बटन के ठीक ऊपर */
+    left: 0;
+    width: 100%;
+    background: #1e2333;
+    border: 1px solid #3a4566;
+    border-radius: 12px;
+    display: none; /* शुरू में छुपा रहेगा */
+    flex-direction: column;
+    z-index: 1000;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+.difficulty-layout.show {
+    display: flex;
+}
+
+.mode-option {
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #8892b0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.mode-option:hover {
+    background: #252c42;
+    color: #fff;
+}
+
+.mode-option.active {
+    color: #ffd700;
+}
+
+.mode-option .check-icon {
+    display: none;
+    font-weight: bold;
+}
+
+.mode-option.active .check-icon {
+    display: block;
+}
+
+/* ── Custom Multiplier Selector Modal ── */
+#mult-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none; z-index: 3000;
+    align-items: flex-end; justify-content: center;
+}
+#mult-modal-overlay.show { display: flex; }
+#mult-modal {
+    width: 100%; max-height: 80vh;
+    background: #1a1f2e;
+    border-top: 3px solid #ffd700;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#mult-modal.open { transform: translateY(0); }
+.mult-modal-title {
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px; color: #ffd700;
+    margin-bottom: 16px; font-weight: 900;
+}
+.mult-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-bottom: 10px;
+}
+.mult-option {
+    background: #252c42;
+    border: 1px solid #353d5e;
+    border-radius: 10px;
+    color: #ccc;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px; font-weight: 700;
+    padding: 12px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.mult-option:hover { background: #2e3752; color: #fff; }
+.mult-option.selected-mult {
+    border-color: #ffd700 !important;
+    background: rgba(255,215,0,0.15) !important;
+    color: #ffd700 !important;
+}
+.mult-close-btn {
+    width: 100%; margin-top: 14px;
+    background: #28a745; border: none;
+    border-radius: 10px; color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-size: 13px; font-weight: 700;
+    padding: 14px; cursor: pointer;
+}
+
+/* ── Bet Input Overlay (jab bet-display click ho) ── */
+#bet-edit-box {
+    width: 100%;
+    background: #1a1f2e;
+    border-top: 3px solid #00e87c;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 30px;
+    display: flex; flex-direction: column; gap: 14px;
+}
+#bet-edit-box label {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px; color: #00e87c; text-align: center;
+}
+#bet-edit-input {
+    width: 100%; background: #252c42;
+    border: 2px solid #00e87c; border-radius: 10px;
+    color: #fff; font-family: 'Orbitron', monospace;
+    font-size: 20px; text-align: center;
+    padding: 12px; outline: none;
+}
+#bet-edit-confirm {
+    background: #00e87c; color: #000;
+    border: none; border-radius: 10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 15px; font-weight: 900;
+    padding: 14px; cursor: pointer;
+}
+#bet-quick-row {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 8px;
+}
+.bet-quick-btn {
+    background: #252c42; border: 1px solid #353d5e;
+    border-radius: 8px; color: #ccc;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 700;
+    padding: 10px 4px; text-align: center;
+    cursor: pointer;
+}
+.bet-quick-btn:active { background: #2e3752; color: #fff; }
+
+#mult-select-btn { display: none; }
+
+/* ── Multiplier Settings Modal ── */
+#mult-settings-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.88);
+    display: none; z-index: 5000;
+    align-items: flex-end;
+}
+#mult-settings-overlay.show { display: flex; }
+#mult-settings-box {
+    width: 100%;
+    background: #1a1f2e;
+    border-top: 3px solid #00e87c;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px 32px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+#mult-settings-box.open { transform: translateY(0); }
+.ms-title {
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 13px; color: #00e87c;
+    font-weight: 900; margin-bottom: 18px;
+}
+.ms-mode-row {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 16px;
+}
+.ms-mode-block {
+    background: #252c42;
+    border-radius: 12px;
+    padding: 12px 14px;
+    border: 1px solid #353d5e;
+}
+.ms-mode-block.active-mode {
+    border-color: #ffd700;
+    background: rgba(255,215,0,0.08);
+}
+.ms-mode-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; font-weight: 900;
+    margin-bottom: 10px;
+}
+.ms-mode-label.easy   { color: #00e87c; }
+.ms-mode-label.medium { color: #ffd700; }
+.ms-mode-label.hard   { color: #ff6b35; }
+.ms-mode-label.hardcore { color: #ff2244; }
+.ms-inputs {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.ms-input-group { display: flex; flex-direction: column; gap: 4px; }
+.ms-input-group span {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px; color: #8892b0;
+}
+.ms-input-group input {
+    background: #1a1f2e;
+    border: 1px solid #3a4566;
+    border-radius: 7px; color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-size: 13px; text-align: center;
+    padding: 8px 4px; outline: none;
+    width: 100%;
+}
+.ms-input-group input:focus { border-color: #00e87c; }
+.ms-preview {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px; color: #5a6380;
+    margin-top: 5px; text-align: center;
+}
+.ms-apply-btn {
+    width: 100%; margin-top: 4px;
+    background: #00e87c; color: #000;
+    border: none; border-radius: 10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px; font-weight: 900;
+    padding: 14px; cursor: pointer;
+}
+/* Settings gear icon in header */
+#mult-settings-gear {
+    font-size: 18px; cursor: pointer;
+    opacity: 0.7; transition: opacity 0.2s;
+    color: #fff;
+}
+#mult-settings-gear:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -549,27 +803,37 @@
             <div id="rng-indicator" style="font-family:'Rajdhani',sans-serif;font-size:10px;color:#00e87c;background:rgba(0,232,124,0.1);border:1px solid rgba(0,232,124,0.3);border-radius:20px;padding:2px 8px;opacity:0;transition:opacity .4s;">🎲 RNG Seeded</div>
         </div>
         <div class="balance-box">
-10000.86 <div class="rupee-icon">₹</div>
+            10000.86 <div class="rupee-icon">₹</div>
         </div>
     </header>
 
     <main id="game-main">
         <div class="tunnel-lane"><div class="tunnel-entrance"></div></div>
 
-        <div id="chicken-character" style="position: absolute; left: -92px; bottom: 6px; z-index: 100; width: 250px; pointer-events: none;">
+        <div id="chicken-character" style="position:absolute;left:-92px;bottom:6px;z-index:100;width:250px;pointer-events:none;">
             <img src="https://raw.githubusercontent.com/jaharul007/jaharul/main/chicken.png" alt="My Chicken" width="100">
         </div>
 
         <div class="lanes-outer" id="lanes-outer">
             <div id="lanes-track"></div>
         </div>
+
+        
     </main>
 
-    <footer>
+    <footer style="position:relative;">
+        <!-- Selection info badge -->
+        <div id="selection-info">✔ <span id="sel-label">No nodes selected</span></div>
+
         <div class="bet-col">
             <div class="stepper">
                 <button class="step-btn" onclick="changeBet(-1)">−</button>
-                <div class="bet-display" id="bet-display">₹ 2</div>
+                <div class="bet-display" id="bet-display" onclick="openDirectKeyboard()" style="cursor:pointer;position:relative;">₹ 2
+                    <input type="number" id="bet-input-field" 
+                        style="position:fixed;opacity:0;width:1px;height:1px;bottom:0;left:0;border:none;background:transparent;font-size:16px;"
+                        inputmode="numeric" pattern="[0-9]*"
+                        onchange="applyBetInput(this.value)" onblur="closeBetKeyboard()">
+                </div>
                 <button class="step-btn" onclick="changeBet(1)">+</button>
             </div>
             <div class="quick-chips">
@@ -580,41 +844,189 @@
             </div>
         </div>
 
-        <div class="settings-col">
-            <div class="label-row">
-                <span style="color:#fff;font-weight:700;">Difficulty</span>
-                <span style="color:var(--text-dim);">Collision chance</span>
-            </div>
-            <div class="dropdown" id="difficulty-dropdown" onclick="cycleDifficulty()">Easy</div>
-        </div>
-
-     <div class="controls-container">
-    <button id="play-btn" class="play-btn" onclick="playChicken()">
-        PLAY
-    </button>
+        <div class="settings-col" style="position: relative;">
+    <div class="label-row">
+        <span style="color:#fff;font-weight:700;">Difficulty</span>
+    </div>
     
-    <button id="cashout-btn" onclick="handleCashOut()">
-        CASH OUT
-    </button>
+    <div id="diff-layout" class="difficulty-layout">
+        <div class="mode-option" id="m-Easy" onclick="selectDifficulty('Easy')">
+            Easy <span class="check-icon">✔</span>
+        </div>
+        <div class="mode-option" id="m-Medium" onclick="selectDifficulty('Medium')">
+            Medium <span class="check-icon">✔</span>
+        </div>
+        <div class="mode-option" id="m-Hard" onclick="selectDifficulty('Hard')">
+            Hard <span class="check-icon">✔</span>
+        </div>
+        <div class="mode-option" id="m-Hardcore" onclick="selectDifficulty('Hardcore')">
+            Hardcore <span class="check-icon">✔</span>
+        </div>
+    </div>
+
+    <div class="dropdown" id="difficulty-dropdown" onclick="toggleDiffLayout()">Easy</div>
 </div>
 
+        <div class="controls-container">
+            <button id="play-btn" class="play-btn" onclick="playChicken()">PLAY</button>
+            <button id="cashout-btn" onclick="handleCashOut()">CASH OUT</button>
+        </div>
     </footer>
 
 </div>
 
 <script>
-/* ====================================================
-   MONGODB SYNC — api/auth.js se balance lena aur dena
-   URL se phoneNumber milega: ?phone=+91XXXXXXXXXX
-====================================================== */
-const API_URL = '/api/auth';
-const urlParams = new URLSearchParams(window.location.search);
-let userPhone = urlParams.get('phone') || urlParams.get('phoneNumber'); 
+    // ══════════════════════════════════════════════════════════════════
+    //  ★★★  MULTIPLIER ARRAYS — Apni Marzi Se Numbers Badlo  ★★★
+    //
+    //  Har mode ke liye alag array hai.
+    //  - Numbers badlo → lanes badlengi automatically
+    //  - Zyada numbers add karo → zyada lanes
+    //  - Kam karo → kam lanes
+    // ══════════════════════════════════════════════════════════════════
 
-// अगर यूजर ने +91 नहीं लगाया, तो खुद लगा दे
-if (userPhone && !userPhone.startsWith('+91')) {
-    userPhone = '+91' + userPhone;
+    const MODE_MULTIPLIERS = {
+
+        // 🟢 EASY — Bahut kam risk, chicken bahut aage jayega
+        //    Agar Easy ke numbers change karne hain toh yahan badlo ↓
+        Easy: [
+            1.03, 1.07, 1.12, 1.17, 1.23,
+            1.29, 1.36, 1.44, 1.53, 1.63,
+            1.75, 1.88, 2.04, 2.22, 2.45,
+            2.72, 3.06, 3.50, 4.08, 4.90,
+            6.13, 6.61, 9.81, 19.44,
+        ],
+
+        // 🟡 MEDIUM — Thoda risk, thoda reward
+        //    Agar Medium ke numbers change karne hain toh yahan badlo ↓
+        Medium: [
+            1.12, 1.28, 1.47, 1.70, 1.98,
+            2.33, 2.76, 3.32, 4.03, 4.96,
+            6.20, 6.91, 8.90, 11.74, 16.00,
+            22.61, 33.58, 53.20, 92.17, 182.51,
+            451.71, 1788.80
+        ],
+
+        // 🔴 HARD — Zyada risk, zyada reward
+        //    Agar Hard ke numbers change karne hain toh yahan badlo ↓
+        Hard: [
+            1.23, 1.55, 1.98, 2.56, 3.36,
+            4.49, 7.53, 10.56, 15.21, 22.59,
+            34.79, 55.97, 94.99, 172.42, 341.40,
+            760.46, 2007.63, 6956.47, 41321.43
+        ],
+
+        // 💀 HARDCORE — Bahut zyada risk, jackpot milega toh milega
+        //    Agar Hardcore ke numbers change karne hain toh yahan badlo ↓
+        Hardcore: [
+            1.63, 2.80, 4.95, 9.08, 15.21,
+            30.12, 62.96, 140.24, 337.19, 890.19,
+            2643.89, 9161.08, 39301.05, 233448.29, 2542251.93
+        ]
+    };
+
+    // Death chance per mode (agar risk adjust karna ho toh yahan badlo)
+    const DIFF_DEATH_PROB = {
+        Easy:     0.06,   // ~6%  per lane
+        Medium:   0.15,   // ~15% per lane
+        Hard:     0.30,   // ~30% per lane
+        Hardcore: 0.45    // ~45% per lane
+    };
+
+    function generateCustomMultipliers(mode) {
+        return MODE_MULTIPLIERS[mode] || MODE_MULTIPLIERS['Easy'];
+    }
+
+// लेआउट को खोलने/बंद करने का फंक्शन
+function toggleDiffLayout() {
+    if (currentGlobalIdx !== -1) return; // गेम चालू है तो बटन काम नहीं करेगा
+    const layout = document.getElementById('diff-layout');
+    layout.classList.toggle('show');
+    
+    // वर्तमान मोड को हाईलाइट करो
+    document.querySelectorAll('.mode-option').forEach(el => el.classList.remove('active'));
+    document.getElementById('m-' + currentDifficulty).classList.add('active');
 }
+
+// मोड सिलेक्ट करने का फंक्शन
+function selectDifficulty(mode) {
+    currentDifficulty = mode;
+    // Custom config se multipliers generate karo
+    myMultipliers = generateCustomMultipliers(mode);
+
+
+    // DIFFICULTY_CONFIG भी sync करो (seedRoundOutcome के लिए)
+    if (!DIFFICULTY_CONFIG[mode]) {
+        DIFFICULTY_CONFIG[mode] = { deathProb: DIFF_DEATH_PROB[mode] || 0.15, label: mode };
+    } else {
+        DIFFICULTY_CONFIG[mode].deathProb = DIFF_DEATH_PROB[mode] || 0.15;
+    }
+
+    // reset custom multiplier selection
+    customTargetMult = null;
+    autoTargetIdx    = null;
+    selectModeOn     = false;
+    // mult-select-btn removed
+
+    // UI अपडेट
+    document.getElementById('difficulty-dropdown').textContent = mode;
+    document.getElementById('diff-layout').classList.remove('show'); // लेआउट बंद करें
+    
+    buildLanes(); // नया ट्रैक बनाएं
+    showToast(`Mode: ${mode}`, '#ffd700');
+}
+
+// अगर बाहर कहीं क्लिक करें तो लेआउट बंद हो जाए
+window.onclick = function(event) {
+    if (!event.target.matches('.dropdown')) {
+        const layout = document.getElementById('diff-layout');
+        if (layout.classList.contains('show')) {
+            layout.classList.remove('show');
+        }
+    }
+}
+    
+
+/* ====================================================
+   SOUND SYSTEM
+====================================================== */
+const BGM_URL   = 'https://raw.githubusercontent.com/jaharul007/jaharul/2c76211be859b2267bfe755e6e53bd4776c09c37/chickengamesound.aac';
+const DEATH_URL = 'https://raw.githubusercontent.com/jaharul007/jaharul/2c76211be859b2267bfe755e6e53bd4776c09c37/chickendeathsound.aac';
+
+let bgmAudio   = null;
+let bgmStarted = false;
+
+function initBGM() {
+    if (bgmStarted) return;
+    bgmStarted = true;
+    bgmAudio = new Audio(BGM_URL);
+    bgmAudio.loop   = true;
+    bgmAudio.volume = 0.45;
+    bgmAudio.play().catch(() => {});
+}
+
+function playDeathSound() {
+    const s = new Audio(DEATH_URL);
+    s.volume = 0.9;
+    // BGM thoda kam karo death ke waqt
+    if (bgmAudio) bgmAudio.volume = 0.15;
+    s.play().catch(() => {});
+    s.onended = () => { if (bgmAudio) bgmAudio.volume = 0.45; };
+}
+
+// Pehli user interaction pe BGM shuru hoga (browser policy)
+document.addEventListener('click',     () => initBGM(), { once: true });
+document.addEventListener('touchstart', () => initBGM(), { once: true });
+
+/* ====================================================
+   MONGODB SYNC
+====================================================== */
+const API_URL   = '/api/auth';
+const urlParams = new URLSearchParams(window.location.search);
+let userPhone   = urlParams.get('phone') || urlParams.get('phoneNumber');
+if (userPhone && !userPhone.startsWith('+91')) userPhone = '+91' + userPhone;
+
+// ── GET: MongoDB se balance load karo ──
 async function loadBalanceFromDB() {
     if (!userPhone) return;
     try {
@@ -623,28 +1035,63 @@ async function loadBalanceFromDB() {
         if (data.success) {
             totalBalance = parseFloat(data.balance) || 0;
             updateBalanceDisplay();
+        } else {
+            console.warn('Balance load failed:', data.message);
+        }
+    } catch (e) { console.error('Balance load error:', e); }
+}
+
+// ── POST: Bet kaato MongoDB se (placeBet endpoint) ──
+async function placeBetOnDB(amount) {
+    if (!userPhone) return true; // offline mode — allow
+    try {
+        const res  = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'placeBet', phoneNumber: userPhone, betAmount: amount, gameType: 'chicken' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            totalBalance = parseFloat(data.balance);
+            updateBalanceDisplay();
+            return true;
+        } else {
+            showToast('❌ ' + (data.message || 'Bet failed'), '#ff4500');
+            return false;
         }
     } catch (e) {
-        console.error('Balance load error:', e);
+        console.error('Bet error:', e);
+        return true; // network error — allow local play
     }
 }
 
-// Balance MongoDB mein save karna (play aur cashout dono pe)
+// ── POST: Cashout karo MongoDB mein (cashout endpoint) ──
+async function cashoutOnDB(winAmt) {
+    if (!userPhone) return;
+    try {
+        const res  = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'cashout', phoneNumber: userPhone, winAmount: winAmt, gameType: 'chicken' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            totalBalance = parseFloat(data.balance);
+            updateBalanceDisplay();
+        }
+    } catch (e) { console.error('Cashout error:', e); }
+}
+
+// ── (Fallback) Direct balance set karo ──
 async function saveBalanceToDB() {
     if (!userPhone) return;
     try {
         await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'updateBalance',
-                phoneNumber: userPhone,
-                balance: totalBalance
-            })
+            body: JSON.stringify({ action: 'updateBalance', phoneNumber: userPhone, balance: totalBalance })
         });
-    } catch (e) {
-        console.error('Balance save error:', e);
-    }
+    } catch (e) { console.error('Balance save error:', e); }
 }
 
 /* ====================================================
@@ -653,64 +1100,128 @@ async function saveBalanceToDB() {
 const HOUSE_EDGE = 0.03;
 
 const DIFFICULTY_CONFIG = {
-    Easy:   { deathProb: 0.15, label: 'Easy' },
-    Medium: { deathProb: 0.25, label: 'Medium' },
-    Hard:   { deathProb: 0.40, label: 'Hard' },
+    Easy:     { deathProb: 0.06, label: 'Easy'     },  // ~6%  per lane → बहुत कम खतरा (chicken ज्यादा आगे जाएगा)
+    Medium:   { deathProb: 0.15, label: 'Medium'   },  // ~15% per lane → मध्यम खतरा
+    Hard:     { deathProb: 0.30, label: 'Hard'     },  // ~30% per lane → ज्यादा खतरा
+    Hardcore: { deathProb: 0.45, label: 'Hardcore' },  // ~45% per lane → बहुत ज्यादा खतरा
 };
 let currentDifficulty = 'Easy';
 
+/* ── नया: generateMultipliers — dynamic formula ── */
 function generateMultipliers(difficulty) {
-    const p = DIFFICULTY_CONFIG[difficulty].deathProb;
-    const surviveFactor = 1 / (1 - p);
-    const steps = 14;
-    let arr = [];
+    const p             = DIFFICULTY_CONFIG[difficulty].deathProb;
+    const surviveFactor = 1 / (1 - p);   // हर step पर fair payout factor
+    const steps         = 15;            // हमेशा 15 nodes
+    const arr           = [];
     for (let i = 0; i < steps; i++) {
         const fair     = Math.pow(surviveFactor, i + 1);
+        // House edge काटो → RTP ≈ 97%
         const adjusted = parseFloat((fair * (1 - HOUSE_EDGE)).toFixed(2));
         arr.push(adjusted);
     }
     return arr;
 }
-function triggerFireOnVent(ventElement) {
-    const count = 8;
-    for (let i = 0; i < count; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'fire-particle';
-        const xDir = (Math.random() - 0.5) * 60;
-        const yDir = -Math.random() * 100;
-        particle.style.setProperty('--x', xDir + 'px');
-        particle.style.setProperty('--y', yDir + 'px');
-        particle.style.left   = (Math.random() * 30 + 10) + 'px';
-        particle.style.bottom = '10px';
-        ventElement.appendChild(particle);
-        setTimeout(() => particle.remove(), 700);
+
+/* ── नया: Multi-select state ── */
+let selectModeOn      = false;   // क्या select mode चालू है?
+let selectedNodes     = new Set(); // कौन से indexes select हुए (Set of numbers)
+let autoTargetIdx     = null;    // automatic cashout target index
+
+function toggleSelectMode() {
+    if (currentGlobalIdx !== -1) { showToast('⚠️ Game चल रही है!', '#ff6b35'); return; }
+    selectModeOn = !selectModeOn;
+    const btn = document.getElementById('select-mode-btn');
+    btn.textContent  = selectModeOn ? 'ON' : 'OFF';
+    btn.style.color  = selectModeOn ? '#ffd700' : '#8892b0';
+    btn.style.border = selectModeOn ? '1px solid #ffd700' : '1px solid #353d5e';
+
+    if (!selectModeOn) {
+        clearSelections();
+    }
+    updateSelectionInfo();
+}
+
+function toggleNodeSelect(idx) {
+    if (!selectModeOn) return; // select mode off है तो ignore
+    if (selectedNodes.has(idx)) {
+        selectedNodes.delete(idx);
+    } else {
+        selectedNodes.add(idx);
+    }
+    // auto target = सबसे बड़ा selected index
+    autoTargetIdx = selectedNodes.size > 0 ? Math.max(...selectedNodes) : null;
+    refreshNodeStyles();
+    updateSelectionInfo();
+    updateMultiCashoutBar();
+}
+
+function clearSelections() {
+    selectedNodes.clear();
+    autoTargetIdx = null;
+    refreshNodeStyles();
+    updateSelectionInfo();
+    updateMultiCashoutBar();
+}
+
+function refreshNodeStyles() {
+    document.querySelectorAll('.lane').forEach(lane => {
+        const idx  = parseInt(lane.id.replace('lane-', ''));
+        const node = lane.querySelector('.multiplier-node');
+        if (!node) return;
+
+        // पुराना selected style हटाओ
+        node.classList.remove('node-selected');
+        const oldCheck = node.querySelector('.node-check');
+        if (oldCheck) oldCheck.remove();
+        lane.classList.remove('selected-lane');
+
+        if (selectedNodes.has(idx)) {
+            node.classList.add('node-selected');
+            lane.classList.add('selected-lane');
+            const check = document.createElement('div');
+            check.className = 'node-check';
+            check.textContent = '✓';
+            node.appendChild(check);
+        }
+    });
+}
+
+function updateSelectionInfo() {
+    const info  = document.getElementById('selection-info');
+    const label = document.getElementById('sel-label');
+    if (selectedNodes.size === 0 || !selectModeOn) {
+        info.classList.remove('visible');
+        return;
+    }
+    info.classList.add('visible');
+    const sorted = [...selectedNodes].sort((a,b)=>a-b);
+    const mults  = sorted.map(i => myMultipliers[i] + 'x').join(', ');
+    label.textContent = `${selectedNodes.size} selected: ${mults}`;
+}
+
+function updateMultiCashoutBar() {
+    const bar     = document.getElementById('multi-cashout-bar');
+    const selCount= document.getElementById('sel-count');
+    const selTarg = document.getElementById('sel-target');
+    if (!selectModeOn || selectedNodes.size === 0) {
+        bar.classList.remove('visible');
+        return;
+    }
+    bar.classList.add('visible');
+    selCount.textContent = selectedNodes.size + ' nodes selected';
+    if (autoTargetIdx !== null) {
+        selTarg.textContent = myMultipliers[autoTargetIdx] + 'x (Lane ' + (autoTargetIdx+1) + ')';
     }
 }
 
-function startRandomFireBursts() {
-    setInterval(() => {
-        const allLanes = document.querySelectorAll('.lane');
-        if (allLanes.length === 0) return;
-        const randomIdx      = Math.floor(Math.random() * allLanes.length);
-        const selectedLane   = allLanes[randomIdx];
-        const selectedLaneNum = parseInt(selectedLane.id.replace('lane-', ''));
-        if (selectedLaneNum === activeLaneIndex) return;
-        const vent = selectedLane.querySelector('.vent');
-        if (vent) triggerFireOnVent(vent);
-    }, 300);
-}
-
-let myMultipliers = [1.63, 2.80, 4.95, 9.08, 15.21, 30.12, 62.96, 140.24, 337.19, 890.19, 2643.89, 9161.08, 39301.05, 233448.29, 2542251.29]; 
+/* multipliers शुरू में Easy के */
+let myMultipliers = generateCustomMultipliers('Easy');
 
 let LANE_WIDTH_PX = 0;
-const VISIBLE_LANES = 5.9; 
-
-function generateMultipliers(difficulty) {
-    return myMultipliers; 
-}
+const VISIBLE_LANES = 5.9;
 
 // Game state
-let totalBalance    = 10000.86; // page load par DB se replace ho jaayega
+let totalBalance    = 10000.86;
 let currentWin      = 0;
 let betAmount       = 2;
 let currentGlobalIdx = -1;
@@ -730,28 +1241,24 @@ function getMultiplier(idx) {
     if (idx >= myMultipliers.length) return myMultipliers[myMultipliers.length - 1].toFixed(2);
     return myMultipliers[idx].toFixed(2);
 }
-
 function getTier(mult) {
-    if (mult < 2) return 1;
+    if (mult < 2)  return 1;
     if (mult < 10) return 2;
     if (mult < 50) return 3;
     return 4;
 }
-
 function updateBalanceDisplay() {
     const balBox = document.querySelector('.balance-box');
-    if (balBox) {
-        balBox.innerHTML = `${parseFloat(totalBalance).toFixed(2)} <div class="rupee-icon">₹</div>`;
-    }
+    if (balBox) balBox.innerHTML = `${parseFloat(totalBalance).toFixed(2)} <div class="rupee-icon">₹</div>`;
 }
 
 /* ====================================================
    3. TRACK & LANE BUILDING
 ====================================================== */
 function buildLanes() {
-    const outerW = document.getElementById('lanes-outer').offsetWidth;
+    const outerW  = document.getElementById('lanes-outer').offsetWidth;
     LANE_WIDTH_PX = outerW / VISIBLE_LANES;
-    const totalLanes = myMultipliers.length + 5;
+    const totalLanes = myMultipliers.length;
 
     Array.from(track.children).forEach(child => {
         if (child.id !== 'chicken-character') child.remove();
@@ -764,30 +1271,53 @@ function buildLanes() {
         const tier = getTier(mult);
         track.appendChild(createLaneEl(i, mult, tier));
     }
-    
-    track.style.transform = `translateX(0px)`;
+    track.style.transform = 'translateX(0px)';
+
+    // lanes rebuild के बाद selected styles restore करो
+    refreshNodeStyles();
+    updateMultiCashoutBar();
 }
 
 function createLaneEl(idx, mult, tier) {
     const lane = document.createElement('div');
     lane.className = 'lane';
-    lane.id        = `lane-${idx}`;
+    lane.id = `lane-${idx}`;
     lane.style.width = LANE_WIDTH_PX + 'px';
     lane.style.flex  = `0 0 ${LANE_WIDTH_PX}px`;
 
+    const lastIdx = myMultipliers.length - 1;
+
+    if (idx === lastIdx) {
+        const light = document.createElement('div');
+        light.className = 'spotlight';
+        lane.appendChild(light);
+
+        const egg = document.createElement('div');
+        egg.className = 'golden-egg';
+        lane.appendChild(egg);
+
+        const stand = document.createElement('div');
+        stand.className = 'egg-stand';
+        lane.appendChild(stand);
+    }
+
+    // मल्टीप्लायर नोड — click पर toggleNodeSelect
     const node = document.createElement('div');
-    node.className = `multiplier-node`; 
+    node.className = 'multiplier-node';
     node.innerHTML = `<div class="node-val">${mult}<small style="font-size:7px">x</small></div>`;
+    node.addEventListener('click', () => toggleNodeSelect(idx));
     lane.appendChild(node);
 
     const vent = document.createElement('div');
     vent.className = 'vent';
+    if (idx === lastIdx) vent.style.opacity = '0.2';
     for (let v = 0; v < 5; v++) {
         const bar = document.createElement('div');
         bar.className = 'vent-bar';
         vent.appendChild(bar);
     }
     lane.appendChild(vent);
+
     return lane;
 }
 
@@ -795,12 +1325,11 @@ function createLaneEl(idx, mult, tier) {
    4. MOVEMENT & CAMERA
 ====================================================== */
 function moveChickenToGlobal(idx) {
-    chicken.style.transition = "left 0.32s cubic-bezier(0.4, 0, 0.2, 1)";
-    
+    chicken.style.transition = 'left 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
     if (idx === -1) {
-        chicken.style.left = '-92px'; 
+        chicken.style.left = '-92px';
     } else {
-        const newLeft = (idx * LANE_WIDTH_PX) + (LANE_WIDTH_PX / 2) - (chicken.offsetWidth / 2); 
+        const newLeft = (idx * LANE_WIDTH_PX) + (LANE_WIDTH_PX / 2) - (chicken.offsetWidth / 2);
         chicken.style.left = newLeft + 'px';
     }
     activeLaneIndex = idx;
@@ -816,7 +1345,7 @@ function highlightActiveLane() {
 function autoCenterCamera(idx) {
     if (idx >= 1) {
         let moveX = (idx - 1) * LANE_WIDTH_PX;
-        track.style.transition = "transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        track.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         track.style.transform  = `translateX(-${moveX}px)`;
     }
 }
@@ -824,11 +1353,11 @@ function autoCenterCamera(idx) {
 /* ====================================================
    5. CORE GAMEPLAY
 ====================================================== */
-function playChicken() {
+async function playChicken() {
     if (isMoving) return;
 
     const playBtn = document.getElementById('play-btn');
-    playBtn.textContent = 'GO'; 
+    playBtn.textContent = 'GO';
 
     if (currentGlobalIdx === -1) {
         if (totalBalance < betAmount) {
@@ -836,15 +1365,39 @@ function playChicken() {
             playBtn.textContent = 'PLAY';
             return;
         }
-        // Bet katna + DB mein save karna
-        totalBalance -= betAmount;
-        updateBalanceDisplay();
-        saveBalanceToDB(); // ← PLAY dabate hi DB update
+        // MongoDB se bet kaato (placeBet endpoint)
+        const betOk = await placeBetOnDB(betAmount);
+        if (!betOk) { playBtn.textContent = 'PLAY'; return; }
+        // Local balance bhi update karo (already done in placeBetOnDB, but fallback)
+        if (!userPhone) { totalBalance -= betAmount; updateBalanceDisplay(); }
         seedRoundOutcome();
         showRngSeedIndicator();
     }
 
     const nextIdx = currentGlobalIdx + 1;
+    const lastLaneIdx = myMultipliers.length - 1;
+
+    // ── Egg lane pe pahunch gaye — aage nahi jana (auto cashout) ──
+    if (currentGlobalIdx >= lastLaneIdx) {
+        handleCashOut();
+        return;
+    }
+
+    // ── नया: अगर chicken selected node पर पहुँच गया तो auto cashout ──
+    if (selectModeOn && autoTargetIdx !== null && nextIdx >= autoTargetIdx) {
+        // पहले chicken को उस node तक move करो, फिर cashout
+        moveChickenToGlobal(autoTargetIdx);
+        autoCenterCamera(autoTargetIdx);
+        currentGlobalIdx  = autoTargetIdx;
+        const mult        = parseFloat(getMultiplier(currentGlobalIdx));
+        currentWin        = (betAmount * mult).toFixed(2);
+        updateActiveLaneGlow(currentGlobalIdx);
+        setTimeout(() => {
+            handleCashOut();
+        }, 400);
+        return;
+    }
+
     if (roundOutcomeIdx !== null && nextIdx >= roundOutcomeIdx) {
         const nextLaneEl = document.getElementById(`lane-${nextIdx}`);
         moveChickenToGlobal(nextIdx);
@@ -879,24 +1432,27 @@ function playChicken() {
     }, 350);
 }
 
-function handleCashOut() {
+async function handleCashOut() {
     if (currentWin <= 0 || isMoving) return;
     const won = parseFloat(currentWin);
-    // Winnings add karna + DB mein save karna
-    totalBalance = parseFloat(totalBalance) + won;
-    updateBalanceDisplay();
-    saveBalanceToDB(); // ← CASH OUT dabate hi DB update
+    // MongoDB mein cashout (winAmount add karo)
+    await cashoutOnDB(won);
+    // Agar offline, local update karo
+    if (!userPhone) {
+        totalBalance = parseFloat(totalBalance) + won;
+        updateBalanceDisplay();
+    }
     showToast(`🏆 जीत! ₹${won.toFixed(2)}`, '#00e87c');
     resetGame();
 }
 
 function resetGame() {
-    currentWin       = 0;
-    currentGlobalIdx = -1;
-    isMoving         = false;
-    isInsideTrack    = false;
-    activeLaneIndex  = -1;
-    roundOutcomeIdx  = null;
+    currentWin        = 0;
+    currentGlobalIdx  = -1;
+    isMoving          = false;
+    isInsideTrack     = false;
+    activeLaneIndex   = -1;
+    roundOutcomeIdx   = null;
 
     document.getElementById('play-btn').textContent      = 'PLAY';
     document.getElementById('cashout-btn').style.display = 'none';
@@ -904,21 +1460,23 @@ function resetGame() {
 
     const gameMain = document.getElementById('game-main');
     gameMain.appendChild(chicken);
-    
-    chicken.style.transition = "none";
+
+    chicken.style.transition = 'none';
     chicken.style.left       = '-92px';
     chicken.style.bottom     = '6px';
-    chicken.style.transform  = "translateY(0) rotate(0deg)"; 
+    chicken.style.transform  = 'translateY(0) rotate(0deg)';
     chicken.style.opacity    = '1';
 
     track.style.transition = 'transform 0.5s ease';
     track.style.transform  = 'translateX(0px)';
-    
+
     highlightActiveLane();
+    // selection reset नहीं करते — player की choice बनी रहेगी अगले round के लिए
 }
 
 function triggerDeath(laneElement) {
     isMoving = true;
+    playDeathSound(); // ← Death sound
     const fireWrap = document.createElement('div');
     fireWrap.className = 'fire-wrap';
     fireWrap.innerHTML = `<div class="fire-base">
@@ -953,10 +1511,7 @@ function seedRoundOutcome() {
     const totalSteps = myMultipliers.length;
     roundOutcomeIdx  = null;
     for (let step = 1; step <= totalSteps; step++) {
-        if (cryptoRandom() < p) {
-            roundOutcomeIdx = step;
-            break;
-        }
+        if (cryptoRandom() < p) { roundOutcomeIdx = step; break; }
     }
 }
 
@@ -990,7 +1545,7 @@ function showToast(msg, color) {
     t.textContent      = msg;
     t.style.opacity    = '1';
     clearTimeout(t._timer);
-    t._timer = setTimeout(function(){ t.style.opacity = '0'; }, 2200);
+    t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2200);
 }
 
 /* ====================================================
@@ -998,15 +1553,23 @@ function showToast(msg, color) {
 ====================================================== */
 function changeBet(dir) {
     const betValues = [2, 5, 10, 20, 50, 100, 200, 500];
-    let idx = betValues.indexOf(betAmount);
+    let idx = betValues.findIndex(v => v >= betAmount);
+    if (idx === -1) idx = betValues.length - 1;
     idx = Math.max(0, Math.min(betValues.length - 1, idx + dir));
     betAmount = betValues[idx];
-    document.getElementById('bet-display').textContent = '₹ ' + betAmount;
+    updateBetDisplay();
 }
 
 function setBet(val) {
     betAmount = val;
-    document.getElementById('bet-display').textContent = '₹ ' + betAmount;
+    updateBetDisplay();
+}
+
+function updateBetDisplay() {
+    const el = document.getElementById('bet-display');
+    if (el) {
+        el.innerHTML = `₹ ${betAmount}<input type="number" id="bet-input-field" style="position:absolute;opacity:0;width:1px;height:1px;top:0;left:0;border:none;background:transparent;pointer-events:none;" inputmode="numeric" pattern="[0-9]*">`;
+    }
 }
 
 function cycleDifficulty() {
@@ -1016,9 +1579,14 @@ function cycleDifficulty() {
 }
 
 function applyDifficulty(diff) {
+    if (currentGlobalIdx !== -1) { showToast('⚠️ पहले game खत्म करो!', '#ff6b35'); return; }
     currentDifficulty = diff;
+    myMultipliers     = generateMultipliers(diff); // ← dynamic calculation
     document.getElementById('difficulty-dropdown').textContent = diff;
     updateHouseEdgeDisplay();
+    clearSelections();   // पुराने selections clear
+    buildLanes();        // ← UI update
+    track.style.transform = 'translateX(0px)';
 }
 
 function updateHouseEdgeDisplay() {
@@ -1030,6 +1598,38 @@ function updateHouseEdgeDisplay() {
 }
 
 /* ====================================================
+   FIRE BURSTS
+====================================================== */
+function triggerFireOnVent(ventElement) {
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'fire-particle';
+        const xDir = (Math.random() - 0.5) * 60;
+        const yDir = -Math.random() * 100;
+        particle.style.setProperty('--x', xDir + 'px');
+        particle.style.setProperty('--y', yDir + 'px');
+        particle.style.left   = (Math.random() * 30 + 10) + 'px';
+        particle.style.bottom = '10px';
+        ventElement.appendChild(particle);
+        setTimeout(() => particle.remove(), 700);
+    }
+}
+
+function startRandomFireBursts() {
+    setInterval(() => {
+        const allLanes = document.querySelectorAll('.lane');
+        if (allLanes.length === 0) return;
+        const randomIdx       = Math.floor(Math.random() * allLanes.length);
+        const selectedLane    = allLanes[randomIdx];
+        const selectedLaneNum = parseInt(selectedLane.id.replace('lane-', ''));
+        if (selectedLaneNum === activeLaneIndex) return;
+        const vent = selectedLane.querySelector('.vent');
+        if (vent) triggerFireOnVent(vent);
+    }, 300);
+}
+
+/* ====================================================
    7. INITIALIZATION
 ====================================================== */
 window.addEventListener('load', () => {
@@ -1037,10 +1637,105 @@ window.addEventListener('load', () => {
     updateBalanceDisplay();
     updateHouseEdgeDisplay();
     startRandomFireBursts();
-    loadBalanceFromDB(); // ← page load par MongoDB se real balance aayega
+    loadBalanceFromDB();
 });
 window.addEventListener('resize', buildLanes);
 
+</script>
+<!-- ── Custom Multiplier Modal ── -->
+<div id="mult-modal-overlay" onclick="closeMultModal(event)">
+    <div id="mult-modal">
+        <div class="mult-modal-title">🎯 Auto Cashout Target</div>
+        <div class="mult-grid" id="mult-grid"></div>
+        <button class="mult-close-btn" onclick="closeMultModal()">✓ Done</button>
+    </div>
+</div>
+
+<!-- bet overlay removed -->
+
+<script>
+
+/* ── Bet Direct Keyboard ── */
+function openDirectKeyboard() {
+    if (currentGlobalIdx !== -1) { showToast('⚠️ पहले game खत्म करो!', '#ff6b35'); return; }
+    const inp = document.getElementById('bet-input-field');
+    inp.value = betAmount;
+    inp.style.opacity = '0';
+    inp.readOnly = false;
+    // Scroll prevent karo — keyboard neeche se aayegi
+    inp.style.bottom = '0px';
+    inp.style.left   = '50%';
+    setTimeout(() => { inp.focus(); }, 50);
+}
+function closeBetKeyboard() {
+    const inp = document.getElementById('bet-input-field');
+    const v = parseInt(inp.value);
+    if (!isNaN(v) && v >= 1) {
+        betAmount = v;
+        updateBetDisplay();
+    }
+}
+function applyBetInput(val) {
+    const v = parseInt(val);
+    if (!isNaN(v) && v >= 1) {
+        betAmount = v;
+        updateBetDisplay();
+    }
+}
+
+/* ── Custom Multiplier Modal ── */
+let customTargetMult = null; // user-chosen multiplier value
+
+function openMultModal() {
+    if (currentGlobalIdx !== -1) { showToast('⚠️ Game चल रही है!', '#ff6b35'); return; }
+    const overlay = document.getElementById('mult-modal-overlay');
+    const modal   = document.getElementById('mult-modal');
+    const grid    = document.getElementById('mult-grid');
+    grid.innerHTML = '';
+    myMultipliers.forEach((m, i) => {
+        const div = document.createElement('div');
+        div.className = 'mult-option' + (customTargetMult === m ? ' selected-mult' : '');
+        div.textContent = m + 'x';
+        div.onclick = () => selectMultiplierTarget(m, i, div);
+        grid.appendChild(div);
+    });
+    overlay.classList.add('show');
+    setTimeout(() => modal.classList.add('open'), 10);
+}
+
+function closeMultModal(e) {
+    const overlay = document.getElementById('mult-modal-overlay');
+    const modal   = document.getElementById('mult-modal');
+    if (!e || e.target === overlay) {
+        modal.classList.remove('open');
+        setTimeout(() => overlay.classList.remove('show'), 300);
+    }
+}
+
+function selectMultiplierTarget(mult, idx, el) {
+    // toggle
+    if (customTargetMult === mult) {
+        customTargetMult = null;
+        autoTargetIdx    = null;
+        // mult-select-btn removed
+        el.classList.remove('selected-mult');
+    } else {
+        customTargetMult = mult;
+        autoTargetIdx    = idx;
+        selectModeOn     = true; // auto-cashout mode on
+        // mult-select-btn removed
+        document.querySelectorAll('.mult-option').forEach(d => d.classList.remove('selected-mult'));
+        el.classList.add('selected-mult');
+        showToast(`✅ Auto-cashout: ${mult}x`, '#ffd700');
+    }
+}
+
+</script>
+
+    function openMultSettings() { showToast("Edit MODE_MULTIPLIERS in code!", "#ffd700"); }
+    function closeMultSettings() {}
+    function updateMsPreview() {}
+    function applyMultSettings() {}
 </script>
 </body>
 </html>
