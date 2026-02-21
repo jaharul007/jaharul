@@ -1780,14 +1780,10 @@ function buildAdminNumGrid() {
 // ADMIN NEXT PERIOD DISPLAY
 // ========================================
 function updateAdminNextPeriod() {
-    const now = new Date();
-    const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-    const dateStr = now.getFullYear().toString() + 
-                   (now.getMonth() + 1).toString().padStart(2, '0') + 
-                   now.getDate().toString().padStart(2, '0');
-    const nextPeriodNum = Math.floor(totalSeconds / currentMode) + 1;
-    const nextPeriod = dateStr + nextPeriodNum.toString().padStart(4, '0');
-    document.getElementById('adminNextPeriod').innerText = nextPeriod;
+    // FIX 4: Period display pehle se NEXT period dikhata hai
+    // Admin panel mein wahi period show karo
+    const nextPeriod = document.getElementById('periodDisplay').innerText.trim();
+    if (nextPeriod) document.getElementById('adminNextPeriod').innerText = nextPeriod;
 }
 
 // ========================================
@@ -1801,19 +1797,14 @@ async function adminSaveForce() {
         return;
     }
 
-    // NEXT PERIOD calculate karo
-    const now = new Date();
-    const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-    const dateStr = now.getFullYear().toString() + 
-                   (now.getMonth() + 1).toString().padStart(2, '0') + 
-                   now.getDate().toString().padStart(2, '0');
-    const nextPeriodNum = Math.floor(totalSeconds / currentMode) + 1;
-    const nextPeriod = dateStr + nextPeriodNum.toString().padStart(4, '0');
+    // FIX 4: Period display mein pehle se NEXT period hai
+    // Admin usi period ke liye result force kar raha hai
+    const nextPeriod = document.getElementById('periodDisplay').innerText.trim();
 
     console.log("🔧 Admin forcing:", val, "for NEXT period:", nextPeriod);
 
     try {
-        const res = await fetch('/api/history', {
+        const res = await fetch('/api/wingo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -1849,7 +1840,7 @@ async function syncAdminData() {
     const period = document.getElementById('periodDisplay').innerText.trim();
     
     try {
-        const res = await fetch(`/api/history?action=adminSummary&period=${period}&mode=${currentMode}`);
+        const res = await fetch(`/api/wingo?action=adminSummary&period=${period}&mode=${currentMode}`);
         const data = await res.json();
         
         if (data.success) {
@@ -1907,7 +1898,7 @@ async function checkBetResult(betData) {
             // Period badal gayi matlab timer zero ho gaya - ab result fetch karo
             console.log(`✅ Period changed! Bet period: ${betData.period}, Now: ${displayedPeriod} - Fetching result...`);
             
-            const res = await fetch(`/api/history?action=checkResult&phone=${betData.phone}&period=${betData.period}&mode=${betData.mode}`);
+            const res = await fetch(`/api/wingo?action=checkResult&phone=${betData.phone}&period=${betData.period}&mode=${betData.mode}`);
             const data = await res.json();
             
             console.log(`📊 Status:`, data.status);
@@ -1966,19 +1957,14 @@ async function confirmBet() {
 
     const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
     
-    // NEXT PERIOD calculate karo
-    const now = new Date();
-    const totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-    const dateStr = now.getFullYear().toString() + 
-                   (now.getMonth() + 1).toString().padStart(2, '0') + 
-                   now.getDate().toString().padStart(2, '0');
-    const nextPeriodNum = Math.floor(totalSeconds / currentMode) + 1;
-    const nextPeriod = dateStr + nextPeriodNum.toString().padStart(4, '0');
-    
+    // FIX 2: Period display mein pehle se NEXT period aa raha hai
+    // Seedha wahi period use karo jismein bet lagni chahiye
+    const nextPeriod = document.getElementById('periodDisplay').innerText.trim();
+
     console.log(`\n💰 PLACING BET`);
     console.log(`Phone: ${phone}`);
     console.log(`Bet: ${selectedBetValue}, Amount: ₹${totalAmt}`);
-    console.log(`For NEXT PERIOD: ${nextPeriod}`);
+    console.log(`For PERIOD: ${nextPeriod}`);
     
     if (currentBalance < totalAmt) {
         alert(`❌ Insufficient Balance!\n\nYour Balance: ₹${currentBalance.toFixed(2)}\nBet Amount: ₹${totalAmt.toFixed(2)}`);
@@ -1991,7 +1977,7 @@ async function confirmBet() {
     confirmBtn.disabled = true;
 
     try {
-        const betRes = await fetch(`/api/history`, { 
+        const betRes = await fetch(`/api/wingo`, { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2042,7 +2028,7 @@ async function loadMyHistory() {
     if (!phone) return;
     
     try {
-        const res = await fetch(`/api/bet?phone=${phone}&mode=${currentMode}`);
+        const res = await fetch(`/api/wingo?action=getMyBets&phone=${encodeURIComponent(phone)}&mode=${currentMode}`);
         const data = await res.json();
         
         if (data.success && data.bets && data.bets.length > 0) {
@@ -2095,7 +2081,7 @@ async function fetchFromDB() {
         const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
         
         try {
-            const saveRes = await fetch('/api/history', {
+            const saveRes = await fetch('/api/wingo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -2112,7 +2098,7 @@ async function fetchFromDB() {
             console.log("Save error:", e.message); 
         }
         
-        const res = await fetch(`/api/history?action=getHistory&mode=${currentMode}&page=${currentPage}`);
+        const res = await fetch(`/api/wingo?action=getHistory&mode=${currentMode}&page=${currentPage}`);
         if(res.ok) { 
             const data = await res.json();
             let historyData = data.results || [];
@@ -2133,7 +2119,7 @@ async function loadBalance() {
     if (!globalPhone) return;
 
     try {
-        const res = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
+        const res = await fetch(`/api/wingo?action=getBalance&phoneNumber=${phoneParam}`);
         const data = await res.json();
         
         if (data.success) {
@@ -2435,47 +2421,76 @@ function setBettingLock(lock) {
 // FIX 3: Timer - result sirf tab aayega jab timer actually zero ho
 // Admin pehle se number save kare par user ko result timer ke baad milega
 // ========================================
+// ──────────────────────────────────────────────────
+// FIX 1 & 2: Period Logic
+//   - periodDisplay = NEXT period (jo aane wala hai)
+//     Isi mein user ka bet lagta hai
+//   - Jab timer zero ho, purana (completed) period
+//     history mein aata hai + fetchFromDB chalta hai
+// ──────────────────────────────────────────────────
+function getCurrentPeriod(now) {
+    const ts = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    const dateStr = now.getFullYear().toString()
+        + (now.getMonth() + 1).toString().padStart(2, '0')
+        + now.getDate().toString().padStart(2, '0');
+    const periodNum = Math.floor(ts / currentMode);
+    return dateStr + periodNum.toString().padStart(4, '0');
+}
+
+function getNextPeriod(now) {
+    const ts = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    const dateStr = now.getFullYear().toString()
+        + (now.getMonth() + 1).toString().padStart(2, '0')
+        + now.getDate().toString().padStart(2, '0');
+    const nextPeriodNum = Math.floor(ts / currentMode) + 1;
+    return dateStr + nextPeriodNum.toString().padStart(4, '0');
+}
+
+// Timer ke display mein current next period track karo
+let _lastDisplayedNext = "";
+
 function startTimer() {
     setInterval(() => {
-        let now = new Date();
-        let totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-        let rem = currentMode - (totalSeconds % currentMode);
-        
-        let m = Math.floor(rem / 60).toString().padStart(2, '0');
-        let s = (rem % 60).toString().padStart(2, '0');
-        
-        // Chhota timer update
-        document.getElementById('timerDigits').innerHTML = `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span><span style="color:#333; font-weight:bold; margin:0 4px; font-size:24px;">:</span><span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
+        const now = new Date();
+        const ts  = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+        const rem = currentMode - (ts % currentMode);
 
-        let bigOverlay = document.getElementById('bigTimerOverlay');
+        // ── Small timer update ──
+        const m = Math.floor(rem / 60).toString().padStart(2, '0');
+        const s = (rem % 60).toString().padStart(2, '0');
+        document.getElementById('timerDigits').innerHTML =
+            `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>`+
+            `<span style="color:#333;font-weight:bold;margin:0 4px;font-size:24px;">:</span>`+
+            `<span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
+
+        // ── Big overlay (last 5s) ──
+        const bigOverlay = document.getElementById('bigTimerOverlay');
         if (rem <= 5) {
-            // Sirf pehli baar jab overlay show ho tab sound bajao
-            if (bigOverlay.style.display !== 'flex') {
-                playTimerSound();
-            }
-            bigOverlay.style.display = 'flex'; 
+            if (bigOverlay.style.display !== 'flex') playTimerSound();
+            bigOverlay.style.display = 'flex';
             document.getElementById('bigDigit1').innerText = s[0];
             document.getElementById('bigDigit2').innerText = s[1];
-            setBettingLock(true); // Last 5s - betting band
+            setBettingLock(true);
         } else {
             bigOverlay.style.display = 'none';
-            setBettingLock(false); // Normal time - betting khuli
+            setBettingLock(false);
         }
 
-        let dateStr = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0');
-        let currentP = dateStr + Math.floor(totalSeconds / currentMode).toString().padStart(4, '0');
-        
-        let displayEl = document.getElementById('periodDisplay');
-        let oldP = displayEl.innerText;
-        displayEl.innerText = currentP;
+        // ── FIX 1: Period display = NEXT period (jo aane wala hai)
+        //    Isi mein user ka bet laga hai / lagega
+        const nextP = getNextPeriod(now);
+        document.getElementById('periodDisplay').innerText = nextP;
 
-        // Period badlega tabhi fetchFromDB call hoga (timer zero hone par)
-        // Admin pehle se result save kare, par user ko tab tak result nahi milega
-        if (oldP !== "" && oldP !== currentP) {
-            console.log("Period changed:", oldP, "->", currentP);
+        // ── FIX: Jab next period badal jaye (matlab current period khatam hua)
+        //    Tab history fetch karo — timer zero par hi result aata hai
+        if (_lastDisplayedNext !== "" && _lastDisplayedNext !== nextP) {
+            console.log("⏰ Timer zero! Completed period:", _lastDisplayedNext, "→ New next:", nextP);
+            // Jo period abhi complete hua uski history fetch karo
             fetchFromDB();
             updateAdminNextPeriod();
         }
+        _lastDisplayedNext = nextP;
+
     }, 1000);
 }
 
