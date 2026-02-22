@@ -192,6 +192,20 @@ function _mhFilterOld(bets) {
 function _mhRender(bets, total) {
     const container = document.getElementById('myHistoryCards');
     if (!container) return;
+    
+    // ✅ DUPLICATE CHECK - Agar pehle se same bets hain to skip
+    if (container.children.length > 0) {
+        const existingWrap = container.children[0];
+        if (existingWrap && existingWrap.classList.contains('mh-wrap')) {
+            const existingCards = existingWrap.querySelectorAll('.mh-card');
+            if (existingCards.length === bets.length) {
+                console.log("⏭️ Skipping duplicate render - cards already exist");
+                return;
+            }
+        }
+    }
+    
+    // Purana content hatao
     container.innerHTML = '';
 
     const wrap = document.createElement('div');
@@ -252,6 +266,8 @@ function _mhRender(bets, total) {
         `;
         wrap.appendChild(card);
     });
+
+
 
     // Pagination
     const totalPages = Math.max(1, Math.ceil(total / MH_LIMIT));
