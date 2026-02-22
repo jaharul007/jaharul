@@ -32,7 +32,7 @@
     background: #0b1730;
     border-radius: 14px;
     padding: 13px 14px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     border: 1px solid #1c3260;
     position: relative;
     overflow: hidden;
