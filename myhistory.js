@@ -32,7 +32,7 @@
     background: #0b1730;
     border-radius: 14px;
     padding: 13px 14px;
-    margin-bottom: 5px;
+    margin-bottom: -3px;
     border: 1px solid #1c3260;
     position: relative;
     overflow: hidden;
@@ -45,6 +45,7 @@
 
 /* Left color strip */
 .mh-card::before {
+display: none;
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
@@ -57,8 +58,8 @@
 
 /* ── Left Color Box ── */
 .mh-box {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 50px;
     border-radius: 13px;
     display: flex;
     align-items: center;
