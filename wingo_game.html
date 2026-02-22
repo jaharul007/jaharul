@@ -1,0 +1,2568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>JAHARUL GAME - OFFICIAL</title>
+    <style>
+    
+.big-timer-overlay {
+    display: none; 
+    position: absolute;
+    top: 33%; /* इसे थोड़ा ऊपर ले जाने के लिए */
+    left: 50%;
+    transform: translate(-50%, -50%); 
+    width: 90%; /* चौड़ा करने के लिए (आप प्रतिशत बदल सकती हैं) */
+    height: auto; /* हाइट ऑटो रखें ताकि वह सामग्री के हिसाब से एडजस्ट हो */
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 50;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; /* गैप कम किया */
+    border-radius: 15px;
+    padding: 10px; /* पैडिंग जोड़ी */
+}
+
+.timer-num-box {
+    background: #001e54;
+    color: #00ffcc;
+    font-size: 170px; /* बड़ा करने के लिए */
+    font-weight: bold;
+    padding: 13px 25px; /* चौड़ाई और ऊंचाई एडजस्ट की */
+    border-radius: 15px;
+    box-shadow: 0 0 25px rgba(0,255,204,0.5);
+    min-width: 100px;
+    text-align: center;
+    line-height: 1; /* लाइन हाइट ठीक की ताकि टेक्स्ट सही दिखे */
+}
+
+
+
+
+        /* =========================================
+           2. HEADER & NAVIGATION
+           ========================================= */
+        .nav-header { 
+            padding: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #22272d; 
+            color: #f3c34d; 
+            font-weight: bold; 
+            border-bottom: 1px solid #333;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+
+   
+        /* =========================================
+           4. WALLET SECTION
+           ========================================= */
+        .wallet-card { 
+            background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%); 
+            margin: 12px 15px; 
+            border-radius: 20px; 
+            padding: 20px; 
+            text-align: center; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .bal-txt { font-size: 32px; font-weight: 800; margin-bottom: 3px; color: #f3c34d; }
+        .w-btn-row { display: flex; gap: 15px; margin-top: 15px; }
+        .w-btn { 
+            flex: 1; 
+            padding: 14px; 
+            border-radius: 30px; 
+            border: none; 
+            font-weight: bold; 
+            color: #fff; 
+            cursor: pointer; 
+            text-decoration: none; 
+            text-align: center; 
+            font-size: 14px;
+        }
+        .withdraw { background: #ff4d4d; }
+        .deposit { background: #2ead6d; }
+
+        /* =========================================
+           5. GAME TABS - NEW CLOCK DESIGN
+           ========================================= */
+        .game-tabs { 
+            display: flex; 
+            justify-content: center; 
+            padding: 10px 15px; 
+            gap: 5px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .game-tabs::-webkit-scrollbar { display: none; }
+        
+        .card {
+            width: 94.4px;
+            height: 115px;
+            background: #252a41;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+
+        .card.active {
+            background: linear-gradient(145deg, #4ade80, #22c55e);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(0,0,0,0.2));
+            border-radius: 12px;
+            z-index: -1;
+        }
+
+        .clock-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .clock-outer {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #e8e8e8, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 
+                6px 6px 15px rgba(0, 0, 0, 0.0),
+                -6px -6px 15px rgba(255, 255, 255, 0.1),
+                inset 0 0 0 3px rgba(255, 255, 255, 255);
+            position: relative;
+        }
+
+        .clock-inner {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #b8b8b8, #d8d8d8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 
+                inset 4px 4px 8px rgba(0, 0, 0, 0.3),
+                inset -2px -2px 5px rgba(255, 255, 255, 0);
+        }
+
+        .clock-dot {
+            width: 2.5px; 
+            height: 3px;
+            background: #ffffff; 
+            position: absolute;
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+            box-shadow: 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .dot-12 { 
+            top: -.1px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+        }
+
+        .dot-3 { 
+            right: -.1px; 
+            top: 50%; 
+            transform: translateY(-50%) rotate(90deg); 
+        }
+
+        .dot-6 { 
+            bottom: -.5px; 
+            left: 50%; 
+            transform: translateX(-50%) rotate(180deg); 
+        }
+
+        .dot-9 { 
+            left: -.1px; 
+            top: 50%; 
+            transform: translateY(-50%) rotate(-90deg); 
+        }
+
+        .clock-center {
+            width: 4px;
+            height: 4px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 10;
+            box-shadow:
+                inset 0.5px 0.5px 1.5px rgba(0, 0, 0, 0.4),
+                0.5px 0.5px 1.5px rgba(0, 0, 0, 0.1);
+        }
+
+        .hour-hand {
+            width: 2px;
+            height: 8.5px;
+            background: #333;
+            border-radius: 2px;
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(-42deg); 
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            z-index: 3;
+        }
+
+        .minute-hand {
+            width: 1.6px;
+            height: 13px;
+            background: #444;
+            border-radius: 2px;
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(50deg);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        .second-hand {
+            width: 0.7px;
+            height: 14.5px;
+            background: #000000;
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(180deg);
+            z-index: 4;
+        }
+
+        .text-container {
+            text-align: center;
+        }
+
+        .wingo-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #cbd2d9;
+            margin-top: 3px;
+            text-shadow: none;
+            font-family: sans-serif;
+            line-height: 1;
+        }
+
+        .card.active .wingo-text {
+            color: #ffffff;
+        }
+
+        .clock-outer::after {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(circle, rgba(255,255,255,0.4), transparent);
+            border-radius: 50%;
+            filter: blur(2.5px);
+        }
+
+        /* =========================================
+           6. TIMER BOX
+           ========================================= */
+        .timer-box { 
+            background: #f3c34d; 
+            margin: 12px 15px; 
+            border-radius: 15px; 
+            display: flex; 
+            color: #5a3e00; 
+            min-height: 100px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .t-left { flex: 1.2; padding: 12px 15px; border-right: 1px dashed rgba(0,0,0,0.2); }
+        .t-right { flex: 1; padding: 12px 15px; text-align: right; }
+        .timer-display { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; }
+        .t-digit { 
+            background: #333; 
+            color: #fff; 
+            padding: 6px 8px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            font-size: 24px; 
+        }
+        .how-btn {
+            background: none; 
+            border: 1px solid #5a3e00; 
+            padding: 3px 10px; 
+            border-radius: 15px; 
+            font-size: 11px; 
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* =========================================
+           7. COLOR BUTTONS (Green, Violet, Red)
+           ========================================= */
+        .color-row { 
+            display: flex; 
+            gap: 10px; 
+            padding: 0 15px; 
+            margin-bottom: 12px; 
+        }
+        .c-btn { 
+            flex: 1; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: none; 
+            color: #fff; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .c-btn:active { transform: scale(0.95); }
+        .green { background: #2ead6d; } 
+        .violet { background: #9b51e0; } 
+        .red { background: #ff4d4d; }
+
+        .multiplier-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+
+        /* =========================================
+           8. NUMBER BALLS GRID - NEW LOTTERY STYLE
+           ========================================= */
+                /* =========================================
+           1. CORE LAYOUT & RESET (UPDATED)
+           ========================================= */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        body { 
+            background: #051130; /* अब पूरे शरीर का रंग वही नीला है */
+            font-family: 'Inter', sans-serif; 
+            color: #fff; 
+            display: flex; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
+        
+        /* नीचे का एक्स्ट्रा स्पेस और लेआउट हटाने के लिए अपडेटेड कोड */
+        .container { 
+        width: 100%; 
+        max-width: 450px; 
+        background: #051130; 
+        height: 100vh; 
+        display: flex; 
+        flex-direction: column; 
+        position: relative; 
+        /* padding-bottom को 0 कर दिया ताकि नीचे फालतू जगह न बचे */
+        padding-bottom: 0px; 
+        }
+        
+        .content { 
+        background: #051130; 
+        flex: 1; 
+        overflow-y: auto; 
+        scrollbar-width: none; 
+        /* नीचे की पैडिंग कम की ताकि स्क्रॉल करने पर लेआउट न दिखे */
+        padding-bottom: 80px; 
+        }
+        
+        .content::-webkit-scrollbar { display: none; }
+
+        /* =========================================
+           8. NUMBER BALLS GRID (UPDATED)
+           ========================================= */
+        .num-grid-container {
+            background: #051130; /* नंबर बॉल्स के पीछे का बैकग्राउंड अब एक जैसा है */
+            padding: 18px 20px 3px 20px;
+            margin: 0;
+            border: none; /* कोई बॉर्डर नहीं */
+        }
+
+        .num-grid { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .ball-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ================= NEW LOTTERY BALL DESIGN ================= */
+        .ball {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 26px rgba(0,0,0,0.55);
+            transition: 0.25s;
+            overflow: hidden;
+            cursor: pointer;
+            border: none;
+        }
+        .ball:hover { transform: scale(1.08); }
+        .ball:active { transform: scale(0.95); }
+
+        /* OUTER RING */
+        .ball-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            box-shadow: inset 0 -6px 12px rgba(0,0,0,0.35);
+            z-index: 1;
+        }
+        .ball-inner {
+            position: absolute;
+            width: 74%;
+            height: 74%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,1) 40%, rgba(255,255,255,0.7) 100%);
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.5);
+            z-index: 2;
+            backdrop-filter: blur(5px);
+            opacity: 0.9;
+        }
+
+        /* TOP SHINE */
+        .ball-shine-top {
+            position: absolute;
+            top: 5%;
+            left: 10%;
+            width: 75%;
+            height: 40%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, transparent 60%);
+            border-radius: 50%;
+            filter: blur(3px);
+            z-index: 3;
+        }
+
+        /* DOTS (4 Per Ball) */
+        .dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.80);
+            z-index: 4;
+            filter: blur(0.2px);
+        }
+        .dot.top { top: -10px; left: 50%; transform: translateX(-50%); }
+        .dot.bottom { bottom: -10px; left: 50%; transform: translateX(-50%); }
+        .dot.left { left: -10px; top: 50%; transform: translateY(-50%); }
+        .dot.right { right: -10px; top: 50%; transform: translateY(-50%); }
+
+        /* NUMBER */
+        .number {
+            position: relative;
+            z-index: 5;
+            font-size: 32px;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        /* COLORS */
+        .ball.red .ball-ring { background: radial-gradient(circle at 35% 35%, #ffb3b3, #ff4d4d, #b30000); }
+        .ball.red .number { color: #ff4040; }
+
+        .ball.green .ball-ring { background: radial-gradient(circle at 35% 35%, #b3f5d1, #22c55e, #149e45); }
+        .ball.green .number { color: #16a34a; }
+
+        .ball.split-0 .ball-ring { 
+    background: conic-gradient(from 226deg, #ff4d4d 180deg, #a855f7 180deg); 
+}
+.ball.split-0 .number { 
+    background: linear-gradient(135deg, #ff4d4d 50%, #a855f7 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+        .ball.split-5 .ball-ring { 
+    background: conic-gradient(from 226deg, #22c55e 180deg, #a855f7 180deg 360deg); 
+}
+.ball.split-5 .number { 
+    background: linear-gradient(135deg, #22c55e 50%, #a855f7 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+        .random-btn {
+            background: transparent;
+            border: 2px solid #e53e3e;
+            color: #e53e3e;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .random-btn:active {
+            transform: scale(0.97);
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        .multiplier-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: nowrap;
+        }
+
+        .mult-btn {
+            background: #1a1f3a;
+            border: 1px solid #2d3455;
+            color: #8b92a8;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 0 0 auto;
+        }
+
+        .mult-btn.active {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+        }
+
+        .bs-row { 
+            display: flex; 
+            gap: 0;
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .bs-btn { 
+            flex: 1; 
+            padding: 10px;
+            font-weight: 900; 
+            border: none; 
+            font-size: 18px; 
+            color: #fff; 
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .bs-btn:active {
+            opacity: 0.8;
+        }
+
+        .big { 
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+        }
+
+        .small { 
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+        }
+
+
+        .bs-multiplier {
+            background: rgba(255,255,255,0.3);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 16px;
+        }
+
+        /* =========================================
+           9. HISTORY TABS & TABLE - WITH WHITE BORDER
+           ========================================= */
+        .history-tabs {
+            display: flex;
+            background: #0f1217;
+            padding: 10px 15px 0;
+            gap: 5px;
+        }
+
+
+        /* 1. बटनों को गोल करने के लिए */
+.hist-tab {
+    flex: 1;
+    padding: 13px 1px;
+    text-align: center;
+    background: #1a2744;
+    color: #8b92a8;
+    border: none;
+    font-weight: 600;
+    border-radius: 10px; /* यहाँ 50px करने से बटन पूरी तरह गोल हो जाएंगे */
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    margin: 0 5px; /* बटनों के बीच थोड़ा गैप */
+}
+
+/* एक्टिव बटन के लिए */
+.hist-tab.active {
+    background: linear-gradient(180deg, #5df9d3 0%, #31d7ab 100%) !important;
+    color: #000 !important;
+    border-radius: 10px; /* एक्टिव होने पर भी गोल रहे */
+}
+
+        .photo-history-card { 
+            background: #051130; 
+            padding: 0 15px 20px 15px;
+        }
+
+        /* टेबल का अपना कार्ड जैसा लुक */
+/* सुनिश्चित करें कि tbody और उसके td का बैकग्राउंड वही डार्क ब्लू हो */
+.p-table {
+    background-color: #051130;
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #2b3d63; /* यह है फोटो जैसा बॉर्डर */
+    border-radius: 10px; /* कोनों को गोल करने के लिए */
+    overflow: hidden; /* ताकि बॉर्डर कोनों पर सही दिखे */
+}
+
+/* tbody td में जो बॉर्डर दिया था, वह सेल्स के बीच की लाइनें हैं, उन्हें भी आप चाहें तो एडजस्ट कर सकती हैं */
+.p-table tbody td {
+    border-top: 1px solid #2b3d63; 
+}
+
+
+
+/* 1/50 वाली पट्टी को पूरी तरह अलग (Separate) करने के लिए */
+.pagination-bar {
+    background: #2b3d63; /* बैकग्राउंड वही नीला रहेगा */
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;    /* <--- असली जादू यहाँ है, यह टेबल से इसे नीचे धकेल देगा */
+    border-radius: 12px; /* इसके कोनों को भी गोल करें ताकि यह अलग बॉक्स दिखे */
+}
+
+
+
+        .p-table th { 
+            background: #2b3d63; 
+            color: #fff; 
+            padding: 12px 5px; 
+            font-size: 13px; 
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .p-table td { 
+    padding: 10px 5px;
+    text-align: center; 
+    font-size: 13px; 
+    border-bottom: 1px solid #1a2744; 
+    color: #fff; 
+    background: #051130; /* <--- इसे '0a0e27' से बदलकर '051130' कर दो */
+}
+
+
+        .p-period { 
+            color: #8b92a8 !important; 
+            font-size: 14.5px !important; 
+        }
+
+        .res-number { 
+            font-weight: 600; 
+            font-size: 23px; 
+        }
+
+        /* टेबल और पेजिंग बटन (1/50) के बीच गैप बनाने के लिए */
+/* टेबल और 1/50 के बीच गैप और बॉर्डर के लिए */
+
+/* पेजिंग बटन को फोटो जैसा सुंदर बनाने के लिए */
+.page-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px; /* बटन को थोड़ा सा गोल किया */
+    border: none;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* पीछे वाला बटन (Previous) */
+.page-btn.prev {
+    background: #2b3d63 !important; /* फोटो जैसा डार्क नीला */
+    color: #fff !important;
+}
+
+/* आगे वाला बटन (Next) */
+.page-btn.next {
+    background: #2b3d63 !important; /* फोटो जैसा डार्क नीला */
+    color: #fff !important;
+}
+
+
+        .page-info {
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* =========================================
+           10. BETTING MODAL
+           ========================================= */
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 9999; 
+            align-items: flex-end; 
+            justify-content: center;
+        }
+        /* =========================================
+   UPDATED BETTING MODAL (AS PER PHOTO)
+   ========================================= */
+.bet-modal { 
+    width: 100%; 
+    max-width: 450px; 
+    background: #2b3038; 
+    border-radius: 15px 15px 0 0; 
+    overflow: hidden; 
+    animation: slideUp 0.3s ease-out;
+}
+.modal-blue-hdr { 
+    background: #80afff; 
+    /* हाइट बढ़ाने के लिए नीचे की पैडिंग (60px) बढ़ा दी है */
+    padding: 20px 10px 60px 10px; 
+    text-align: center; 
+    color: #fff;
+    font-size: 16px; 
+    font-weight: 500;
+    position: relative;
+    z-index: 2;
+    border-radius: 15px 15px 0 0;
+    /* यह जादुई लाइन पूरी पट्टी को नीचे से V-shape दे देगी */
+    clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 50% 100%, 0% 80%);
+}
+
+.modal-white-sel { 
+    background: #fff; 
+    color: #4fa1f9; 
+    width: 70%; /* आपकी पसंद के अनुसार छोटा */
+    margin: 0 auto; 
+    /* पट्टी को चपटा करने के लिए padding कम की है */
+    padding: 4px; 
+    border-radius: 5px; 
+    font-weight: bold; 
+    text-align: center; 
+    font-size: 17px;
+    position: relative;
+    /* पट्टी को ऊपर नीले हिस्से में चढ़ाने के लिए */
+    top: -50px; 
+    z-index: 3;
+}
+/* बॉडी के पैडिंग को थोड़ा बढ़ाएं ताकि ट्रायंगल के नीचे जगह रहे */
+.modal-body { 
+    padding: 20px 20px 15px 20px; 
+}
+
+.modal-body { padding: 0 20px 15px 20px; }
+
+.row-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+.label-txt { font-size: 16px; color: #fff; font-weight: 400; }
+
+/* Buttons Grid */
+.chip-grid, .x-grid { display: flex; gap: 8px; }
+.chip, .x-btn { 
+    background: #444b54; color: #a1a1a1; border: none; 
+    padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;
+}
+.chip.active, .x-btn.active { background: #4fa1f9; color: #fff; }
+
+/* Qty Control */
+.qty-control { display: flex; align-items: center; gap: 5px; }
+.qty-btn { background: #4fa1f9; border: none; color: #fff; width: 30px; height: 30px; border-radius: 4px; font-size: 20px; }
+.qty-input { background: #444b54; border: none; color: #fff; width: 100px; height: 30px; text-align: center; border-radius: 4px; }
+
+/* Agreement Section */
+.agree-row { display: flex; align-items: center; gap: 8px; margin-top: 15px; font-size: 13px; color: #ccc; }
+.agree-row input { accent-color: #f3c34d; width: 18px; height: 18px; }
+.rule-link { color: #d9534f; text-decoration: none; }
+
+/* Footer Buttons */
+.modal-footer { display: flex; width: 100%; margin-top: 10px; }
+.f-btn { border: none; padding: 15px; font-weight: bold; font-size: 16px; cursor: pointer; flex: 1; }
+.f-cancel { background: #444b54; color: #ccc; }
+.f-confirm { background: #4fa1f9; color: #fff; }
+
+        /* =========================================
+           11. ADMIN PANEL (HIDDEN - 3 CLICK UNLOCK)
+           ========================================= */
+        .admin-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 99999;
+            align-items: flex-start;
+            justify-content: center;
+            overflow-y: auto;
+        }
+        .admin-overlay.show { display: flex; }
+
+        .admin-panel {
+            width: 100%;
+            max-width: 450px;
+            background: #ff3131;
+            min-height: 100vh;
+            padding: 20px;
+            color: #000;
+            position: relative;
+        }
+
+        .admin-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+        .admin-header-row h1 { font-size: 22px; font-weight: 900; }
+        .admin-close-btn {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .admin-box {
+            background: rgba(0,0,0,0.15);
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .admin-box-title {
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #000;
+            margin-bottom: 12px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        /* Color Summary Row */
+        .color-sum-row {
+            display: flex;
+            justify-content: space-around;
+            gap: 8px;
+        }
+        .color-sum-item { text-align: center; }
+        .color-sum-amount {
+            font-size: 26px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 2px 2px #000;
+            display: block;
+        }
+        .color-sum-label {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 4px 16px;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: 900;
+            font-size: 12px;
+        }
+        .lbl-green { background: #2ead6d; }
+        .lbl-violet { background: #9b51e0; }
+        .lbl-red { background: #d94d4d; }
+
+        /* Number Grid */
+        .admin-num-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        .admin-num-item { text-align: center; }
+        .admin-num-ball {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 900;
+            font-size: 16px;
+        }
+        .admin-num-amt {
+            font-size: 15px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 1px 1px #000;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* Users Table */
+        .admin-users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .admin-users-table thead tr { background: rgba(0,0,0,0.3); }
+        .admin-users-table th {
+            padding: 10px 6px;
+            text-align: center;
+            font-weight: 900;
+            color: #fff;
+            font-size: 11px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .admin-users-table td {
+            padding: 9px 6px;
+            text-align: center;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .admin-users-table tr:nth-child(even) { background: rgba(0,0,0,0.1); }
+        .bal-positive { color: #7fff7f !important; }
+        .bal-zero { color: #ffcc00 !important; }
+
+        /* Force Result */
+        .force-input {
+            width: 100%;
+            padding: 18px;
+            border-radius: 15px;
+            border: 3px solid #000;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 900;
+            background: #fff;
+            margin-top: 10px;
+            color: #000;
+        }
+        .force-save-btn {
+            width: 100%;
+            padding: 18px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 15px;
+            font-weight: 900;
+            cursor: pointer;
+            font-size: 17px;
+            margin-top: 14px;
+        }
+        .force-save-btn:active { opacity: 0.8; }
+        .admin-status-txt {
+            margin-top: 16px;
+            font-weight: 900;
+            font-size: 17px;
+            color: #fff;
+            text-shadow: 1px 1px #000;
+            text-align: center;
+        }
+
+        .res-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin: 0 2px; }
+
+        .history-content { display: none; }
+        .history-content.active { display: block; }
+
+        /* =========================================
+           12. RESULT MODAL STYLES (WIN/LOSS POPUP)
+           ========================================= */
+        .result-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 99998;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .result-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Main Result Card */
+        .result-card {
+            width: 95%;
+            max-width: 360px;
+            border-radius: 50px;
+            padding: 12px 20px;
+            text-align: center;
+            position: relative;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5) translateY(100px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* WIN CARD - Orange/Red Gradient */
+        .result-card.win {
+            background: linear-gradient(180deg, #ff6b35 0%, #ff4757 100%);
+            box-shadow: 0 20px 60px rgba(255, 71, 87, 0.5);
+        }
+
+        /* LOSE CARD - Blue Gradient */
+        .result-card.lose {
+            background: linear-gradient(180deg, #a8c5e0 0%, #7fa8cc 100%);
+            box-shadow: 0 20px 60px rgba(127, 168, 204, 0.5);
+        }
+
+        /* Medal/Badge with Wings */
+        .result-badge {
+            width: 120px;
+            height: 120px;
+            margin: -60px auto 20px auto;
+            position: relative;
+        }
+
+        .badge-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .win .badge-circle {
+            background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+            border: 4px solid #fff;
+        }
+
+        .lose .badge-circle {
+            background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+            border: 4px solid #fff;
+        }
+
+        .badge-icon {
+            font-size: 50px;
+            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+        }
+
+        /* Wings */
+        .wing {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 30px;
+            z-index: 1;
+        }
+
+        .wing-left {
+            left: -15px;
+            clip-path: polygon(0% 50%, 100% 0%, 100% 100%);
+        }
+
+        .wing-right {
+            right: -15px;
+            clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+        }
+
+        .win .wing {
+            background: linear-gradient(90deg, #ffebcd 0%, #ffd700 100%);
+        }
+
+        .lose .wing {
+            background: linear-gradient(90deg, #e3f2fd 0%, #90caf9 100%);
+        }
+
+        /* Ribbon Effect */
+        .ribbon {
+            width: 100%;
+            height: 60px;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .ribbon-top {
+            width: 100%;
+            height: 40px;
+            border-radius: 10px 10px 0 0;
+            position: relative;
+        }
+
+        .win .ribbon-top {
+            background: linear-gradient(180deg, #ff8c42 0%, #ff6b35 100%);
+        }
+
+        .lose .ribbon-top {
+            background: linear-gradient(180deg, #b8d4e8 0%, #a8c5e0 100%);
+        }
+
+        .ribbon-bottom {
+            width: 100%;
+            height: 20px;
+            position: relative;
+        }
+
+        .ribbon-bottom::before,
+        .ribbon-bottom::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+        }
+
+        .ribbon-bottom::before {
+            left: 0;
+        }
+
+        .ribbon-bottom::after {
+            right: 0;
+        }
+
+        .win .ribbon-bottom::before,
+        .win .ribbon-bottom::after {
+            background: linear-gradient(180deg, #ff6b35 0%, #d63031 100%);
+        }
+
+        .lose .ribbon-bottom::before,
+        .lose .ribbon-bottom::after {
+            background: linear-gradient(180deg, #a8c5e0 0%, #7fa8cc 100%);
+        }
+
+        /* Title */
+        .result-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 15px;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Lottery Results Pills */
+        .lottery-pills {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .pill.green { background: #2ead6d; }
+        .pill.red { background: #ff4757; }
+        .pill.violet { background: #9b51e0; }
+        .pill.number {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            font-size: 18px;
+            font-weight: 900;
+        }
+        .pill.big { background: #ffa726; }
+        .pill.small { background: #42a5f5; }
+
+        /* Result Paper */
+        .result-paper {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: inset 0 -5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .win .result-paper {
+            background: linear-gradient(180deg, #fff5f5 0%, #ffe8e8 100%);
+        }
+
+        .lose .result-paper {
+            background: linear-gradient(180deg, #f0f4f8 0%, #e1e8ed 100%);
+        }
+
+        .result-label {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .win .result-label {
+            color: #ff6b35;
+        }
+
+        .lose .result-label {
+            color: #7fa8cc;
+        }
+
+        .result-amount {
+            font-size: 36px;
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        .win .result-amount {
+            color: #ff4757;
+        }
+
+        .lose .result-amount {
+            color: #95a5a6;
+        }
+
+        .result-period {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 8px;
+        }
+
+        /* Auto Close Timer */
+        /* टिक और गोले का मेन डिब्बा */
+.auto-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* टिक और गोले को एक साथ रखने वाला कंटेनर */
+.tick-container {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    /* यहाँ से आप दोनों को एक साथ लेफ्ट-राइट खिसका सकते हैं */
+    transform: translateX(-5px); 
+}
+
+#tickCircle, #tickMark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#tickMark {
+    display: block; /* शुरुआत में टिक दिखेगा */
+}
+
+        .auto-close svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Close Button */
+        .result-close-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            margin: 20px auto 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        .result-close-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* Confetti Animation (for WIN only) */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation: confettiFall 3s linear infinite;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(600px) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <audio id="timerAudio" src="https://raw.githubusercontent.com/jaharul007/jaharul/8c34ea09ff927169a424f136af48b2bed791d3b4/Screenrecorder-2026-02-17-13-24-23-472.mp3" preload="auto"></audio>
+
+<div class="container">
+    <!-- NAV HEADER (triple-click here to open admin) -->
+    <div class="nav-header" id="navHeader">
+        <span onclick="window.location.href=`homepage.html?phone=${phoneParam}`" style="cursor:pointer; font-size: 20px;">❮</span>
+        <span>JAHARUL GAME</span>
+        <span style="width: 20px;"></span>
+    </div>
+
+    <div class="content">
+        <div class="wallet-card">
+            <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                <div class="bal-txt">₹<span id="balDisplay">0.00</span></div>
+                <span onclick="loadBalance()" style="cursor:pointer; font-size: 24px; color: #f3c34d; margin-top: -5px;">🔄</span>
+            </div>
+            <span style="font-size:12px; color:#ccc; letter-spacing: 1px;">AVAILABLE BALANCE</span>
+            <div class="w-btn-row">
+                <button class="w-btn withdraw" onclick="window.location.href='withdraw.html'">Withdraw</button>
+                <button class="w-btn deposit" onclick="window.location.href='deposit.html'">Deposit</button>
+            </div>
+        </div>
+
+        <div class="game-tabs">
+            <!-- Card 1: WinGo 30sec -->
+            <div class="card" onclick="switchM(30, this)">
+                <div class="clock-container">
+                    <div class="clock-outer">
+                        <div class="clock-inner">
+                            <div class="clock-dot dot-12"></div>
+                            <div class="clock-dot dot-3"></div>
+                            <div class="clock-dot dot-6"></div>
+                            <div class="clock-dot dot-9"></div>
+                            <div class="hour-hand"></div>
+                            <div class="minute-hand"></div>
+                            <div class="second-hand"></div>
+                            <div class="clock-center"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-container">
+                    <div class="wingo-text">WinGo</div>
+                    <div class="wingo-text">30sec</div>
+                </div>
+            </div>
+
+            <!-- Card 2: WinGo 1 Min (Active by default) -->
+            <div class="card active" onclick="switchM(60, this)">
+                <div class="clock-container">
+                    <div class="clock-outer">
+                        <div class="clock-inner">
+                            <div class="clock-dot dot-12"></div>
+                            <div class="clock-dot dot-3"></div>
+                            <div class="clock-dot dot-6"></div>
+                            <div class="clock-dot dot-9"></div>
+                            <div class="hour-hand"></div>
+                            <div class="minute-hand"></div>
+                            <div class="second-hand"></div>
+                            <div class="clock-center"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-container">
+                    <div class="wingo-text">WinGo 1</div>
+                    <div class="wingo-text">Min</div>
+                </div>
+            </div>
+
+            <!-- Card 3: WinGo 3 Min -->
+            <div class="card" onclick="switchM(180, this)">
+                <div class="clock-container">
+                    <div class="clock-outer">
+                        <div class="clock-inner">
+                            <div class="clock-dot dot-12"></div>
+                            <div class="clock-dot dot-3"></div>
+                            <div class="clock-dot dot-6"></div>
+                            <div class="clock-dot dot-9"></div>
+                            <div class="hour-hand"></div>
+                            <div class="minute-hand"></div>
+                            <div class="second-hand"></div>
+                            <div class="clock-center"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-container">
+                    <div class="wingo-text">WinGo 3</div>
+                    <div class="wingo-text">Min</div>
+                </div>
+            </div>
+
+            <!-- Card 4: WinGo 5 Min -->
+            <div class="card" onclick="switchM(300, this)">
+                <div class="clock-container">
+                    <div class="clock-outer">
+                        <div class="clock-inner">
+                            <div class="clock-dot dot-12"></div>
+                            <div class="clock-dot dot-3"></div>
+                            <div class="clock-dot dot-6"></div>
+                            <div class="clock-dot dot-9"></div>
+                            <div class="hour-hand"></div>
+                            <div class="minute-hand"></div>
+                            <div class="second-hand"></div>
+                            <div class="clock-center"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-container">
+                    <div class="wingo-text">WinGo 5</div>
+                    <div class="wingo-text">Min</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timer-box">
+            <div class="t-left">
+                <button class="how-btn" onclick="showRules()">How to play</button>
+                <p id="modeName" style="margin-top:15px; font-size:14px; font-weight:bold; color: #333;">WinGo 1 Min</p>
+                <div id="miniDots" style="margin-top:8px; display:flex; gap:4px;"></div>
+            </div>
+            <div class="t-right">
+                <p style="font-size:11px; font-weight:bold; color: #555;">Time remaining</p>
+                <div class="timer-display" id="timerDigits"></div>
+                <p id="periodDisplay" style="margin-top:12px; font-size:14px; font-weight:900; letter-spacing:1px; color: #222;"></p>
+            </div>
+        </div>
+
+        <div class="color-row">
+            <button onclick="openBet('Green')" class="c-btn green">
+                <span>Green</span>
+                <span class="multiplier-text">2X</span>
+            </button>
+            <button onclick="openBet('Violet')" class="c-btn violet">
+                <span>Violet</span>
+                <span class="multiplier-text">4.5X</span>
+            </button>
+            <button onclick="openBet('Red')" class="c-btn red">
+                <span>Red</span>
+                <span class="multiplier-text">2X</span>
+            </button>
+        </div>
+
+        <div class="num-grid-container" style="position: relative;"> 
+    
+    <div id="bigTimerOverlay" class="big-timer-overlay">
+        <div class="timer-num-box" id="bigDigit1">0</div>
+        <div class="timer-num-box" id="bigDigit2">5</div>
+    </div>
+
+    <div class="num-grid" id="mainGrid"></div>
+
+
+            <div class="multiplier-row">
+                <button class="random-btn" onclick="openBet('Random')">Random</button>
+                <button class="mult-btn active" onclick="setMultiplier(1, this)">X1</button>
+                <button class="mult-btn" onclick="setMultiplier(5, this)">X5</button>
+                <button class="mult-btn" onclick="setMultiplier(10, this)">X10</button>
+                <button class="mult-btn" onclick="setMultiplier(20, this)">X20</button>
+                <button class="mult-btn" onclick="setMultiplier(50, this)">X50</button>
+                <button class="mult-btn" onclick="setMultiplier(100, this)">X100</button>
+            </div>
+
+            <div class="bs-row">
+                <button onclick="openBet('Big')" class="bs-btn big">
+                    <span>Big</span>
+                    <span class="bs-multiplier">2X</span>
+                </button>
+                <button onclick="openBet('Small')" class="bs-btn small">
+                    <span>Small</span>
+                    <span class="bs-multiplier">2X</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="history-tabs">
+            <button class="hist-tab active" onclick="switchHistoryTab(0, this)">Game history</button>
+            <button class="hist-tab" onclick="switchHistoryTab(1, this)">Chart</button>
+            <button class="hist-tab" onclick="switchHistoryTab(2, this)">My history</button>
+        </div>
+
+        <!-- ── Game History Tab ── -->
+        <div class="history-content active" id="gameHistory">
+            <div class="photo-history-card" style="background: transparent !important; padding: 10px 15px;">
+                <div style="background: #051130; border: 1.5px solid #2b3d63; border-radius: 12px; overflow: hidden; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                    <table class="p-table" style="width: 100%; border-collapse: collapse; background: #051130; border: none; margin: 0;">
+                        <thead>
+                            <tr style="background: #2b3d63;">
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Period</th>
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Number</th>
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Big Small</th>
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Color</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody" style="background: #051130;"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-bar" style="background: #051130; border: 1.5px solid #2b3d63; border-radius: 10px; padding: 10px 15px; display: flex; justify-content: center; align-items: center; gap: 40px; margin-top: 10px;">
+                    <button class="page-btn prev" style="background: #1a2a4d !important; border: none; color: #5d75a5; width: 35px; height: 35px; border-radius: 8px;" onclick="changePage(-1)">‹</button>
+                    <span class="page-info" id="pageInfo" style="color: #5d75a5; font-weight: bold; font-size: 16px;">1/50</span>
+                    <button class="page-btn next" style="background: #00ffc3 !important; border: none; color: #000; width: 35px; height: 35px; border-radius: 8px;" onclick="changePage(1)">›</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Chart Tab ── -->
+        <div class="history-content" id="chartSection"></div>
+
+        <!-- ── My History Tab ── -->
+        <div class="history-content" id="myHistory">
+            <div id="myHistoryCards"></div>
+        </div>
+        </div>
+    </div>
+
+    <!-- BETTING MODAL -->
+    <div class="modal-overlay" id="betModalOverlay" onclick="closeModalOnOverlay(event)">
+    <div class="bet-modal" onclick="event.stopPropagation()">
+        <div class="modal-blue-hdr" id="popHeader">WinGo 1 Min</div>
+        <div class="modal-white-sel" id="selType">Select --</div>
+        
+        <div class="modal-body">
+            <div class="row-item">
+                <div class="label-txt">Balance</div>
+                <div class="chip-grid">
+                    <button class="chip active" onclick="setBase(1, this)">1</button>
+                    <button class="chip" onclick="setBase(10, this)">10</button>
+                    <button class="chip" onclick="setBase(100, this)">100</button>
+                    <button class="chip" onclick="setBase(1000, this)">1000</button>
+                </div>
+            </div>
+
+            <div class="row-item">
+                <div class="label-txt">Quantity</div>
+                <div class="qty-control">
+                    <button class="qty-btn" onclick="changeQty(-1)">-</button>
+                    <input type="number" class="qty-input" id="qtyInput" value="1" oninput="updateTotal()">
+                    <button class="qty-btn" onclick="changeQty(1)">+</button>
+                </div>
+            </div>
+
+            <div class="row-item" style="justify-content: flex-end;">
+                <div class="x-grid">
+                    <button class="x-btn active" onclick="setX(1, this)">X1</button>
+                    <button class="x-btn" onclick="setX(5, this)">X5</button>
+                    <button class="x-btn" onclick="setX(10, this)">X10</button>
+                    <button class="x-btn" onclick="setX(20, this)">X20</button>
+                    <button class="x-btn" onclick="setX(50, this)">X50</button>
+                    <button class="x-btn" onclick="setX(100, this)">X100</button>
+                </div>
+            </div>
+
+            <div class="agree-row">
+                <input type="checkbox" id="agreeCheck" checked>
+                <span>I agree <a href="#" class="rule-link">《Pre-sale rules》</a></span>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="f-btn f-cancel" onclick="closeBetPopup()">Cancel</button>
+            <button class="f-btn f-confirm" onclick="confirmBet()" id="confirmBtn">
+                Total amount ₹<span id="totalTxt">1.00</span>
+            </button>
+        </div>
+    </div>
+</div>
+    <!-- ================================================
+         ADMIN PANEL (hidden by default, 3-click unlock)
+         ================================================ -->
+    <div class="admin-overlay" id="adminOverlay">
+        <div class="admin-panel">
+            <div class="admin-header-row">
+                <h1>MASTER CONTROL</h1>
+                <button class="admin-close-btn" onclick="closeAdmin()">CLOSE</button>
+            </div>
+
+            <!-- Color Bet Summary -->
+            <div class="admin-box">
+                <div class="admin-box-title">Total Bets on Colors</div>
+                <div class="color-sum-row">
+                    <div class="color-sum-item">
+                        <span class="color-sum-amount" id="admin-sum-Green">₹0</span>
+                        <span class="color-sum-label lbl-green">Green</span>
+                    </div>
+                    <div class="color-sum-item">
+                        <span class="color-sum-amount" id="admin-sum-Violet">₹0</span>
+                        <span class="color-sum-label lbl-violet">Violet</span>
+                    </div>
+                    <div class="color-sum-item">
+                        <span class="color-sum-amount" id="admin-sum-Red">₹0</span>
+                        <span class="color-sum-label lbl-red">Red</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Number-wise Tracking -->
+            <div class="admin-box">
+                <div class="admin-box-title">Number-wise Bet Tracking</div>
+                <div class="admin-num-grid" id="adminNumGrid"></div>
+            </div>
+
+            <!-- All Users Table -->
+            <div class="admin-box">
+                <div class="admin-box-title">All Users & Balances</div>
+                <table class="admin-users-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Balance</th>
+                            <th>Active Bets</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersBody">
+                        <tr><td colspan="4" style="color:#fff; padding:15px;">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Force Result -->
+            <div class="admin-box" style="text-align: center;">
+                <div class="admin-box-title">Force Next Winner</div>
+                <p style="color:#fff; font-weight:700; margin-bottom:8px;">Next Period: <span id="adminNextPeriod">---</span></p>
+                <input type="number" id="adminForceInp" class="force-input" placeholder="0-9" min="0" max="9">
+                <button class="force-save-btn" onclick="adminSaveForce()">SAVE RESULT NOW</button>
+                <div class="admin-status-txt" id="adminStatusTxt">STATUS: AUTO MODE</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================
+     RESULT MODAL (WIN/LOSS POPUP)
+     ================================================ -->
+<div class="result-overlay" id="resultOverlay">
+    <div class="result-card" id="resultCard">
+        <!-- Badge with Wings -->
+        <div class="result-badge">
+            <div class="wing wing-left"></div>
+            <div class="badge-circle">
+                <div class="badge-icon">🚀</div>
+            </div>
+            <div class="wing wing-right"></div>
+        </div>
+
+        <!-- Ribbon -->
+        <div class="ribbon">
+            <div class="ribbon-top">
+                <h2 class="result-title" id="resultTitle">Congratulations</h2>
+            </div>
+            <div class="ribbon-bottom"></div>
+        </div>
+
+        <!-- Lottery Result Pills -->
+        <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 8px;">Lottery results</div>
+        <div class="lottery-pills" id="lotteryPills"></div>
+
+        <!-- Result Paper -->
+        <div class="result-paper">
+            <div class="result-label" id="resultLabel">Bonus</div>
+            <div class="result-amount" id="resultAmount">₹0.00</div>
+            <div class="result-period" id="resultPeriod">Period: WinGo 1 Min<br>202506281000999</div>
+        </div>
+
+        <!-- Manual Close with Tick Toggle -->
+        <div class="auto-close" onclick="toggleAutoClose()" style="cursor: pointer;">
+    <div class="tick-container">
+        <svg id="tickCircle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+        </svg>
+        <svg id="tickMark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+    <span>Click to close</span>
+</div>
+
+
+        <!-- Close Button -->
+        <button class="result-close-btn" onclick="closeResultPopup()">✕</button>
+
+        <!-- Confetti Container (for wins) -->
+        <div id="confettiContainer"></div>
+    </div>
+</div>
+
+<script>
+// ========================================
+// GLOBAL SETTINGS & AUTH
+// ========================================
+const urlParams = new URLSearchParams(window.location.search);
+
+const globalPhone = urlParams.get('phone');
+const phoneParam = globalPhone ? encodeURIComponent(globalPhone) : "";
+
+let currentMode = 60, baseAmount = 1, multiplier = 1, selectedBetValue = "";
+let currentUserPhone = null, currentPage = 1, totalPages = 50, currentBalance = 0;
+let userBets = [];
+let activeBetChecks = {};
+
+function getCurrentUserPhone() {
+    return globalPhone;
+}
+
+// ========================================
+// ADMIN SYSTEM (TRIPLE CLICK NAV TO OPEN)
+// ========================================
+let adminClickCount = 0;
+document.getElementById('navHeader').addEventListener('click', (e) => {
+    if (e.target.closest('span')?.style.cursor === 'pointer') return;
+    adminClickCount++;
+    setTimeout(() => { adminClickCount = 0; }, 1000);
+    if (adminClickCount >= 3) openAdmin();
+});
+
+function openAdmin() {
+    document.getElementById('adminOverlay').classList.add('show');
+    buildAdminNumGrid();
+    updateAdminNextPeriod();
+    syncAdminData();
+}
+
+function closeAdmin() { 
+    document.getElementById('adminOverlay').classList.remove('show'); 
+}
+
+function buildAdminNumGrid() {
+    const grid = document.getElementById('adminNumGrid');
+    grid.innerHTML = '';
+    for (let i = 0; i <= 9; i++) {
+        let col = (i === 0 || i === 5) ? '#9b51e0' : (i % 2 === 0 ? '#d94d4d' : '#2ead6d');
+        grid.innerHTML += `<div class="admin-num-item"><div class="admin-num-ball" style="background:${col}">${i}</div><span class="admin-num-amt" id="admin-sum-Num${i}">₹0</span></div>`;
+    }
+}
+
+// ========================================
+// ADMIN NEXT PERIOD DISPLAY
+// ========================================
+function updateAdminNextPeriod() {
+    // FIX 4: periodDisplay pehle se NEXT period dikhata hai — wahi admin ko bhi dikho
+    const nextP = document.getElementById('periodDisplay').innerText.trim();
+    if (nextP) document.getElementById('adminNextPeriod').innerText = nextP;
+}
+
+// ========================================
+// ADMIN SAVE FORCE FUNCTION (FIXED)
+// ========================================
+async function adminSaveForce() {
+    const val = document.getElementById('adminForceInp').value;
+    
+    if (val === '' || val < 0 || val > 9) {
+        alert('⚠️ Enter number 0-9');
+        return;
+    }
+
+    // FIX 4: periodDisplay mein pehle se NEXT period hai — usi ke liye force karo
+    const nextPeriod = document.getElementById('periodDisplay').innerText.trim();
+    if (!nextPeriod) { alert('⚠️ Timer load nahi hua, thoda wait karo'); return; }
+
+    console.log("🔧 Admin forcing:", val, "for period:", nextPeriod);
+
+    try {
+        const res = await fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                action: 'generateResult',
+                number: parseInt(val), 
+                mode: parseInt(currentMode), 
+                period: nextPeriod,
+                isAdmin: true
+            })
+        });
+        
+        const data = await res.json();
+        console.log("📊 Response:", data);
+        
+        if (data.success) { 
+            alert(`✅ Result ${val} saved for NEXT PERIOD ${nextPeriod}`);
+            document.getElementById('adminForceInp').value = '';
+            document.getElementById('adminStatusTxt').innerText = `FORCED: ${val} for ${nextPeriod}`;
+            syncAdminData();
+        } else {
+            alert('❌ Error: ' + (data.message || 'Failed'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('❌ Error: ' + err.message);
+    }
+}
+
+// ========================================
+// SYNC ADMIN DATA FUNCTION
+// ========================================
+async function syncAdminData() {
+    const period = document.getElementById('periodDisplay').innerText.trim();
+    
+    try {
+        const res = await fetch(`/api/history?action=adminSummary&period=${period}&mode=${currentMode}`);
+        const data = await res.json();
+        
+        if (data.success) {
+            document.getElementById('admin-sum-Green').innerText = '₹' + (data.colorSums.Green || 0);
+            document.getElementById('admin-sum-Violet').innerText = '₹' + (data.colorSums.Violet || 0);
+            document.getElementById('admin-sum-Red').innerText = '₹' + (data.colorSums.Red || 0);
+            
+            for (let i = 0; i <= 9; i++) {
+                document.getElementById('admin-sum-Num' + i).innerText = '₹' + (data.numberSums[i] || 0);
+            }
+            
+            if (data.userList && data.userList.length > 0) {
+                const tbody = document.getElementById('adminUsersBody');
+                tbody.innerHTML = data.userList.map((u, idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${u.phoneNumber.substring(0, 10)}...</td>
+                        <td class="${u.balance > 0 ? 'bal-positive' : 'bal-zero'}">₹${u.balance.toFixed(2)}</td>
+                        <td>${u.activeBets}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+    } catch (e) {
+        console.error("Sync error:", e);
+    }
+}
+
+// ========================================
+// CHECK BET RESULT FUNCTION
+// ========================================
+// FIX 3: Ye function sirf tabhi call hota hai jab user ne bet lagayi ho
+// FIX 4: Timer zero hone ke BAAD hi result popup dikhega
+async function checkBetResult(betData) {
+    const checkKey = betData.phone + '_' + betData.period;
+
+    // Duplicate check — same bet dobara check na ho
+    if (activeBetChecks[checkKey]) return;
+    activeBetChecks[checkKey] = true;
+
+    console.log('🔍 Bet placed for period:', betData.period, '— waiting for timer zero...');
+
+    const checkInterval = setInterval(async () => {
+        try {
+            // FIX 4: periodDisplay ab NEXT period dikhata hai
+            // Jab displayed NEXT period > bet period → timer zero hua
+            const displayedNext = document.getElementById('periodDisplay').innerText.trim();
+            if (!displayedNext) return;
+
+            // String compare karo — period numbers lexicographically sortable hain
+            if (displayedNext <= betData.period) {
+                // Abhi bet wala period chal raha hai — ruko
+                console.log('⏳ Timer not zero yet. Bet period:', betData.period, 'Display next:', displayedNext);
+                return;
+            }
+
+            // ✅ Timer zero ho gaya — ab result fetch karo
+            console.log('✅ Timer zero! Fetching result for period:', betData.period);
+
+            const res = await fetch(
+                `/api/history?action=checkResult&phone=${encodeURIComponent(betData.phone)}&period=${betData.period}&mode=${betData.mode}`
+            );
+            const data = await res.json();
+            console.log('📊 Result status:', data.status);
+
+            // Result abhi DB mein nahi aaya — agla interval mein dobara try
+            if (!data.status || data.status === 'pending') {
+                console.log('⏳ Result pending in DB, retrying...');
+                return;
+            }
+
+            // Result aa gaya — interval band karo
+            clearInterval(checkInterval);
+            delete activeBetChecks[checkKey];
+
+            // FIX 3: Sirf is user ko popup dikhao (ye function sirf bet wale ke liye chala)
+            if (data.status === 'won') {
+                console.log('🎉 WIN! ₹' + data.winAmount);
+                showResultPopup('win', data.winAmount, betData.period, data.resultNumber, betData.betOn);
+                if (data.newBalance !== undefined) {
+                    currentBalance = data.newBalance;
+                    document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
+                }
+            } else if (data.status === 'lost') {
+                console.log('😢 LOSS');
+                showResultPopup('lose', 0, betData.period, data.resultNumber, betData.betOn);
+            }
+
+            setTimeout(() => { loadBalance(); loadMyHistory(); }, 1000);
+
+        } catch (e) {
+            console.error('checkBetResult error:', e);
+        }
+    }, 2000);
+
+    // 5 minute timeout — safety
+    setTimeout(() => {
+        clearInterval(checkInterval);
+        delete activeBetChecks[checkKey];
+    }, 300000);
+}
+
+// ========================================
+// CONFIRM BET FUNCTION (FIXED - NEXT PERIOD)
+// ========================================
+async function confirmBet() {
+    // ✅ FIX: Last 5 seconds mein confirm bhi nahi hona chahiye
+    if (bettingLocked) {
+        alert('⏰ Betting band ho gayi! Timer khatam hone ka wait karo.');
+        closeBetPopup();
+        return;
+    }
+    
+    const phone = getCurrentUserPhone();
+    if (!phone) { 
+        alert('❌ Please login first!'); 
+        return; 
+    }
+
+
+
+    const totalAmt = parseFloat(document.getElementById('totalTxt').innerText);
+    
+    // FIX 2: periodDisplay mein pehle se NEXT period hai — seedha wahi use karo
+    const nextPeriod = document.getElementById('periodDisplay').innerText.trim();
+
+    console.log(`\n💰 PLACING BET`);
+    console.log(`Phone: ${phone}`);
+    console.log(`Bet: ${selectedBetValue}, Amount: ₹${totalAmt}`);
+    console.log(`For PERIOD: ${nextPeriod}`);
+    
+    if (currentBalance < totalAmt) {
+        alert(`❌ Insufficient Balance!\n\nYour Balance: ₹${currentBalance.toFixed(2)}\nBet Amount: ₹${totalAmt.toFixed(2)}`);
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmBtn');
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = 'Processing...<span class="spinner"></span>';
+    confirmBtn.disabled = true;
+
+    try {
+        const betRes = await fetch(`/api/history`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'placeBet',
+                phone: phone,
+                period: nextPeriod,
+                mode: currentMode,
+                betOn: selectedBetValue,
+                amount: totalAmt
+            })
+        });
+
+        const betResult = await betRes.json();
+        console.log('📊 Response:', betResult);
+        
+        if (!betResult.success) {
+            alert('❌ ' + (betResult.message || 'Bet failed!'));
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+            return;
+        }
+
+        currentBalance = parseFloat(betResult.newBalance);
+        document.getElementById('balDisplay').innerText = currentBalance.toFixed(2);
+        
+        console.log(`✅ Bet placed! Balance: ₹${currentBalance}`);
+        
+        closeBetPopup();
+        loadMyHistory();
+        
+        const betData = { phone, period: nextPeriod, mode: currentMode, betOn: selectedBetValue, amount: totalAmt };
+        checkBetResult(betData);
+        
+    } catch(e) {
+        console.error('❌ Error:', e);
+        alert('❌ Server Error!');
+    } finally {
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+    }
+}
+
+// ========================================
+// LOAD MY HISTORY FUNCTION
+// ========================================
+async function loadMyHistory() {
+    const phone = getCurrentUserPhone();
+    if (!phone) return;
+    
+    try {
+        const res = await fetch(`/api/bet?phone=${phone}&mode=${currentMode}`);
+        const data = await res.json();
+        
+        if (data.success && data.bets && data.bets.length > 0) {
+            userBets = data.bets;
+            document.getElementById('myHistoryTable').style.display = 'table';
+            document.getElementById('myHistoryEmpty').style.display = 'none';
+            
+            const html = userBets.slice(0, 20).map(bet => {
+                let statusColor = '#f59e0b', statusIcon = '⏳', statusText = 'Pending';
+                if (bet.status === 'won') { 
+                    statusColor = '#10b981'; 
+                    statusIcon = '✅'; 
+                    statusText = `+₹${(bet.winAmount || 0).toFixed(2)}`; 
+                }
+                else if (bet.status === 'lost') { 
+                    statusColor = '#ef4444'; 
+                    statusIcon = '❌'; 
+                    statusText = `-₹${bet.amount.toFixed(2)}`; 
+                }
+                
+                return `<tr>
+                    <td class="p-period">${bet.period}</td>
+                    <td style="color:#4fa1f9; font-weight:700;">${bet.betOn}</td>
+                    <td style="color:#f59e0b; font-weight:700;">₹${bet.amount.toFixed(2)}</td>
+                    <td><span style="color:${statusColor}; font-size:16px;">${statusIcon} ${statusText}</span></td>
+                </tr>`;
+            }).join('');
+            
+            document.getElementById('myHistoryBody').innerHTML = html;
+        } else {
+            document.getElementById('myHistoryTable').style.display = 'none';
+            document.getElementById('myHistoryEmpty').innerText = 'No bets yet';
+            document.getElementById('myHistoryEmpty').style.display = 'block';
+        }
+    } catch (e) {
+        console.error("History error:", e);
+    }
+}
+
+// ========================================
+// FETCH FROM DB FUNCTION
+// ========================================
+async function fetchFromDB() {
+    try {
+        const now = new Date();
+        const total = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+        const dateStr = now.getFullYear().toString() + 
+                       (now.getMonth() + 1).toString().padStart(2, '0') + 
+                       now.getDate().toString().padStart(2, '0');
+        const currentPeriod = dateStr + Math.floor(total / currentMode).toString().padStart(4, '0');
+        
+        try {
+            const saveRes = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'generateResult',
+                    period: currentPeriod, 
+                    mode: currentMode 
+                })
+            });
+            
+            const saveData = await saveRes.json();
+            console.log('📊 Result:', saveData.message);
+            
+        } catch(e) { 
+            console.log("Save error:", e.message); 
+        }
+        
+        const res = await fetch(`/api/history?action=getHistory&mode=${currentMode}&page=${currentPage}`);
+        if(res.ok) { 
+            const data = await res.json();
+            let historyData = data.results || [];
+            renderHistory(historyData);
+        }
+
+        loadBalance(); 
+    } catch (e) {
+        console.error("Error:", e);
+    }
+}
+    
+// ========================================
+// BALANCE MANAGEMENT
+// ========================================
+async function loadBalance() {
+    const balElement = document.getElementById('balDisplay');
+    if (!globalPhone) return;
+
+    try {
+        const res = await fetch(`/api/auth?action=getBalance&phoneNumber=${phoneParam}`);
+        const data = await res.json();
+        
+        if (data.success) {
+            currentBalance = parseFloat(data.balance);
+            balElement.innerText = currentBalance.toFixed(2);
+        }
+    } catch (err) {
+        console.error('Balance load error:', err);
+    }
+}
+
+// ========================================
+// RESULT POPUP FUNCTIONS
+// ========================================
+function showResultPopup(type, amount, period, resultNumber, betOn) {
+    const overlay = document.getElementById('resultOverlay');
+    const card = document.getElementById('resultCard');
+    const title = document.getElementById('resultTitle');
+    const label = document.getElementById('resultLabel');
+    const amountEl = document.getElementById('resultAmount');
+    const periodEl = document.getElementById('resultPeriod');
+    const pillsContainer = document.getElementById('lotteryPills');
+    
+    card.className = 'result-card ' + type;
+    
+    if (type === 'win') {
+        title.innerText = 'Congratulations';
+        label.innerText = 'Bonus';
+        amountEl.innerText = '₹' + amount.toFixed(2);
+        amountEl.style.color = '#ff4757';
+        createConfetti();
+    } else {
+        title.innerText = 'Sorry';
+        label.innerText = 'Lose';
+        amountEl.innerText = 'Lose';
+        amountEl.style.color = '#95a5a6';
+        document.getElementById('confettiContainer').innerHTML = '';
+    }
+    
+    const modeName = document.getElementById('modeName').innerText;
+    periodEl.innerHTML = `Period: ${modeName}<br>${period}`;
+    
+    pillsContainer.innerHTML = generateResultPills(resultNumber);
+    
+    overlay.classList.add('show');
+    
+    document.getElementById('tickMark').style.display = 'block';
+}
+
+function generateResultPills(number) {
+    let html = '';
+    
+    let color = (number % 2 === 0) ? 'red' : 'green';
+    if (number === 0 || number === 5) {
+        color = 'violet';
+    }
+    html += `<span class="pill ${color}">${color.charAt(0).toUpperCase() + color.slice(1)}</span>`;
+    
+    let numColor = (number % 2 === 0) ? 'red' : 'green';
+    if (number === 0 || number === 5) numColor = 'violet';
+    html += `<span class="pill number ${numColor}">${number}</span>`;
+    
+    let size = number >= 5 ? 'big' : 'small';
+    html += `<span class="pill ${size}">${size.charAt(0).toUpperCase() + size.slice(1)}</span>`;
+    
+    return html;
+}
+
+function closeResultPopup() {
+    document.getElementById('resultOverlay').classList.remove('show');
+}
+
+function toggleAutoClose() {
+    const tickMark = document.getElementById('tickMark');
+    if (tickMark.style.display === 'none') {
+        tickMark.style.display = 'block';
+    } else {
+        tickMark.style.display = 'none';
+    }
+}
+
+function createConfetti() {
+    const container = document.getElementById('confettiContainer');
+    container.innerHTML = '';
+    
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        container.appendChild(confetti);
+    }
+}
+
+// ========================================
+// BETTING FUNCTIONS (MODAL RESET FIXED)
+// ========================================
+function showRules() {
+    alert(`🎮 WinGo Game Rules:
+
+Green (1,3,5,7,9): Win 2x or 4.5x
+Red (0,2,4,6,8): Win 2x or 4.5x
+Violet (0,5): Win 4.5x
+Number (0-9): Win 9x
+Big (5-9): Win 2x
+Small (0-4): Win 2x
+
+Good luck! 🍀`);
+}
+
+function openBet(val) {
+    // ✅ FIX: Last 5 seconds mein bet nahi lag sakti
+    if (bettingLocked) {
+        return; // Silently block - buttons disabled hain, yeh extra safety hai
+    }
+    
+    const phone = getCurrentUserPhone();
+    if (!phone) {
+        alert('❌ Unable to get user info. Please refresh the page.');
+        return;
+    }
+    
+    // ✅ RESET ALL VALUES TO DEFAULT
+    baseAmount = 1;
+    multiplier = 1;
+    selectedBetValue = val;
+    
+    // Reset UI
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.chip')[0].classList.add('active'); // First chip (1) active
+    
+    document.querySelectorAll('.x-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.x-btn')[0].classList.add('active'); // X1 active
+    
+    document.getElementById('qtyInput').value = 1;
+    
+    document.getElementById('selType').innerText = "Select " + val;
+    document.getElementById('popHeader').innerText = document.getElementById('modeName').innerText;
+    document.getElementById('betModalOverlay').style.display = 'flex';
+    
+    updateTotal(); // Total bhi update karo
+}
+
+function closeBetPopup() { 
+    document.getElementById('betModalOverlay').style.display = 'none'; 
+}
+
+function closeModalOnOverlay(event) {
+    if (event.target.id === 'betModalOverlay') closeBetPopup();
+}
+
+function setBase(v, b) { 
+    baseAmount = v; 
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); 
+    b.classList.add('active'); 
+    updateTotal(); 
+}
+
+function setX(v, b) { 
+    multiplier = v; 
+    document.querySelectorAll('.x-btn').forEach(x => x.classList.remove('active')); 
+    b.classList.add('active'); 
+    updateTotal(); 
+}
+
+function changeQty(v) { 
+    let i = document.getElementById('qtyInput'); 
+    i.value = Math.max(1, (parseInt(i.value) || 0) + v); 
+    updateTotal(); 
+}
+
+function updateTotal() { 
+    let qty = parseInt(document.getElementById('qtyInput').value) || 1; 
+    document.getElementById('totalTxt').innerText = (baseAmount * qty * multiplier).toFixed(2); 
+}
+
+function setMultiplier(val, btn) {
+    document.querySelectorAll('.mult-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function getBetType(betValue) {
+    if (betValue === 'Green' || betValue === 'Red' || betValue === 'Violet') return 'color';
+    if (betValue === 'Big' || betValue === 'Small') return 'size';
+    if (betValue === 'Random') return 'random';
+    return 'number';
+}
+
+// ========================================
+// HISTORY FUNCTIONS
+// ========================================
+function switchHistoryTab(index, btn) {
+    document.querySelectorAll('.hist-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.history-content').forEach(c => c.classList.remove('active'));
+    const sections = ['gameHistory', 'chartSection', 'myHistory'];
+    document.getElementById(sections[index]).classList.add('active');
+    if (index === 2) { _mhPage = 1; loadMyHistory(); }
+    if (index === 0) fetchFromDB();
+}
+
+function changePage(direction) {
+    currentPage += direction;
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('pageInfo').innerText = currentPage + '/' + totalPages;
+    fetchFromDB();
+}
+
+function renderHistory(history) {
+    const miniDots = document.getElementById('miniDots'); 
+    const historyBody = document.getElementById('historyBody');
+    
+    if(!history || history.length === 0) {
+        historyBody.innerHTML = '<tr><td colspan="4">No Data</td></tr>';
+        miniDots.innerHTML = '';
+        return;
+    }
+
+    // --- 1. 'How to Play' के नीचे 5 छोटी बॉल्स ---
+    const recentResults = history.slice(0, 5);
+    miniDots.innerHTML = recentResults.map(item => {
+        const n = parseInt(item.n || item.number || item.result || 0);
+        let ballClass = (n % 2 === 0) ? 'red' : 'green';
+        if (n === 0) ballClass = 'split-0';
+        if (n === 5) ballClass = 'split-5';
+        
+        return `<div class="ball ${ballClass}" style="width:25px; height:25px; box-shadow:none;">
+                    <div class="ball-ring"></div>
+                    <div class="number" style="font-size:14px; -webkit-text-fill-color: initial; background:none; color:white;">${n}</div>
+                </div>`;
+    }).join('');
+
+    // --- 2. नीचे वाली टेबल का डेटा ---
+    const html = history.slice(0, 10).map(i => {
+        const n = parseInt(i.n || i.number || i.result || 0);
+        const period = i.p || i.period || 'N/A';
+        let numColor = (n % 2 === 0) ? '#ff4d4d' : '#10b981';
+        if (n === 0 || n === 5) numColor = '#9b51e0';
+        
+        let dots = '';
+        if (n === 0) {
+            dots = '<span class="res-dot" style="background:#ff4d4d;"></span><span class="res-dot" style="background:#9b51e0;"></span>';
+        } else if (n === 5) {
+            dots = '<span class="res-dot" style="background:#10b981;"></span><span class="res-dot" style="background:#9b51e0;"></span>';
+        } else {
+            dots = `<span class="res-dot" style="background:${numColor};"></span>`;
+        }
+        
+        const sizeText = n >= 5 ? 'Big' : 'Small';
+        const sizeColor = n >= 5 ? '#ffa726' : '#42a5f5';
+        
+        return `<tr>
+            <td class="p-period">${period}</td>
+            <td><span class="res-number" style="color:${numColor};">${n}</span></td>
+            <td style="color:${sizeColor}; font-weight:600;">${sizeText}</td>
+            <td><div style="display:flex; justify-content:center;">${dots}</div></td>
+        </tr>`;
+    }).join('');
+    
+    historyBody.innerHTML = html;
+}
+
+
+// ========================================
+// SOUND - Original audio file se bajao (aapka apna MP3)
+// ========================================
+function playTimerSound() {
+    const audio = document.getElementById('timerAudio');
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log("Sound play error:", e));
+    }
+}
+
+// ========================================
+// FIX: Last 5 seconds mein betting band karo
+// ========================================
+let bettingLocked = false;
+function setBettingLock(lock) {
+    if (bettingLocked === lock) return;
+    bettingLocked = lock;
+    // Balls aur color/size buttons disable karo
+    document.querySelectorAll('#mainGrid .ball, #mainGrid .ball-wrapper').forEach(el => {
+        el.style.pointerEvents = lock ? 'none' : '';
+        el.style.opacity = lock ? '0.4' : '';
+    });
+    document.querySelectorAll('.color-row .bet-btn, .size-row .bet-btn').forEach(btn => {
+        btn.style.pointerEvents = lock ? 'none' : '';
+        btn.style.opacity = lock ? '0.4' : '';
+    });
+    if (lock) closeBetPopup();
+}
+
+// ========================================
+// FIX 3: Timer - result sirf tab aayega jab timer actually zero ho
+// Admin pehle se number save kare par user ko result timer ke baad milega
+// ========================================
+function startTimer() {
+    // _prevNextP: pichli baar ka NEXT period track karne ke liye
+    let _prevNextP = "";
+
+    setInterval(() => {
+        let now = new Date();
+        let totalSeconds = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+        let rem = currentMode - (totalSeconds % currentMode);
+
+        let m = Math.floor(rem / 60).toString().padStart(2, '0');
+        let s = (rem % 60).toString().padStart(2, '0');
+
+        // Chhota timer update
+        document.getElementById('timerDigits').innerHTML =
+            `<span class="t-digit">${m[0]}</span><span class="t-digit">${m[1]}</span>` +
+            `<span style="color:#333;font-weight:bold;margin:0 4px;font-size:24px;">:</span>` +
+            `<span class="t-digit">${s[0]}</span><span class="t-digit">${s[1]}</span>`;
+
+        let bigOverlay = document.getElementById('bigTimerOverlay');
+        if (rem <= 5) {
+            if (bigOverlay.style.display !== 'flex') playTimerSound();
+            bigOverlay.style.display = 'flex';
+            document.getElementById('bigDigit1').innerText = s[0];
+            document.getElementById('bigDigit2').innerText = s[1];
+            setBettingLock(true);
+        } else {
+            bigOverlay.style.display = 'none';
+            setBettingLock(false);
+        }
+
+        // FIX 1 + 2: periodDisplay = NEXT period (jo aane wala hai)
+        // Isi period mein user ka bet lagta hai
+        let dateStr = now.getFullYear().toString()
+            + (now.getMonth() + 1).toString().padStart(2, '0')
+            + now.getDate().toString().padStart(2, '0');
+        let currentPeriodNum = Math.floor(totalSeconds / currentMode);
+        let nextPeriodNum    = currentPeriodNum + 1;
+        let nextP = dateStr + nextPeriodNum.toString().padStart(4, '0');
+
+        // Timer ke niche NEXT period dikhao
+        document.getElementById('periodDisplay').innerText = nextP;
+
+        // Jab nextP badal gaya = timer zero hua = purana period complete hua
+        // Ab fetchFromDB karo taaki history update ho
+        if (_prevNextP !== "" && _prevNextP !== nextP) {
+            console.log("⏰ Timer zero! Period complete:", _prevNextP, "→ New next:", nextP);
+            fetchFromDB();
+            updateAdminNextPeriod();
+        }
+        _prevNextP = nextP;
+
+    }, 1000);
+}
+
+
+
+function switchM(s, el) {
+    currentMode = s;
+    document.querySelectorAll('.card').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('modeName').innerText = "WinGo " + (s >= 60 ? (s/60)+" Min" : s+" Sec");
+    currentPage = 1;
+    document.getElementById('pageInfo').innerText = currentPage + '/' + totalPages;
+    updateAdminNextPeriod();
+    fetchFromDB();
+}
+
+// ========================================
+// LOTTERY BALLS GENERATOR (0-9)
+// ========================================
+window.onload = () => {
+    getCurrentUserPhone();
+    loadBalance();
+    
+    const grid = document.getElementById('mainGrid');
+    grid.innerHTML = '';
+    
+    const ballData = [
+        { num: 0, class: 'split-0' },
+        { num: 1, class: 'green' },
+        { num: 2, class: 'red' },
+        { num: 3, class: 'green' },
+        { num: 4, class: 'red' },
+        { num: 5, class: 'split-5' },
+        { num: 6, class: 'red' },
+        { num: 7, class: 'green' },
+        { num: 8, class: 'red' },
+        { num: 9, class: 'green' }
+    ];
+
+    ballData.forEach(item => {
+        let wrapper = document.createElement('div');
+        wrapper.className = 'ball-wrapper';
+        
+        let ball = document.createElement('button');
+        ball.className = `ball ${item.class}`;
+        ball.onclick = () => openBet(item.num);
+        
+        ball.innerHTML = `
+            <div class="ball-ring"></div>
+            <div class="ball-inner"></div>
+            <div class="ball-shine-top"></div>
+            <div class="dot top"></div>
+            <div class="dot bottom"></div>
+            <div class="dot left"></div>
+            <div class="dot right"></div>
+            <div class="number">${item.num}</div>
+        `;
+        
+        let mult = document.createElement('span');
+        mult.className = 'multiplier-text';
+        mult.innerText = '9X';
+        
+        wrapper.appendChild(ball);
+        wrapper.appendChild(mult);
+        grid.appendChild(wrapper);
+    });
+    
+    fetchFromDB();
+    startTimer();
+};
+</script>
+    <!-- ── My History JS (photo-style cards) ── -->
+    <script src="myhistory.js"></script>
+</body>
+</html>
