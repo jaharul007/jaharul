@@ -1,11 +1,6 @@
 // ================================================================
 //  myhistory.js  —  My History Tab (Photo-style Cards)
-//
-//  Kya karta hai:
-//  1. "My history" click → game history HIDE, ye cards UPAR dikhte hain
-//  2. Photo jaisi card design: Color box + Period + Succeed/Failed
-//  3. 24 hours se purani bets automatic filter/delete ho jaati hain
-//  4. /api/bet se data fetch karta hai (auth.js ke saath compatible)
+//  FINAL VERSION - With all fixes
 // ================================================================
 
 // ── 1. CSS INJECT ────────────────────────────────────────────
@@ -13,13 +8,13 @@
     const s = document.createElement('style');
     s.textContent = `
 
-/* My History tab content bilkul game history ki jagah aaye */
+/* My History tab content */
 #myHistory {
     padding: 0;
     background: transparent;
 }
 
-/* Wrapper — game history jaise hi spacing */
+/* Wrapper */
 .mh-wrap {
     padding: 10px 15px 20px 15px;
 }
@@ -43,7 +38,7 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Left color strip - HATTA DIYA */
+/* Left color strip - HATAYA */
 .mh-card::before {
     display: none;
 }
@@ -169,7 +164,6 @@ function _mhFmt(ts) {
 }
 
 // ── 5. HELPER: 24hr filter ───────────────────────────────────
-// 24 ghante se purani bets ko filter karo — automatically hatao
 function _mhFilterOld(bets) {
     const now = Date.now();
     return bets.filter(b => {
@@ -185,13 +179,35 @@ function _mhRender(bets, total) {
     const container = document.getElementById('myHistoryCards');
     if (!container) return;
     
-    // ✅ DUPLICATE CHECK - Agar pehle se same bets hain to skip
+    // ✅ FINAL DUPLICATE CHECK - Period-wise check
     if (container.children.length > 0) {
         const existingWrap = container.children[0];
         if (existingWrap && existingWrap.classList.contains('mh-wrap')) {
             const existingCards = existingWrap.querySelectorAll('.mh-card');
-            if (existingCards.length === bets.length) {
-                console.log("⏭️ Skipping duplicate render - cards already exist");
+            
+            // Collect all periods from existing cards
+            const existingPeriods = new Set();
+            existingCards.forEach(card => {
+                const periodDiv = card.querySelector('.mh-period');
+                if (periodDiv) {
+                    // Get the period text (first child node)
+                    const periodText = periodDiv.childNodes[0]?.nodeValue?.trim() || '';
+                    if (periodText) existingPeriods.add(periodText);
+                }
+            });
+            
+            // Check if any new bet period already exists
+            let hasDuplicate = false;
+            for (let bet of bets) {
+                const period = String(bet.period || '');
+                if (existingPeriods.has(period)) {
+                    hasDuplicate = true;
+                    break;
+                }
+            }
+            
+            if (hasDuplicate) {
+                console.log("⏭️ Skipping duplicate render - periods already exist");
                 return;
             }
         }
@@ -279,7 +295,7 @@ function mhChangePage(dir) {
     loadMyHistory();
 }
 
-// ── 8. MAIN FUNCTION (overrides old loadMyHistory) ───────────
+// ── 8. MAIN FUNCTION ───────────────────────────
 async function loadMyHistory() {
     // Phone number lo
     const phone = (typeof globalPhone !== 'undefined' && globalPhone)
@@ -312,7 +328,7 @@ async function loadMyHistory() {
     try {
         const mode = (typeof currentMode !== 'undefined') ? currentMode : 60;
 
-        // ✅ CACHE BUSTING - timestamp add kiya taake fresh data aaye
+        // ✅ CACHE BUSTING - timestamp for fresh data
         const timestamp = Date.now();
         const res  = await fetch(
             `/api/bet?phone=${encodeURIComponent(phone)}&mode=${mode}&page=${_mhPage}&limit=${MH_LIMIT}&_=${timestamp}`
@@ -320,7 +336,7 @@ async function loadMyHistory() {
         const data = await res.json();
 
         if (data.success && Array.isArray(data.bets) && data.bets.length > 0) {
-            // ── 24hr se purani entries automatically filter karo ──
+            // 24hr filter
             const freshBets = _mhFilterOld(data.bets);
             _mhTotal = data.total || freshBets.length;
             _mhRender(freshBets, _mhTotal);
