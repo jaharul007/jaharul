@@ -1512,48 +1512,38 @@
             <button class="hist-tab" onclick="switchHistoryTab(1, this)">Chart</button>
             <button class="hist-tab" onclick="switchHistoryTab(2, this)">My history</button>
         </div>
-           <div class="photo-history-card" style="background: transparent !important; padding: 10px 15px;">
-    
-    <div style="background: #051130; border: 1.5px solid #2b3d63; border-radius: 12px; overflow: hidden; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-        <table class="p-table" style="width: 100%; border-collapse: collapse; background: #051130; border: none; margin: 0;">
-            <thead>
-                <tr style="background: #2b3d63;">
-                    <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Period</th>
-                    <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Number</th>
-                    <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Big Small</th>
-                    <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Color</th>
-                </tr>
-            </thead>
-            <tbody id="historyBody" style="background: #051130;">
-                </tbody>
-        </table>
-    </div>
 
-    <div class="pagination-bar" style="background: #051130; border: 1.5px solid #2b3d63; border-radius: 10px; padding: 10px 15px; display: flex; justify-content: center; align-items: center; gap: 40px; margin-top: 10px;">
-        <button class="page-btn prev" style="background: #1a2a4d !important; border: none; color: #5d75a5; width: 35px; height: 35px; border-radius: 8px;" onclick="changePage(-1)">‹</button>
-        <span class="page-info" id="pageInfo" style="color: #5d75a5; font-weight: bold; font-size: 16px;">1/50</span>
-        <button class="page-btn next" style="background: #00ffc3 !important; border: none; color: #000; width: 35px; height: 35px; border-radius: 8px;" onclick="changePage(1)">›</button>
-    </div>
-
-</div>
-
-        
-            <div class="history-content" id="chartSection"></div>
-
-            <div class="history-content" id="myHistory">
-                <table class="p-table" id="myHistoryTable" style="display:none;">
-                    <thead>
-                        <tr>
-                            <th>Period</th>
-                            <th>Bet</th>
-                            <th>Amount</th>
-                            <th>Result</th>
-                        </tr>
-                    </thead>
-                    <tbody id="myHistoryBody"></tbody>
-                </table>
-                <p id="myHistoryEmpty" style="padding:30px; color:#6b7280;">Loading your bets...</p>
+        <!-- ── Game History Tab ── -->
+        <div class="history-content active" id="gameHistory">
+            <div class="photo-history-card" style="background: transparent !important; padding: 10px 15px;">
+                <div style="background: #051130; border: 1.5px solid #2b3d63; border-radius: 12px; overflow: hidden; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                    <table class="p-table" style="width: 100%; border-collapse: collapse; background: #051130; border: none; margin: 0;">
+                        <thead>
+                            <tr style="background: #2b3d63;">
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Period</th>
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Number</th>
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Big Small</th>
+                                <th style="color: #8fa3bf; padding: 12px 5px; font-size: 13px; font-weight: 500; border: none;">Color</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody" style="background: #051130;"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-bar" style="background: #051130; border: 1.5px solid #2b3d63; border-radius: 10px; padding: 10px 15px; display: flex; justify-content: center; align-items: center; gap: 40px; margin-top: 10px;">
+                    <button class="page-btn prev" style="background: #1a2a4d !important; border: none; color: #5d75a5; width: 35px; height: 35px; border-radius: 8px;" onclick="changePage(-1)">‹</button>
+                    <span class="page-info" id="pageInfo" style="color: #5d75a5; font-weight: bold; font-size: 16px;">1/50</span>
+                    <button class="page-btn next" style="background: #00ffc3 !important; border: none; color: #000; width: 35px; height: 35px; border-radius: 8px;" onclick="changePage(1)">›</button>
+                </div>
             </div>
+        </div>
+
+        <!-- ── Chart Tab ── -->
+        <div class="history-content" id="chartSection"></div>
+
+        <!-- ── My History Tab ── -->
+        <div class="history-content" id="myHistory">
+            <div id="myHistoryCards"></div>
+        </div>
         </div>
     </div>
 
@@ -2326,7 +2316,8 @@ function switchHistoryTab(index, btn) {
     document.querySelectorAll('.history-content').forEach(c => c.classList.remove('active'));
     const sections = ['gameHistory', 'chartSection', 'myHistory'];
     document.getElementById(sections[index]).classList.add('active');
-    if (index === 2) loadMyHistory();
+    if (index === 2) { _mhPage = 1; loadMyHistory(); }
+    if (index === 0) fetchFromDB();
 }
 
 function changePage(direction) {
