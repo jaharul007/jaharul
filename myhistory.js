@@ -1,51 +1,65 @@
-// ============================================================
-//  myhistory.js — My History Section
-//  Photo jaisi card design: betOn color box + period + status
-//  Is file ko wingo_game_fixed.html ke </body> se pehle include karo
-// ============================================================
+// ================================================================
+//  myhistory.js  —  My History Tab (Photo-style Cards)
+//
+//  Kya karta hai:
+//  1. "My history" click → game history HIDE, ye cards UPAR dikhte hain
+//  2. Photo jaisi card design: Color box + Period + Succeed/Failed
+//  3. 24 hours se purani bets automatic filter/delete ho jaati hain
+//  4. /api/bet se data fetch karta hai (auth.js ke saath compatible)
+// ================================================================
 
-// ── CSS inject karo ──────────────────────────────────────────
-(function injectMyHistoryCSS() {
-    const style = document.createElement('style');
-    style.textContent = `
+// ── 1. CSS INJECT ────────────────────────────────────────────
+(function () {
+    const s = document.createElement('style');
+    s.textContent = `
 
-/* ── My History Container ── */
+/* My History tab content bilkul game history ki jagah aaye */
 #myHistory {
-    padding: 0 0 20px 0;
+    padding: 0;
     background: transparent;
 }
 
-/* ── Single Bet Card (Photo jaisa) ── */
+/* Wrapper — game history jaise hi spacing */
+.mh-wrap {
+    padding: 10px 15px 20px 15px;
+}
+
+/* ── Single Card ── */
 .mh-card {
     display: flex;
     align-items: center;
-    gap: 14px;
-    background: #0e1a35;
+    gap: 12px;
+    background: #0b1730;
     border-radius: 14px;
-    padding: 14px 14px;
-    margin: 0 12px 10px 12px;
-    border: 1px solid #1a2d55;
+    padding: 13px 14px;
+    margin-bottom: 10px;
+    border: 1px solid #1c3260;
     position: relative;
     overflow: hidden;
+    animation: mhSlide 0.2s ease both;
+}
+@keyframes mhSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Subtle left glow line */
+/* Left color strip */
 .mh-card::before {
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 3px;
+    width: 4px;
     border-radius: 14px 0 0 14px;
 }
-.mh-card.mh-won::before  { background: #10b981; }
-.mh-card.mh-lost::before { background: #ef4444; }
-.mh-card.mh-pending::before { background: #f59e0b; }
+.mh-card.c-won::before     { background: #10b981; }
+.mh-card.c-lost::before    { background: #ef4444; }
+.mh-card.c-pending::before { background: #f59e0b; }
 
-/* ── Left Color Box (Green/Red/Violet/Big/Small) ── */
-.mh-color-box {
-    width: 62px;
-    height: 62px;
-    border-radius: 14px;
+/* ── Left Color Box ── */
+.mh-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -53,322 +67,267 @@
     font-weight: 800;
     color: #fff;
     flex-shrink: 0;
-    letter-spacing: 0.3px;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
-.mh-box-green  { background: linear-gradient(135deg, #16a34a, #22c55e); }
-.mh-box-red    { background: linear-gradient(135deg, #dc2626, #ef4444); }
-.mh-box-violet { background: linear-gradient(135deg, #7c3aed, #9b51e0); }
-.mh-box-big    { background: linear-gradient(135deg, #d97706, #f59e0b); }
-.mh-box-small  { background: linear-gradient(135deg, #2563eb, #3b82f6); }
-.mh-box-number { background: linear-gradient(135deg, #0f766e, #14b8a6); }
+.bg-green  { background: linear-gradient(135deg, #15803d, #22c55e); }
+.bg-red    { background: linear-gradient(135deg, #b91c1c, #f87171); }
+.bg-violet { background: linear-gradient(135deg, #6d28d9, #a855f7); }
+.bg-big    { background: linear-gradient(135deg, #b45309, #fbbf24); }
+.bg-small  { background: linear-gradient(135deg, #1d4ed8, #60a5fa); }
+.bg-num    { background: linear-gradient(135deg, #0e7490, #22d3ee); }
+.mh-box-num { font-size: 24px; font-weight: 900; line-height: 1; }
 
-/* ── Middle Info Section ── */
-.mh-info {
-    flex: 1;
-    min-width: 0;
-}
+/* ── Middle Info ── */
+.mh-info { flex: 1; min-width: 0; }
 .mh-period {
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 700;
     color: #e2e8f0;
-    letter-spacing: 0.3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
-.mh-period-arrow {
-    color: #10b981;
-    font-size: 11px;
-}
-.mh-datetime {
-    font-size: 12px;
-    color: #64748b;
-    margin-top: 3px;
-    font-weight: 500;
-}
-.mh-beton {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-top: 4px;
-    font-weight: 600;
-}
+.mh-period-arrow { color: #10b981; font-size: 10px; margin-left: 5px; }
+.mh-time { font-size: 12px; color: #475569; margin-top: 3px; }
+.mh-betinfo { font-size: 12px; color: #475569; margin-top: 3px; }
+.mh-betinfo b { color: #94a3b8; }
 
-/* ── Right Status Section ── */
-.mh-right {
-    text-align: right;
-    flex-shrink: 0;
-}
-.mh-status-badge {
+/* ── Right Status ── */
+.mh-right { flex-shrink: 0; text-align: right; }
+.mh-badge {
     display: inline-block;
     padding: 5px 14px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 800;
-    letter-spacing: 0.3px;
     border: 1.5px solid;
 }
-.mh-status-badge.won  {
-    color: #10b981;
-    border-color: #10b981;
-    background: rgba(16,185,129,0.08);
-}
-.mh-status-badge.lost {
-    color: #ef4444;
-    border-color: #ef4444;
-    background: rgba(239,68,68,0.08);
-}
-.mh-status-badge.pending {
-    color: #f59e0b;
-    border-color: #f59e0b;
-    background: rgba(245,158,11,0.08);
-}
-
-.mh-amount {
-    font-size: 14px;
-    font-weight: 800;
-    margin-top: 6px;
-}
-.mh-amount.won  { color: #10b981; }
-.mh-amount.lost { color: #ef4444; }
+.mh-badge.won     { color: #10b981; border-color: #10b981; background: rgba(16,185,129,0.1); }
+.mh-badge.lost    { color: #ef4444; border-color: #ef4444; background: rgba(239,68,68,0.1);  }
+.mh-badge.pending { color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,0.1); }
+.mh-amount { font-size: 14px; font-weight: 800; margin-top: 5px; }
+.mh-amount.won     { color: #10b981; }
+.mh-amount.lost    { color: #ef4444; }
 .mh-amount.pending { color: #f59e0b; }
 
-/* ── Empty / Loading State ── */
+/* ── Empty State ── */
 .mh-empty {
     text-align: center;
     padding: 50px 20px;
-    color: #475569;
+    color: #334155;
     font-size: 15px;
     font-weight: 600;
 }
-.mh-empty-icon {
-    font-size: 48px;
-    display: block;
-    margin-bottom: 12px;
-    opacity: 0.5;
-}
+.mh-empty-icon { font-size: 46px; display: block; margin-bottom: 12px; }
 
-/* ── Pagination Bar ── */
-.mh-pagination {
+/* ── Pagination ── */
+.mh-pag {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     gap: 20px;
-    margin: 16px 12px 0 12px;
-    background: #0e1a35;
-    border-radius: 12px;
-    padding: 12px;
-    border: 1px solid #1a2d55;
+    background: #051130;
+    border: 1.5px solid #2b3d63;
+    border-radius: 10px;
+    padding: 10px 15px;
+    margin-top: 10px;
 }
-.mh-page-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: none;
-    background: #1e3a6e;
-    color: #fff;
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
+.mh-pbtn {
+    width: 35px; height: 35px;
+    border-radius: 8px; border: none;
+    font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
 }
-.mh-page-btn:active { background: #2563eb; }
-.mh-page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.mh-page-info {
-    color: #e2e8f0;
-    font-size: 15px;
-    font-weight: 700;
-    min-width: 50px;
-    text-align: center;
-}
-
-/* ── Card Entry Animation ── */
-@keyframes mhSlideIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-.mh-card {
-    animation: mhSlideIn 0.25s ease both;
-}
+.mh-pbtn.prev { background: #1a2a4d !important; color: #5d75a5; }
+.mh-pbtn.next { background: #00ffc3 !important; color: #000; }
+.mh-pbtn:disabled { opacity: 0.3; cursor: not-allowed; }
+.mh-pinfo { color: #5d75a5; font-weight: bold; font-size: 16px; }
 
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(s);
 })();
 
-// ── State ────────────────────────────────────────────────────
-let mhPage      = 1;
-const MH_LIMIT  = 10;
-let mhTotal     = 1;
-let mhBets      = [];
+// ── 2. CONSTANTS & STATE ─────────────────────────────────────
+const MH_TTL   = 24 * 60 * 60 * 1000;   // 24 hours in ms
+const MH_LIMIT = 10;                      // Cards per page
+let _mhPage    = 1;
+let _mhTotal   = 0;
 
-// ── Color box helper ─────────────────────────────────────────
-function getMhBoxClass(betOn) {
-    const b = String(betOn).toLowerCase();
-    if (b === 'green')  return 'mh-box-green';
-    if (b === 'red')    return 'mh-box-red';
-    if (b === 'violet') return 'mh-box-violet';
-    if (b === 'big')    return 'mh-box-big';
-    if (b === 'small')  return 'mh-box-small';
-    return 'mh-box-number';  // 0-9
+// ── 3. HELPER: Color box info ─────────────────────────────────
+function _mhBoxInfo(betOn) {
+    const b = String(betOn || '').toLowerCase();
+    if (b === 'green')  return { cls: 'bg-green',  html: 'Green' };
+    if (b === 'red')    return { cls: 'bg-red',    html: 'Red' };
+    if (b === 'violet') return { cls: 'bg-violet', html: 'Violet' };
+    if (b === 'big')    return { cls: 'bg-big',    html: 'Big' };
+    if (b === 'small')  return { cls: 'bg-small',  html: 'Small' };
+    // Number 0-9
+    return { cls: 'bg-num', html: `<span class="mh-box-num">${betOn}</span>` };
 }
 
-function getMhBoxLabel(betOn) {
-    const b = String(betOn);
-    // Single digit number → just show number
-    if (/^\d$/.test(b)) return b;
-    return b;
-}
-
-// ── Format datetime from period (YYYYMMDDxxxx) ───────────────
-function formatPeriodDate(period) {
+// ── 4. HELPER: Format timestamp ───────────────────────────────
+function _mhFmt(ts) {
+    if (!ts) return '';
     try {
-        const s = String(period);
-        if (s.length < 8) return '';
-        const yr = s.slice(0, 4);
-        const mo = s.slice(4, 6);
-        const dy = s.slice(6, 8);
-        // Use createdAt from bet if available — fallback to period parse
-        return `${yr}-${mo}-${dy}`;
+        const d = new Date(ts);
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
     } catch(e) { return ''; }
 }
 
-// ── Render cards ─────────────────────────────────────────────
-function renderMyHistoryCards(bets) {
-    const container = document.getElementById('myHistory');
-    if (!container) return;
+// ── 5. HELPER: 24hr filter ───────────────────────────────────
+// 24 ghante se purani bets ko filter karo — automatically hatao
+function _mhFilterOld(bets) {
+    const now = Date.now();
+    return bets.filter(b => {
+        const ts = b.createdAt
+            ? new Date(b.createdAt).getTime()
+            : (b.updatedAt ? new Date(b.updatedAt).getTime() : now);
+        return (now - ts) < MH_TTL;
+    });
+}
 
-    // Clear old content (keep pagination if exists)
-    const oldList = container.querySelector('.mh-list');
-    if (oldList) oldList.remove();
-    const oldPage = container.querySelector('.mh-pagination');
-    if (oldPage) oldPage.remove();
+// ── 6. RENDER CARDS ──────────────────────────────────────────
+function _mhRender(bets, total) {
+    const container = document.getElementById('myHistoryCards');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'mh-wrap';
 
     if (!bets || bets.length === 0) {
-        container.innerHTML = `
+        wrap.innerHTML = `
             <div class="mh-empty">
                 <span class="mh-empty-icon">📋</span>
-                No bets found
+                Koi bet nahi mili
             </div>`;
+        container.appendChild(wrap);
         return;
     }
 
-    const list = document.createElement('div');
-    list.className = 'mh-list';
-
+    // Cards
     bets.forEach((bet, i) => {
-        const betOn   = bet.betOn || bet.bet_on || 'Unknown';
-        const period  = bet.period || '';
-        const amount  = parseFloat(bet.amount || 0);
-        const status  = bet.status || 'pending';
-        const winAmt  = parseFloat(bet.winAmount || bet.win_amount || 0);
-        const dateStr = bet.createdAt
-            ? new Date(bet.createdAt).toLocaleString('en-IN', { hour12: false })
-            : formatPeriodDate(period);
+        const betOn  = String(bet.betOn || bet.bet_on || '');
+        const period = String(bet.period || '');
+        const amount = parseFloat(bet.amount || 0);
+        const status = String(bet.status || 'pending');
+        const winAmt = parseFloat(bet.winAmount || bet.win_amount || 0);
+        const ts     = _mhFmt(bet.createdAt || bet.updatedAt);
+        const box    = _mhBoxInfo(betOn);
 
-        const boxClass = getMhBoxClass(betOn);
-        const boxLabel = getMhBoxLabel(betOn);
-
-        let statusText, amountText, badgeClass, cardClass;
+        let badgeTxt, amtTxt, cls;
         if (status === 'won') {
-            statusText = 'Succeed';
-            amountText = `+₹${winAmt.toFixed(2)}`;
-            badgeClass = 'won';
-            cardClass  = 'mh-won';
+            badgeTxt = 'Succeed';
+            amtTxt   = `+₹${winAmt.toFixed(2)}`;
+            cls      = 'won';
         } else if (status === 'lost') {
-            statusText = 'Failed';
-            amountText = `-₹${amount.toFixed(2)}`;
-            badgeClass = 'lost';
-            cardClass  = 'mh-lost';
+            badgeTxt = 'Failed';
+            amtTxt   = `-₹${amount.toFixed(2)}`;
+            cls      = 'lost';
         } else {
-            statusText = 'Pending';
-            amountText = `₹${amount.toFixed(2)}`;
-            badgeClass = 'pending';
-            cardClass  = 'mh-pending';
+            badgeTxt = 'Pending';
+            amtTxt   = `₹${amount.toFixed(2)}`;
+            cls      = 'pending';
         }
 
         const card = document.createElement('div');
-        card.className = `mh-card ${cardClass}`;
+        card.className = `mh-card c-${cls}`;
         card.style.animationDelay = `${i * 0.04}s`;
-
         card.innerHTML = `
-            <div class="mh-color-box ${boxClass}">${boxLabel}</div>
+            <div class="mh-box ${box.cls}">${box.html}</div>
             <div class="mh-info">
                 <div class="mh-period">
                     ${period}
                     <span class="mh-period-arrow">▼</span>
                 </div>
-                <div class="mh-datetime">${dateStr}</div>
-                <div class="mh-beton">Bet on: <strong style="color:#cbd5e1">${betOn}</strong> &nbsp;|&nbsp; ₹${amount.toFixed(2)}</div>
+                <div class="mh-time">${ts}</div>
+                <div class="mh-betinfo">Bet: <b>${betOn}</b> &nbsp;|&nbsp; ₹${amount.toFixed(2)}</div>
             </div>
             <div class="mh-right">
-                <div class="mh-status-badge ${badgeClass}">${statusText}</div>
-                <div class="mh-amount ${badgeClass}">${amountText}</div>
+                <div class="mh-badge ${cls}">${badgeTxt}</div>
+                <div class="mh-amount ${cls}">${amtTxt}</div>
             </div>
         `;
-        list.appendChild(card);
+        wrap.appendChild(card);
     });
 
-    container.appendChild(list);
-
     // Pagination
-    const totalPages = Math.max(1, Math.ceil(mhTotal / MH_LIMIT));
+    const totalPages = Math.max(1, Math.ceil(total / MH_LIMIT));
     const pag = document.createElement('div');
-    pag.className = 'mh-pagination';
+    pag.className = 'mh-pag';
     pag.innerHTML = `
-        <button class="mh-page-btn" onclick="mhChangePage(-1)" ${mhPage <= 1 ? 'disabled' : ''}>&#8249;</button>
-        <span class="mh-page-info">${mhPage}/${totalPages}</span>
-        <button class="mh-page-btn" onclick="mhChangePage(1)" ${mhPage >= totalPages ? 'disabled' : ''}>&#8250;</button>
+        <button class="mh-pbtn prev" onclick="mhChangePage(-1)" ${_mhPage <= 1 ? 'disabled' : ''}>&#8249;</button>
+        <span class="mh-pinfo">${_mhPage}/${totalPages}</span>
+        <button class="mh-pbtn next" onclick="mhChangePage(1)" ${_mhPage >= totalPages ? 'disabled' : ''}>&#8250;</button>
     `;
-    container.appendChild(pag);
+    wrap.appendChild(pag);
+    container.appendChild(wrap);
 }
 
-// ── Page change ───────────────────────────────────────────────
+// ── 7. PAGE CHANGE ───────────────────────────────────────────
 function mhChangePage(dir) {
-    const totalPages = Math.max(1, Math.ceil(mhTotal / MH_LIMIT));
-    mhPage = Math.max(1, Math.min(totalPages, mhPage + dir));
+    const totalPages = Math.max(1, Math.ceil(_mhTotal / MH_LIMIT));
+    _mhPage = Math.max(1, Math.min(totalPages, _mhPage + dir));
     loadMyHistory();
 }
 
-// ── Main load function (overrides the old one) ────────────────
+// ── 8. MAIN FUNCTION (overrides old loadMyHistory) ───────────
 async function loadMyHistory() {
-    const phone = getCurrentUserPhone ? getCurrentUserPhone() : (globalPhone || null);
+    // Phone number lo
+    const phone = (typeof globalPhone !== 'undefined' && globalPhone)
+        ? globalPhone
+        : (typeof getCurrentUserPhone === 'function' ? getCurrentUserPhone() : null);
+
+    // Loading state
+    const container = document.getElementById('myHistoryCards');
+    if (container) {
+        container.innerHTML = `
+            <div class="mh-wrap">
+                <div class="mh-empty">
+                    <span class="mh-empty-icon" style="font-size:36px">⏳</span>
+                    Loading...
+                </div>
+            </div>`;
+    }
+
     if (!phone) {
-        renderMyHistoryCards([]);
+        if (container) container.innerHTML = `
+            <div class="mh-wrap">
+                <div class="mh-empty">
+                    <span class="mh-empty-icon">🔒</span>
+                    Login karo pehle
+                </div>
+            </div>`;
         return;
     }
 
-    const container = document.getElementById('myHistory');
-    if (container) {
-        container.innerHTML = `<div class="mh-empty"><span class="mh-empty-icon" style="font-size:32px">⏳</span>Loading...</div>`;
-    }
-
     try {
-        // auth.js ke saath kaam karta hai — /api/bet endpoint use karo
-        const mode = typeof currentMode !== 'undefined' ? currentMode : 60;
+        const mode = (typeof currentMode !== 'undefined') ? currentMode : 60;
+
+        // API call — auth.js ke /api/bet endpoint ko use karta hai
         const res  = await fetch(
-            `/api/bet?phone=${encodeURIComponent(phone)}&mode=${mode}&page=${mhPage}&limit=${MH_LIMIT}`
+            `/api/bet?phone=${encodeURIComponent(phone)}&mode=${mode}&page=${_mhPage}&limit=${MH_LIMIT}`
         );
         const data = await res.json();
 
-        if (data.success && data.bets && data.bets.length > 0) {
-            mhBets  = data.bets;
-            mhTotal = data.total || data.bets.length;
-            renderMyHistoryCards(mhBets);
+        if (data.success && Array.isArray(data.bets) && data.bets.length > 0) {
+            // ── 24hr se purani entries automatically filter karo ──
+            const freshBets = _mhFilterOld(data.bets);
+            _mhTotal = data.total || freshBets.length;
+            _mhRender(freshBets, _mhTotal);
         } else {
-            // Hide old table elements if they exist
-            const tbl = document.getElementById('myHistoryTable');
-            const emp = document.getElementById('myHistoryEmpty');
-            if (tbl) tbl.style.display = 'none';
-            if (emp) emp.style.display = 'none';
-            renderMyHistoryCards([]);
+            _mhTotal = 0;
+            _mhRender([], 0);
         }
     } catch (e) {
         console.error('loadMyHistory error:', e);
-        renderMyHistoryCards([]);
+        if (container) container.innerHTML = `
+            <div class="mh-wrap">
+                <div class="mh-empty">
+                    <span class="mh-empty-icon">⚠️</span>
+                    Load nahi hua, retry karo
+                </div>
+            </div>`;
     }
 }
