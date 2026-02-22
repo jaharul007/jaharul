@@ -178,42 +178,9 @@ function _mhFilterOld(bets) {
 function _mhRender(bets, total) {
     const container = document.getElementById('myHistoryCards');
     if (!container) return;
-    
-    // ✅ FINAL DUPLICATE CHECK - Period-wise check
-    if (container.children.length > 0) {
-        const existingWrap = container.children[0];
-        if (existingWrap && existingWrap.classList.contains('mh-wrap')) {
-            const existingCards = existingWrap.querySelectorAll('.mh-card');
-            
-            // Collect all periods from existing cards
-            const existingPeriods = new Set();
-            existingCards.forEach(card => {
-                const periodDiv = card.querySelector('.mh-period');
-                if (periodDiv) {
-                    // Get the period text (first child node)
-                    const periodText = periodDiv.childNodes[0]?.nodeValue?.trim() || '';
-                    if (periodText) existingPeriods.add(periodText);
-                }
-            });
-            
-            // Check if any new bet period already exists
-            let hasDuplicate = false;
-            for (let bet of bets) {
-                const period = String(bet.period || '');
-                if (existingPeriods.has(period)) {
-                    hasDuplicate = true;
-                    break;
-                }
-            }
-            
-            if (hasDuplicate) {
-                console.log("⏭️ Skipping duplicate render - periods already exist");
-                return;
-            }
-        }
-    }
-    
-    // Purana content hatao
+
+    // Hamesha fresh render karo — duplicate skip NAHI karna
+    // Warna pending cards kabhi update nahi hote
     container.innerHTML = '';
 
     const wrap = document.createElement('div');
@@ -295,49 +262,84 @@ function mhChangePage(dir) {
     loadMyHistory();
 }
 
-// ── 8. MAIN FUNCTION ───────────────────────────
+// ── 8. PENDING BETS UPDATER ──────────────────────────────────
+// Ye function har pending bet ka result individually check karta hai
+// Isse Big + Small dono par bet laga ho — dono alag update honge
+async function _mhResolvePending(bets, phone, mode) {
+    const pending = bets.filter(b => b.status === 'pending');
+    if (pending.length === 0) return bets;
+
+    console.log(`🔄 Resolving ${pending.length} pending bet(s)...`);
+    const result = [...bets];
+
+    // Sab pending bets parallel mein check karo
+    await Promise.all(pending.map(async (bet) => {
+        try {
+            const url = `/api/history?action=checkResult`
+                + `&phone=${encodeURIComponent(phone)}`
+                + `&period=${bet.period}`
+                + `&mode=${mode}`
+                + `&betOn=${encodeURIComponent(bet.betOn)}`
+                + `&_=${Date.now()}`;
+            const res  = await fetch(url);
+            const data = await res.json();
+
+            // won / lost aaya to us bet ki entry update karo
+            if (data.status === 'won' || data.status === 'lost') {
+                // period + betOn dono match karo taaki Big aur Small alag rahein
+                const idx = result.findIndex(
+                    b => b.period === bet.period && b.betOn === bet.betOn
+                );
+                if (idx !== -1) {
+                    result[idx] = {
+                        ...result[idx],
+                        status:       data.status,
+                        winAmount:    data.status === 'won' ? (data.winAmount || 0) : 0,
+                        resultNumber: data.resultNumber
+                    };
+                    console.log(`✅ ${bet.betOn} @ ${bet.period} → ${data.status}`);
+                }
+            }
+        } catch (e) {
+            console.warn(`Pending resolve failed: ${bet.betOn} @ ${bet.period}`, e);
+        }
+    }));
+
+    return result;
+}
+
+// ── 9. MAIN FUNCTION ─────────────────────────────────────────
 async function loadMyHistory() {
-    // Phone number lo
     const phone = (typeof globalPhone !== 'undefined' && globalPhone)
         ? globalPhone
         : (typeof getCurrentUserPhone === 'function' ? getCurrentUserPhone() : null);
 
-    // Loading state
     const container = document.getElementById('myHistoryCards');
-    if (container) {
-        container.innerHTML = `
-            <div class="mh-wrap">
-                <div class="mh-empty">
-                    <span class="mh-empty-icon" style="font-size:36px">⏳</span>
-                    Loading...
-                </div>
-            </div>`;
-    }
 
     if (!phone) {
         if (container) container.innerHTML = `
-            <div class="mh-wrap">
-                <div class="mh-empty">
-                    <span class="mh-empty-icon">🔒</span>
-                    Login karo pehle
-                </div>
-            </div>`;
+            <div class="mh-wrap"><div class="mh-empty">
+                <span class="mh-empty-icon">🔒</span>Login karo pehle
+            </div></div>`;
         return;
     }
 
     try {
         const mode = (typeof currentMode !== 'undefined') ? currentMode : 60;
 
-        // ✅ CACHE BUSTING - timestamp for fresh data
-        const timestamp = Date.now();
+        // Fresh bets fetch karo
         const res  = await fetch(
-            `/api/bet?phone=${encodeURIComponent(phone)}&mode=${mode}&page=${_mhPage}&limit=${MH_LIMIT}&_=${timestamp}`
+            `/api/bet?phone=${encodeURIComponent(phone)}&mode=${mode}&page=${_mhPage}&limit=${MH_LIMIT}&_=${Date.now()}`
         );
         const data = await res.json();
 
         if (data.success && Array.isArray(data.bets) && data.bets.length > 0) {
-            // 24hr filter
-            const freshBets = _mhFilterOld(data.bets);
+            let freshBets = _mhFilterOld(data.bets);       // 24hr filter
+
+            // KEY FIX: Har pending bet ka result checkResult se update karo
+            // Isse chahe 1 bet ho ya 10 — sab sahi status dikhenge
+            freshBets = await _mhResolvePending(freshBets, phone, mode);
+
             _mhTotal = data.total || freshBets.length;
             _mhRender(freshBets, _mhTotal);
         } else {
@@ -347,11 +349,8 @@ async function loadMyHistory() {
     } catch (e) {
         console.error('loadMyHistory error:', e);
         if (container) container.innerHTML = `
-            <div class="mh-wrap">
-                <div class="mh-empty">
-                    <span class="mh-empty-icon">⚠️</span>
-                    Load nahi hua, retry karo
-                </div>
-            </div>`;
+            <div class="mh-wrap"><div class="mh-empty">
+                <span class="mh-empty-icon">⚠️</span>Load nahi hua
+            </div></div>`;
     }
 }
