@@ -43,18 +43,10 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Left color strip */
+/* Left color strip - HATTA DIYA */
 .mh-card::before {
-display: none;
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 4px;
-    border-radius: 14px 0 0 14px;
+    display: none;
 }
-.mh-card.c-won::before     { background: #10b981; }
-.mh-card.c-lost::before    { background: #ef4444; }
-.mh-card.c-pending::before { background: #f59e0b; }
 
 /* ── Left Color Box ── */
 .mh-box {
@@ -267,8 +259,6 @@ function _mhRender(bets, total) {
         wrap.appendChild(card);
     });
 
-
-
     // Pagination
     const totalPages = Math.max(1, Math.ceil(total / MH_LIMIT));
     const pag = document.createElement('div');
@@ -322,9 +312,10 @@ async function loadMyHistory() {
     try {
         const mode = (typeof currentMode !== 'undefined') ? currentMode : 60;
 
-        // API call — auth.js ke /api/bet endpoint ko use karta hai
+        // ✅ CACHE BUSTING - timestamp add kiya taake fresh data aaye
+        const timestamp = Date.now();
         const res  = await fetch(
-            `/api/bet?phone=${encodeURIComponent(phone)}&mode=${mode}&page=${_mhPage}&limit=${MH_LIMIT}`
+            `/api/bet?phone=${encodeURIComponent(phone)}&mode=${mode}&page=${_mhPage}&limit=${MH_LIMIT}&_=${timestamp}`
         );
         const data = await res.json();
 
